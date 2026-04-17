@@ -1,0 +1,9 @@
+[package]
+name = "cat_and_plants"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = "0.18"
+strum = "0.28"
+strum_macros = "0.28"
