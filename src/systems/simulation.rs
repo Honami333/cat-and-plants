@@ -7,7 +7,7 @@ pub fn plant_growth(
     current_world: Res<CurrentWorld>,
     mut inv: ResMut<GlobalInventory>,
 ) {
-    let inventory = current_world.get_inv_mut(&mut inv);
+    let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
     
     for slot in inventory.iter_mut() {
     if let SlotState::Occupied(plant) = slot && plant.growth_score < plant.growth_thereshold {

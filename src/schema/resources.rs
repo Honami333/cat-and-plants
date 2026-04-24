@@ -8,11 +8,13 @@ pub struct GameAssets { // Изображения
     pub pot_stands: Handle<Image>,
     pub sunlit_nursery: Handle<Image>,
     pub button_buy_tomato: Handle<Image>,
+    pub warm_paws_porch: Handle<Image>,
 }
 
 #[derive(Resource)]
 pub struct ShaderAssets { // Общий список шейдеров
-    pub window_light: Handle<ShaderMaterial>
+    pub sn_window_light: Handle<ShaderMaterial>,
+    pub wpp_window_light: Handle<ShaderMaterial>,
 }
 
 #[derive(Resource)]

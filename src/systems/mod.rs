@@ -20,10 +20,14 @@ impl Plugin for SystemPlugin {
             Update, (
             visials::update_plant_appearance,
             visials::update_scene_scale,
-            interaction::state_dragg_item,
             visials::sync_inventory_visuals,
             visials::animate_counters,
             visials::update_resourse_text,
+            visials::grag_item_anim_and_zsort,
+            visials::shader_animation,
+
+            interaction::state_dragg_item,
+            
             simulation::plant_growth.run_if(on_timer(Duration::from_secs(1))),
         )
         .run_if(in_state(GameState::Playing)));

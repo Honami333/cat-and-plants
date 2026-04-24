@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use crate::schema::{resources::*, config::*, types_and_states::*, world_components::*};
+use crate::schema::{config::*, resources::*, types_and_states::*, world_components::*};
+use crate::world::sunlit_nursery::{BUT_TOMATO_CFG, SN_DATA, SN_SLOT_CFG};
+use crate::world::warm_paws_porch::{WPP_DATA};
+
 
 
 // Общий спаун мира
@@ -10,38 +13,62 @@ pub fn spawm_world_system(
     shaders: Res<ShaderAssets>,
     current_world: Res<CurrentWorld>,
     font: Res<FontAssets>,
+    cameras: Query<&Camera2d>,
 ) {
-    commands.spawn(Camera2d::default());
+    if cameras.is_empty() {
+        commands.spawn(Camera2d::default());
+    };
 
-    // Получения данных о мире
-    let (data, slot_cfg, button_cfg, bg_image, pot_image, shaders) = current_world.get_config(&assets, &shaders);
+    match *current_world {
+        CurrentWorld::SunlitNursery => {
+            bg_spawn(&mut commands, assets.sunlit_nursery.clone(), SN_DATA);
+            shader_spawn(&mut commands, &mut meshes, shaders.sn_window_light.clone());
+            spawn_slots(&mut commands, &SN_SLOT_CFG, assets.pot_stands.clone());
+            spawn_button(&mut commands, &assets, &BUT_TOMATO_CFG);
+            spawn_resourse_text(&mut commands, &font);
+        },
+        CurrentWorld::WarmPawsPorch => {
+            bg_spawn(&mut commands, assets.warm_paws_porch.clone(), WPP_DATA);
+            shader_spawn(&mut commands, &mut meshes, shaders.wpp_window_light.clone());
+        }
+    };
+}
 
-    // Спаун всего мира
+
+pub fn bg_spawn(
+    commands: &mut Commands,
+    bg_image: Handle<Image>,
+    data: ScaleBackground,
+
+) {
     commands.spawn((
     Transform::from_xyz(0.0, 0.0, 0.0),
     Sprite::from_image(bg_image),
     data.clone(),
     Room,
     ));
+}
+
+
+pub fn shader_spawn(
+    commands: &mut Commands,
+    meshes: &mut Assets<Mesh>,
+    shaders: Handle<ShaderMaterial>,
+) {
     commands.spawn((
         Mesh2d(meshes.add(Rectangle::default())),
         MeshMaterial2d(shaders),
         Transform::from_xyz(0.0, 0.0, 20.0),
     ShaderMash,
     ));
-
-    spawn_slots(&mut commands, &current_world, &slot_cfg, pot_image);
-    spawn_button(&mut commands, &assets, &button_cfg);
-    spawn_resourse_text(&mut commands, &font);
 }
 
 
 // Спаун слотов в зависимости от мира
 pub fn spawn_slots(
     commands: &mut Commands,
-    current_world: &Res<CurrentWorld>,
     config: &WorldSettingsSlot,
-    pot_image: Handle<Image>,
+    slot_image_handle: Handle<Image>,
 ) {
     for row in 0..config.slot_grid_scale {
     for col in 0..config.slot_grid_scale {
@@ -51,7 +78,7 @@ pub fn spawn_slots(
 
         commands.spawn((
             Transform::from_translation(pos.extend(1.0)),
-            Sprite::from_image(pot_image.clone()),
+            Sprite::from_image(slot_image_handle.clone()),
             Slot {
                 id: (row * config.slot_grid_scale + col) as usize,
                 base_pos: pos,

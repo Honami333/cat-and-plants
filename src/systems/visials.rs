@@ -3,7 +3,7 @@ use bevy::window::PrimaryWindow;
 use bevy::ui::UiScale;
 use crate::schema::{resources::*, config::*, types_and_states::*, world_components::*};
 use crate::systems::lifecycle::item_spawn;
-use crate::world::{SUNLIT_NURSERY_PLANT_RESOURCE};
+use crate::world::sunlit_nursery::{SN_PLANT_RES};
 
 
 // Обновление визуала в инвенторе
@@ -15,7 +15,7 @@ pub fn sync_inventory_visuals(
     query_slots: Query<&Slot>,
     current_world: Res<CurrentWorld>,
 ) {
-    let inventory = current_world.get_inv_mut(&mut inv);
+    let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
     // Спаун преметов в слотах
     for (idx, slot_state) in inventory.iter_mut().enumerate() {
         if let SlotState::Occupied(plant) = slot_state {
@@ -56,7 +56,7 @@ pub fn update_plant_appearance(
     _assets: Res<AtlasAssets>,
     current_world: Res<CurrentWorld>,
 ) {
-    let inventory = current_world.get_inv_mut(&mut inv);
+    let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
 
     for (mut sprite, slot_info) in query_item.iter_mut() {
         let Some(slot_state) = inventory.get_mut(slot_info.uid as usize) else { continue; };
@@ -77,30 +77,42 @@ pub fn update_plant_appearance(
     }
 }
 
+// Z сортировка, анимация перестаскивание и маштабировние предметов
+pub fn grag_item_anim_and_zsort(
+    worlds: Res<WorldScale>,
+    mut item_slot_query: Query<(&mut Transform, &SlotItem)>,
+) {
+    for (mut item_trans, item_info) in item_slot_query.iter_mut() {
+        let z_index = 2.5 - (item_info.base_pos.y / 360.0);
+
+        item_trans.scale = Vec3::splat(worlds.scale);
+        item_trans.translation = (item_info.base_pos * worlds.scale).extend(z_index);
+    }
+}
 
 // Обновление маштаба всей сцены
 pub fn update_scene_scale(
     mut set: ParamSet<(
-        Query<(&mut Transform, &mut ScaleBackground)>,
+        Query<(&mut Transform, &ScaleBackground)>,
         Query<(&mut Transform, &Slot)>,
-        Query<(&mut Transform, &SlotItem)>,
         Query<(&mut Transform, &MyButton)>,
         Query<&mut Transform, With<ShaderMash>>,
     )>,
     mut materials: ResMut<Assets<ShaderMaterial>>,
     mut ui_scale: ResMut<UiScale>,
+    mut worlds: ResMut<WorldScale>,
     window: Single<&Window, With<PrimaryWindow>>,
     shader_query: Query<&MeshMaterial2d<ShaderMaterial>>,
-    time: Res<Time>,
 ) {
-    let mut scale: f32 = 1.0;
+    // Задний фон и общий скейл
+    let scale = if let Ok((mut bg_trans, bg_info)) = set.p0().single_mut() {
+        let s = (window.width() / bg_info.wh.x).min(window.height() / bg_info.wh.y);
+        bg_trans.scale = Vec3::splat(s);
+        s
+    } else { return; };
 
-    // Задний фон
-    for (mut bg_trans, mut bg_info) in set.p0().iter_mut() {
-        scale = (window.width() / bg_info.wh.x).min(window.height() / bg_info.wh.y);
-        bg_info.scale_bg = scale;
-        bg_trans.scale = Vec3::splat(scale);
-    }
+    if worlds.scale == scale { return; }
+    worlds.scale = scale;
 
     // Слоты
     for (mut slot_trans, slot_info) in set.p1().iter_mut() {
@@ -108,16 +120,8 @@ pub fn update_scene_scale(
         slot_trans.scale = Vec3::splat(scale);
     }
 
-    // Предметы
-    for (mut item_trans, item_info) in set.p2().iter_mut() {
-        let z_index = 2.5 - (item_info.base_pos.y / 360.0);
-        
-        item_trans.translation = (item_info.base_pos * scale).extend(z_index);
-        item_trans.scale = Vec3::splat(scale);
-    }
-
     // Кнопки
-    for (mut button_trans, button_info) in set.p3().iter_mut() {
+    for (mut button_trans, button_info) in set.p2().iter_mut() {
         button_trans.translation = (button_info.base_pos * scale).extend(5.0);
         button_trans.scale = Vec3::splat(scale);
     }
@@ -125,12 +129,9 @@ pub fn update_scene_scale(
     // Шейдеры
     for material_handle in shader_query.iter() {
     if let Some(material) = materials.get_mut(&material_handle.0) {
-        let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
-        material.color.set_alpha(material.color.alpha + sin_time);
-
         material.scale = material.original_scale / scale;
 
-        for mut transform in set.p4().iter_mut() {
+        for mut transform in set.p3().iter_mut() {
             transform.scale = Vec3::splat(material.mash_scale * scale);
             }
         }
@@ -140,13 +141,35 @@ pub fn update_scene_scale(
 }
 
 
+pub fn shader_animation(
+    mut materials: ResMut<Assets<ShaderMaterial>>,
+    shader_query: Query<&MeshMaterial2d<ShaderMaterial>>,
+    time: Res<Time>,
+) {
+    for material_handle in shader_query.iter() {
+    if let Some(material) = materials.get_mut(&material_handle.0) {
+        match material.shader_type {
+            0 => {
+                let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
+                material.color.set_alpha(material.color.alpha + sin_time);
+            },
+            1 => {
+                let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
+                material.color.set_alpha(material.color.alpha + sin_time);
+            }
+            _ => return,
+        };
+    }}
+}
+
 pub fn update_resourse_text(
     mut text_query: Query<(&mut VisualCounter, &mut Text, &MyText)>,
     current_world: Res<CurrentWorld>,
     economy: Res<Economy>,
 ) {
     let plant_res = match *current_world {
-        CurrentWorld::SunlitNursery => SUNLIT_NURSERY_PLANT_RESOURCE,
+        CurrentWorld::SunlitNursery => SN_PLANT_RES,
+        CurrentWorld::WarmPawsPorch => return,
     };
 
     for (mut counter, mut text, marker) in text_query.iter_mut() {

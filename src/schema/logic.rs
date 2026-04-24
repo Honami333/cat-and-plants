@@ -1,10 +1,8 @@
 use bevy::prelude::*;
 use bevy::shader::ShaderRef;
 use bevy::sprite_render::{AlphaMode2d, Material2d};
-use crate::world::{SUNLIT_NURSERY_SLOT_CFG, SUNLIT_NURSERY_BUTTON_CFG, SUNLIT_NURSERY_DATA};
 use crate::schema::types_and_states::{CurrentWorld, Economy, GlobalInventory, PlantStateGrowth, PlantStateUpdate, ResourceType, SlotState};
-use crate::schema::config::{ButtonCFG, Plant, ScaleBackground, ShaderMaterial, WorldSettingsSlot};
-use crate::schema::resources::{GameAssets, ShaderAssets};
+use crate::schema::config::{Plant, ShaderMaterial};
 
 
 // Логика
@@ -30,6 +28,7 @@ impl GlobalInventory {
     ) {
         let invetory_array = match loc {
             CurrentWorld::SunlitNursery => &mut self.sunlit_nursery_inv,
+            CurrentWorld::WarmPawsPorch => return,
         };
         
         for  slot in invetory_array.iter_mut() {
@@ -47,6 +46,7 @@ impl GlobalInventory {
     ) {
         let invetory_array = match loc {
             CurrentWorld::SunlitNursery => &mut self.sunlit_nursery_inv,
+            CurrentWorld::WarmPawsPorch => return,
         };
         if invetory_array[new_id] == SlotState::Locked {
         }
@@ -69,57 +69,33 @@ impl Economy {
 
 impl Material2d for ShaderMaterial { // Настройки шейдеров
     fn fragment_shader() -> ShaderRef {
-        "shaders/window_light.wgsl".into()
-    }
+        "shaders/combined_window.wgsl".into()
+    } 
 
     fn alpha_mode(&self) -> bevy::sprite_render::AlphaMode2d {
         AlphaMode2d::Blend
     }
 }
 
-impl CurrentWorld { // Поставщик настроек миров
-    pub fn get_config(
-        &self,
-        assets: &Res<GameAssets>,
-        shaders: &Res<ShaderAssets>,
-    ) -> (
-        &ScaleBackground,
-        &WorldSettingsSlot,
-        &ButtonCFG,
-        Handle<Image>,
-        Handle<Image>,
-        Handle<ShaderMaterial>,
-    ) {
-        match self {
-            CurrentWorld::SunlitNursery => (
-            &SUNLIT_NURSERY_DATA,
-            &SUNLIT_NURSERY_SLOT_CFG,
-            &SUNLIT_NURSERY_BUTTON_CFG,
-
-            assets.sunlit_nursery.clone(),
-            assets.pot_stands.clone(),
-            shaders.window_light.clone(),
-            ),
-        }
-    }
-}
 
 impl CurrentWorld {
     pub fn get_inv<'a>(
         &self,
         inv: &'a Res<GlobalInventory>,
-    ) -> &'a [SlotState; 16] {
+    ) -> Option<&'a [SlotState; 16]> {
         match self {
-            CurrentWorld::SunlitNursery => &inv.sunlit_nursery_inv,
+            CurrentWorld::SunlitNursery => Some(&inv.sunlit_nursery_inv),
+            CurrentWorld::WarmPawsPorch => None,
         }
     }
 
     pub fn get_inv_mut<'a>(
         &self,
         inv: &'a mut ResMut<GlobalInventory>,
-    ) -> &'a mut [SlotState; 16] {
+    ) -> Option<&'a mut [SlotState; 16]> {
         match self {
-            CurrentWorld::SunlitNursery => &mut inv.sunlit_nursery_inv,
+            CurrentWorld::SunlitNursery => Some(&mut inv.sunlit_nursery_inv),
+            CurrentWorld::WarmPawsPorch => None,
         }
     }
 }

@@ -8,7 +8,6 @@ use crate::schema::types_and_states::{TypeButton, TypePlant, PlantStateGrowth, R
 #[derive(Component, Clone, Copy)]
 pub struct ScaleBackground { // Мир
     pub wh: Vec2,
-    pub scale_bg: f32
 }
 
 #[derive(Clone)]
@@ -54,6 +53,8 @@ pub struct  ShaderMaterial { // Конфиг фейдеров
     pub color: LinearRgba,
     #[uniform[0]]
     pub scale: f32,
+    #[uniform[0]]
+    pub shader_type: u32,
     pub original_scale: f32,
-    pub mash_scale: f32
+    pub mash_scale: f32,
 }

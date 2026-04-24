@@ -18,6 +18,7 @@ impl Plugin for SchemaPlugin {
         app.init_resource::<types_and_states::CurrentWorld>()
             .init_resource::<types_and_states::GlobalInventory>()
             .init_resource::<types_and_states::DragItem>()
+            .init_resource::<types_and_states::WorldScale>()
             .init_resource::<types_and_states::Economy>();
 
 

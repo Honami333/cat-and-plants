@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::schema::{resources::*, config::*};
+use crate::schema::{resources::*, config::*, types_and_states::*};
 
 
 // Загруста ассетов
@@ -9,8 +9,9 @@ pub fn load_assets(
 ) {
     let assets = GameAssets {
         pot_stands: asset_server.load("pot_stands.png"),
-        sunlit_nursery: asset_server.load("sunlit_nursery.png"),
         button_buy_tomato: asset_server.load("button_buy_tomato.png"),
+        sunlit_nursery: asset_server.load("world/sunlit_nursery.png"),
+        warm_paws_porch: asset_server.load("world/warm_paws_porch.png"),
     };
     commands.insert_resource(assets);
 }
@@ -22,12 +23,20 @@ pub fn load_shaders(
     mut materials: ResMut<Assets<ShaderMaterial>>
 ) {
     let shaders = ShaderAssets {
-        window_light: materials.add(ShaderMaterial {
+        sn_window_light: materials.add(ShaderMaterial {
             color: LinearRgba::new(1.0, 0.6, 0.5, 0.2),
             scale: 0.004,
             original_scale: 0.004,
             mash_scale: 650.0,
-            })
+            shader_type: ShaderType::SNWindowLight as u32,
+            }),
+        wpp_window_light: materials.add(ShaderMaterial {
+            color: LinearRgba::new(1.0, 0.6, 0.5, 0.2),
+            scale: 0.004,
+            original_scale: 0.004,
+            mash_scale: 650.0,
+            shader_type: ShaderType::WPPWindowLight as u32,
+            }),
     };
     commands.insert_resource(shaders);
 }

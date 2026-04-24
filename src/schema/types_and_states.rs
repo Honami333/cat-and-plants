@@ -13,8 +13,10 @@ pub enum GameState { // Стадии загрузки
 
 #[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum CurrentWorld { // Выбраный мир
-    #[default]
+    
     SunlitNursery,
+    #[default]
+    WarmPawsPorch,
 }
 
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
@@ -57,6 +59,13 @@ pub enum ResourceType {
     Pumpkin,
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+#[repr(u32)]
+pub enum ShaderType {
+    SNWindowLight = 0,
+    WPPWindowLight = 1,
+}
+
 // Список инвенторей
 #[derive(Resource)]
 pub struct GlobalInventory {
@@ -72,4 +81,9 @@ pub struct Economy {
 #[derive(Resource, Default)]
 pub struct DragItem { // Обьект курсора
     pub entity: Option<Entity>,
+}
+
+#[derive(Resource, Default)]
+pub struct  WorldScale {
+    pub scale: f32,
 }
