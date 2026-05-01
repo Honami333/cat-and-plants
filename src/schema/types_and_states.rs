@@ -11,9 +11,9 @@ pub enum GameState { // Стадии загрузки
     Playing
 }
 
-#[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(States, Hash, Resource, Default, Clone, Copy, PartialEq, Eq, Debug, Display)]
 pub enum CurrentWorld { // Выбраный мир
-
+    
     WarmPawsPorch,
     #[default]
     SunlitNursery,

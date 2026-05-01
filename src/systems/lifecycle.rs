@@ -11,15 +11,10 @@ pub fn spawm_world_system(
     mut meshes: ResMut<Assets<Mesh>>,
     assets: Res<GameAssets>,
     shaders: Res<ShaderAssets>,
-    current_world: Res<CurrentWorld>,
+    current_world: Res<State<CurrentWorld>>,
     font: Res<FontAssets>,
-    cameras: Query<&Camera2d>,
 ) {
-    if cameras.is_empty() {
-        commands.spawn(Camera2d::default());
-    };
-
-    match *current_world {
+    match current_world.get() {
         CurrentWorld::SunlitNursery => {
             bg_spawn(&mut commands, assets.sunlit_nursery.clone(), SN_DATA);
             shader_spawn(&mut commands, &mut meshes, shaders.sn_window_light.clone());
@@ -47,6 +42,7 @@ pub fn bg_spawn(
     Sprite::from_image(bg_image),
     data.clone(),
     Room,
+    CleanupMarker,
     ));
 }
 
@@ -61,6 +57,7 @@ pub fn shader_spawn(
         MeshMaterial2d(shaders),
         Transform::from_xyz(0.0, 0.0, 20.0),
     ShaderMash,
+    CleanupMarker,
     ));
 }
 
@@ -84,6 +81,7 @@ pub fn spawn_slots(
                 id: (row * config.slot_grid_scale + col) as usize,
                 base_pos: pos,
             },
+            CleanupMarker,
         ));
     }}
 }
@@ -103,6 +101,7 @@ pub fn spawn_button(
         MyButton {
             base_pos: Vec2::new(config.pos.x, config.pos.y),
         },
+        CleanupMarker,
     ));
 }
 
@@ -117,7 +116,6 @@ pub fn item_spawn(
 ) {
     let (image_handle, layout_type) = match plant_type {
         TypePlant::Tomato => (assets.tomato_pot_atlas.clone(), assets.common_layot.clone()),
-
     };
 
     if let Some(slot) = query_slots.iter().find(| slot | slot.id == target_id) {
@@ -133,6 +131,7 @@ pub fn item_spawn(
                 base_pos: Vec2::new(10000.0, 10000.0),
                 slot_id: slot.id,
             },
+            CleanupMarker,
         ));
     }
 }
@@ -169,7 +168,18 @@ pub fn spawn_resourse_text(
                     display_value: 0.0,
                     target_value: 0.0,
                 },
+                CleanupMarker,
             ));
         }
     });
+}
+
+
+pub fn cleanup_system(
+    mut commands: Commands,
+    clean_query: Query<Entity, With<CleanupMarker>>,
+) {
+    for entity in clean_query.iter() {
+        commands.entity(entity).despawn();
+    };
 }

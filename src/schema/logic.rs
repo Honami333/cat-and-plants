@@ -75,27 +75,17 @@ impl Economy {
         self.storage[res as usize]
     }
 
-    pub fn get_egui_all(&self, well: TradeWell, item_count: f64) -> f64 {
-        let mut count = 0.0;
-
-        for (i, item_count) in self.storage.iter().enumerate() {
-            if *item_count > 0.0 && i != 0 && i != self.storage.len() - 1 {
-                count += 1.0;
-            }
-        }
-
+    pub fn get_egui_all(&self, well: TradeWell, percent: f64) -> f64 {
         let mut all_trade = 0.0;
-        let new_well = item_count / count;
 
         for (i, item_count) in self.storage.iter().enumerate() {
             if *item_count > 0.0 && i != 0 && i != self.storage.len() - 1 {
                 if let Some(cur_well) = well.well.get(i - 1) {
-                    let s = new_well * cur_well;
+                    let s = (item_count * percent / 100.0).floor() * cur_well;
                     all_trade += s;
                 }
             }
         }
-
 
         all_trade
     }
@@ -104,25 +94,19 @@ impl Economy {
         self.storage[res] += amount;
     }
 
-    pub fn add_all(&mut self, amount: f64) {
+    pub fn add_all(&mut self, percent: f64) {
         let mut new_inv = self.storage;
-        let mut count = 0.0;
-
-        for (i, item_count) in new_inv.iter().enumerate() {
-            if *item_count > 0.0 && i != 0 && i != new_inv.len() - 1 {
-                count += 1.0;
-            }
-        }
 
         for (i, count_inv) in new_inv.iter_mut().enumerate() {
             if i != 0 && i != self.storage.len() - 0 && *count_inv > 0.0 {
-                *count_inv -= amount / count;
+                *count_inv -= (*count_inv * percent / 100.0).floor();
             }
         }
 
         self.storage = new_inv;
     }
 }
+
 
 impl Material2d for ShaderMaterial { // Настройки шейдеров
     fn fragment_shader() -> ShaderRef {

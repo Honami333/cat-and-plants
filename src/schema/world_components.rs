@@ -19,7 +19,7 @@ pub struct Slot { // Слот инвенторя
     pub base_pos: Vec2,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct SlotItem { // Предмет
     pub uid: usize,
     pub base_pos: Vec2,
@@ -34,3 +34,6 @@ pub struct VisualCounter {
     pub display_value: f64,
     pub target_value: f64,
 }
+
+#[derive(Component)]
+pub struct CleanupMarker;

@@ -14,6 +14,7 @@ pub struct SchemaPlugin;
 impl Plugin for SchemaPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<types_and_states::GameState>();
+        app.init_state::<types_and_states::CurrentWorld>();
 
         app.init_resource::<types_and_states::CurrentWorld>()
             .init_resource::<types_and_states::GlobalInventory>()

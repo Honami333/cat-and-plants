@@ -14,7 +14,7 @@ pub fn sync_inventory_visuals(
     mut inv: ResMut<GlobalInventory>,
     assets: Res<AtlasAssets>,
     query_slots: Query<&Slot>,
-    current_world: Res<CurrentWorld>,
+    current_world: Res<State<CurrentWorld>>,
 ) {
     let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
     
@@ -55,8 +55,7 @@ pub fn sync_inventory_visuals(
 pub fn update_plant_appearance(
     mut query_item: Query<(&mut Sprite, &mut SlotItem)>,
     mut inv: ResMut<GlobalInventory>,
-    _assets: Res<AtlasAssets>,
-    current_world: Res<CurrentWorld>,
+    current_world: Res<State<CurrentWorld>>,
 ) {
     let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
 
@@ -78,6 +77,37 @@ pub fn update_plant_appearance(
         };
     }
 }
+
+
+pub fn sync_plant_state(
+    trigger: On<Add, SlotItem>,
+    mut inv: ResMut<GlobalInventory>,
+    current_world: Res<State<CurrentWorld>>,
+    query_item: Query<&SlotItem>
+) {
+    let entity = trigger.entity;
+
+    let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
+
+    if let Ok(slot_info) = query_item.get(entity) {
+        let Some(slot_state) = inventory.get_mut(slot_info.uid as usize) else { return; };
+
+        let SlotState::Occupied(plant) = slot_state else { return; };
+        
+        let growth_pct: f32 = plant.growth_score as f32 / plant.growth_thereshold as f32;
+
+        match growth_pct {
+            p if p >= 0.25 && p < 0.50 => plant.state = PlantStateGrowth::Seed(PlantStateUpdate::Idle),
+            p if p >= 0.50 && p < 0.75 => plant.state = PlantStateGrowth::Sprout(PlantStateUpdate::Idle),
+            p if p >= 0.75 && p < 1.0 => plant.state = PlantStateGrowth::Sapling(PlantStateUpdate::Idle),
+            p if p == 1.0 => plant.state = PlantStateGrowth::Mature(PlantStateUpdate::Idle),
+            _ => {}
+        };
+        println!("{}", plant.growth_score);
+        println!("{:?}", plant.state);
+    };
+}
+
 
 // Z сортировка, анимация перестаскивание и маштабировние предметов
 pub fn grag_item_anim_and_zsort(
@@ -113,7 +143,6 @@ pub fn update_scene_scale(
         s
     } else { return; };
 
-    if worlds.scale == scale { return; }
     worlds.scale = scale;
 
     // Слоты
@@ -213,11 +242,11 @@ pub fn animate_counters(
 
 pub fn format_number(n : f64) -> String {
     match n {
-        x if x >= 1e15 => format!("{:.2}Q", n / 1e15),
-        x if x >= 1e12 => format!("{:.2}T", n / 1e12),
-        x if x >= 1e9 => format!("{:.2}B", n / 1e9),
-        x if x >= 1e6 => format!("{:.2}M", n / 1e6),
-        x if x >= 1e3 => format!("{:.2}K", n / 1e3),
+        x if x >= 1e15 => format!("{:.1}Q", n / 1e15),
+        x if x >= 1e12 => format!("{:.1}T", n / 1e12),
+        x if x >= 1e9 => format!("{:.1}B", n / 1e9),
+        x if x >= 1e6 => format!("{:.1}M", n / 1e6),
+        x if x >= 1e3 => format!("{:.1}K", n / 1e3),
         _ => format!("{:.0}", n)
     }
 }

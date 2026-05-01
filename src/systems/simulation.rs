@@ -1,14 +1,16 @@
 use bevy::prelude::*;
-use crate::schema::{types_and_states::*};
+use crate::schema::types_and_states::*;
 
 
 // Механика роста
 pub fn plant_growth(
-    current_world: Res<CurrentWorld>,
     mut inv: ResMut<GlobalInventory>,
 ) {
-    let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
-    
+    let invetories = [
+        &mut inv.sunlit_nursery_inv,
+    ];
+
+    for inventory in invetories {
     for slot in inventory.iter_mut() {
     if let SlotState::Occupied(plant) = slot && plant.growth_score < plant.growth_thereshold {
         plant.growth_score += 1;
@@ -27,5 +29,5 @@ pub fn plant_growth(
             },
             _ => {}
         }
-    }}
+    }}}
 }

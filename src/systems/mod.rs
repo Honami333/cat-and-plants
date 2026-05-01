@@ -18,10 +18,20 @@ impl Plugin for SystemPlugin {
 
         app.add_systems(
             OnEnter(GameState::Playing),
-            lifecycle::spawm_world_system);
+            camera_spawn
+        );
+
+        app.add_systems(OnExit(CurrentWorld::WarmPawsPorch), lifecycle::cleanup_system);
+        app.add_systems(OnExit(CurrentWorld::SunlitNursery), lifecycle::cleanup_system);
+
+
+        app.add_systems(OnEnter(CurrentWorld::WarmPawsPorch), lifecycle::spawm_world_system);
+        app.add_systems(OnEnter(CurrentWorld::SunlitNursery), lifecycle::spawm_world_system);
         
-        app.add_systems(EguiPrimaryContextPass,
-        egui_overlay::trading_ui_system);
+        app.add_systems(EguiPrimaryContextPass, (
+            egui_overlay::trading_ui_system,
+            egui_overlay::map_ui_system
+        ).chain());
 
         app.add_systems(
             Update, (
@@ -43,7 +53,14 @@ impl Plugin for SystemPlugin {
         app.add_observer(interaction::start_drag_item);
         app.add_observer(interaction::button_check);
         app.add_observer(interaction::harvest);
+
+        app.add_observer(visials::sync_plant_state);
     }
+}
+
+
+fn camera_spawn(mut commands: Commands) {
+    commands.spawn(Camera2d::default());
 }
 
 
