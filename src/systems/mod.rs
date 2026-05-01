@@ -1,7 +1,9 @@
 use bevy::{prelude::*, time::common_conditions::on_timer};
+use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use crate::schema::{types_and_states::*};
 use std::time::Duration;
 
+mod egui_overlay;
 mod interaction;
 mod lifecycle;
 mod simulation;
@@ -12,10 +14,15 @@ pub struct SystemPlugin;
 
 impl Plugin for SystemPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(EguiPlugin::default());
+
         app.add_systems(
             OnEnter(GameState::Playing),
             lifecycle::spawm_world_system);
         
+        app.add_systems(EguiPrimaryContextPass,
+        egui_overlay::trading_ui_system);
+
         app.add_systems(
             Update, (
             visials::update_plant_appearance,

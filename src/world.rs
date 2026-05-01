@@ -1,3 +1,9 @@
+use crate::schema::types_and_states::TradeWell;
+
+pub const TRADEWELL: TradeWell = TradeWell {
+    well: [1.0, 2.0, 5.0, 20.0, 0.0]
+};
+
 pub mod sunlit_nursery {
     // Константы для мира Sunlit Nursery 
     use bevy::prelude::*;
@@ -16,7 +22,7 @@ pub mod sunlit_nursery {
     pub const BUT_TOMATO_CFG: ButtonCFG = ButtonCFG {
         pos: Vec2::new(224.0, -156.0),
         _text: "TOMATO",
-         b_type: TypeButton::TomatoButton,
+        b_type: TypeButton::TomatoButton,
     };
     
 
@@ -45,8 +51,20 @@ pub mod sunlit_nursery {
 
 pub mod warm_paws_porch {
     use bevy::prelude::*;
-    use crate::schema::{config::*};
+    use crate::schema::{config::*, types_and_states::*};
 
     pub const WPP_DATA: ScaleBackground = ScaleBackground { wh: Vec2::new(640.0, 360.0) };
+
+
+    pub const WPP_PLANT_RES: PlantResource = PlantResource {
+        plant0: ResourceType::None,
+        plant1: ResourceType::None,
+        plant2: ResourceType::None,
+        plant3: ResourceType::None,
+        plant_icon0: "",
+        plant_icon1: "",
+        plant_icon2: "",
+        plant_icon3: "",
+    };
 }
 

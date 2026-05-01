@@ -4,6 +4,7 @@ use bevy::ui::UiScale;
 use crate::schema::{resources::*, config::*, types_and_states::*, world_components::*};
 use crate::systems::lifecycle::item_spawn;
 use crate::world::sunlit_nursery::{SN_PLANT_RES};
+use crate::world::warm_paws_porch::{WPP_PLANT_RES};
 
 
 // Обновление визуала в инвенторе
@@ -16,6 +17,7 @@ pub fn sync_inventory_visuals(
     current_world: Res<CurrentWorld>,
 ) {
     let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
+    
     // Спаун преметов в слотах
     for (idx, slot_state) in inventory.iter_mut().enumerate() {
         if let SlotState::Occupied(plant) = slot_state {
@@ -169,7 +171,7 @@ pub fn update_resourse_text(
 ) {
     let plant_res = match *current_world {
         CurrentWorld::SunlitNursery => SN_PLANT_RES,
-        CurrentWorld::WarmPawsPorch => return,
+        CurrentWorld::WarmPawsPorch => WPP_PLANT_RES,
     };
 
     for (mut counter, mut text, marker) in text_query.iter_mut() {
@@ -209,7 +211,7 @@ pub fn animate_counters(
     }
 }
 
-fn format_number(n : f64) -> String {
+pub fn format_number(n : f64) -> String {
     match n {
         x if x >= 1e15 => format!("{:.2}Q", n / 1e15),
         x if x >= 1e12 => format!("{:.2}T", n / 1e12),

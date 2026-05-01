@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::shader::ShaderRef;
 use bevy::sprite_render::{AlphaMode2d, Material2d};
-use crate::schema::types_and_states::{CurrentWorld, Economy, GlobalInventory, PlantStateGrowth, PlantStateUpdate, ResourceType, SlotState};
+use crate::schema::types_and_states::*;
 use crate::schema::config::{Plant, ShaderMaterial};
 
 
@@ -62,8 +62,65 @@ impl Economy {
         self.storage[res as usize]
     }
 
+    pub fn egui_get(&self, res: EGUIResourceType) -> f64 {
+        if res == EGUIResourceType::All {
+            let mut count = 0.0;
+            for (i, count_inv) in self.storage.iter().enumerate() {
+                if i != 0 && i != self.storage.len() - 1 {
+                    count += count_inv;
+                }
+            }
+            return count;
+        }
+        self.storage[res as usize]
+    }
+
+    pub fn get_egui_all(&self, well: TradeWell, item_count: f64) -> f64 {
+        let mut count = 0.0;
+
+        for (i, item_count) in self.storage.iter().enumerate() {
+            if *item_count > 0.0 && i != 0 && i != self.storage.len() - 1 {
+                count += 1.0;
+            }
+        }
+
+        let mut all_trade = 0.0;
+        let new_well = item_count / count;
+
+        for (i, item_count) in self.storage.iter().enumerate() {
+            if *item_count > 0.0 && i != 0 && i != self.storage.len() - 1 {
+                if let Some(cur_well) = well.well.get(i - 1) {
+                    let s = new_well * cur_well;
+                    all_trade += s;
+                }
+            }
+        }
+
+
+        all_trade
+    }
+
     pub fn add(&mut self, res: usize, amount: f64) {
         self.storage[res] += amount;
+    }
+
+    pub fn add_all(&mut self, amount: f64) {
+        let mut new_inv = self.storage;
+        let mut count = 0.0;
+
+        for (i, item_count) in new_inv.iter().enumerate() {
+            if *item_count > 0.0 && i != 0 && i != new_inv.len() - 1 {
+                count += 1.0;
+            }
+        }
+
+        for (i, count_inv) in new_inv.iter_mut().enumerate() {
+            if i != 0 && i != self.storage.len() - 0 && *count_inv > 0.0 {
+                *count_inv -= amount / count;
+            }
+        }
+
+        self.storage = new_inv;
     }
 }
 
@@ -122,6 +179,17 @@ impl PlantStateGrowth {
             Self::Sprout(_) => Self::Sapling(PlantStateUpdate::Idle),
             Self::Sapling(_) => Self::Mature(PlantStateUpdate::Idle),
             Self::Mature(_) => Self::Mature(PlantStateUpdate::Idle),
+        }
+    }
+}
+
+impl Default for TradeState {
+    fn default() -> Self {
+        Self {
+            selected_world: EGUICurrntWorld::All,
+            selected_item: EGUIResourceType::All,
+            selected_percent: 100,
+            selected_economy: 0.0,
         }
     }
 }

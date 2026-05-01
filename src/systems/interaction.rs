@@ -122,6 +122,5 @@ pub fn harvest(
 
         plant.state = PlantStateGrowth::Seed(PlantStateUpdate::Idle);
         plant.growth_score = 0;
-        
     }
 }

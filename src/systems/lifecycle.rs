@@ -24,12 +24,13 @@ pub fn spawm_world_system(
             bg_spawn(&mut commands, assets.sunlit_nursery.clone(), SN_DATA);
             shader_spawn(&mut commands, &mut meshes, shaders.sn_window_light.clone());
             spawn_slots(&mut commands, &SN_SLOT_CFG, assets.pot_stands.clone());
-            spawn_button(&mut commands, &assets, &BUT_TOMATO_CFG);
+            spawn_button(&mut commands, &BUT_TOMATO_CFG, assets.button_buy_tomato.clone());
             spawn_resourse_text(&mut commands, &font);
         },
         CurrentWorld::WarmPawsPorch => {
             bg_spawn(&mut commands, assets.warm_paws_porch.clone(), WPP_DATA);
             shader_spawn(&mut commands, &mut meshes, shaders.wpp_window_light.clone());
+            spawn_resourse_text(&mut commands, &font);
         }
     };
 }
@@ -91,16 +92,12 @@ pub fn spawn_slots(
 // Спаун кнопок
 pub fn spawn_button(
     commands: &mut Commands,
-    assets: &GameAssets,
     config: &ButtonCFG,
+    button_image_handle: Handle<Image>,
 ) {
-    let image_handle = match config.b_type {
-        TypeButton::TomatoButton => assets.button_buy_tomato.clone(),
-    };
-
     commands.spawn((
         config.b_type.clone(),
-        Sprite::from_image(image_handle),
+        Sprite::from_image(button_image_handle),
         Transform::from_xyz(config.pos.x, config.pos.y, 5.0),
         Pickable::default(),
         MyButton {
