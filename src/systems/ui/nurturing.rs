@@ -3,35 +3,42 @@ use bevy_egui::{egui, EguiContexts};
 use strum::IntoEnumIterator;
 use crate::schema::{types_and_states::*, resources::*};
 use crate::systems::visials::format_number;
-use crate::world::TRADEWELL;
+use crate::content::world::sunlit_nursery::*;
 
 
 pub fn trading_ui_system(
     mut contexts: EguiContexts,
     mut trade_state: ResMut<TradeState>,
     mut economy: ResMut<Economy>,
+    mut fonts_loaded: Local<bool>,
     all_fonts: Res<Assets<Font>>, 
     font: Res<FontAssets>,
+    upgrade_storege: Res<UpgradeStorege>,
 ) {
     let Ok(ctx) = contexts.ctx_mut() else { return; };
 
-    if let Some(font_data) = all_fonts.get(&font.emoji_font) {
-        let mut fonts = egui::FontDefinitions::default();
+    if !*fonts_loaded {
+        if let Some(font_data) = all_fonts.get(&font.emoji_font) {
+            let mut fonts = egui::FontDefinitions::default();
 
-        let bytes = (*font_data.data).clone(); 
+            let bytes = (*font_data.data).clone(); 
 
-        fonts.font_data.insert(
-            "f".to_owned(),
-            std::sync::Arc::new(egui::FontData::from_owned(bytes)),
-        );
+            fonts.font_data.insert(
+                "f".to_owned(),
+                std::sync::Arc::new(egui::FontData::from_owned(bytes)),
+            );
 
-        fonts.families.get_mut(&egui::FontFamily::Proportional).unwrap()
-        .insert(0, "f".to_owned());
+            fonts.families.get_mut(&egui::FontFamily::Proportional).unwrap()
+            .insert(0, "f".to_owned());
 
-        ctx.set_fonts(fonts);
-    };
+            ctx.set_fonts(fonts);
 
-    egui::Window::new("Cat trade")
+            *fonts_loaded = true;
+        };
+    }
+
+
+    egui::Window::new("Cat feed")
     .default_open(true)
     .fixed_size([600.0, 400.0])
     .resizable(false)
@@ -82,7 +89,7 @@ pub fn trading_ui_system(
                     });
 
                     ui.group(|ui| {
-                        let trade = trade_well(&trade_state, &economy);
+                        let trade = trade_well(&trade_state, &economy, &upgrade_storege);
 
                         ui.set_height(50.0);
                         ui.set_width(50.0);
@@ -96,7 +103,7 @@ pub fn trading_ui_system(
             });
             columns[0].add_space(10.0);
             columns[0].group(|ui| {
-                let trade = trade_well(&trade_state, &economy);
+                let trade = trade_well(&trade_state, &economy, &upgrade_storege);
 
                 if ui.add_sized([100.0, 40.0], egui::Button::new("Feed")).clicked() {
                     economy.add(0,  trade);
@@ -166,10 +173,21 @@ pub fn trading_ui_system(
 }
 
 
+
+
 fn trade_well(
     trade_state: &TradeState,
     economy: &Economy,
+    upgrade_storege: &UpgradeStorege,
 ) -> f64 {
+    let mut wholesale_supply_upgrade = 1.0;
+
+    for upgrade in upgrade_storege.global.iter() {
+        if upgrade.id == UpgradeUID::WholesaleSupply && upgrade.current_level > 0 {
+            wholesale_supply_upgrade = upgrade.levels[upgrade.current_level - 1].value;
+        };
+    };
+
     let mut cur_well = 0.0;
 
     let item_idx = trade_state.selected_item as usize;
@@ -185,115 +203,5 @@ fn trade_well(
         _ => cur_well * trade_state.selected_economy
     };
 
-    trade
-}
-
-pub fn map_ui_system(
-    mut contexts: EguiContexts,
-    mut new_current_world: ResMut<NextState<CurrentWorld>>,
-    current_world: Res<State<CurrentWorld>>,
-) {
-    let Ok(ctx) = contexts.ctx_mut() else { return; };
-
-    let my_frame = egui::Frame {
-        fill: egui::Color32::from_rgba_unmultiplied(20, 20, 20, 150),
-        corner_radius: 10.0.into(),
-        inner_margin: 5.0.into(),
-        ..default()
-    };
-
-    egui::Window::new("")
-    .anchor(egui::Align2::RIGHT_TOP, [-10.0, 10.0])
-    .fixed_size([320.0, 240.0])
-    .collapsible(false)
-    .title_bar(false)
-    .resizable(false)
-    .frame(my_frame)
-
-    .show(ctx, |ui| {
-        ui.vertical_centered(|ui| {
-            let (response, painter) = ui.allocate_painter(
-                [310.0, 230.0].into(),
-                egui::Sense::click()
-            );
-
-            let min = response.rect.min;
-
-            let room_point_sn = vec![
-                min + egui::vec2(20.0, 20.0),
-                min + egui::vec2(20.0, 120.0),
-                min + egui::vec2(100.0, 120.0),
-                min + egui::vec2(100.0, 80.0),
-                min + egui::vec2(95.0, 80.0),
-                min + egui::vec2(95.0, 50.0),
-                min + egui::vec2(100.0, 50.0),
-                min + egui::vec2(100.0, 20.0),
-            ];
-
-            let room_point_wpp = vec![
-                min + egui::vec2(130.0, 20.0),
-                min + egui::vec2(260.0, 20.0),
-                min + egui::vec2(260.0, 120.0),
-                min + egui::vec2(130.0, 120.0),
-                min + egui::vec2(130.0, 100.0),
-                min + egui::vec2(135.0, 100.0),
-                min + egui::vec2(135.0, 70.0),
-                min + egui::vec2(130.0, 70.0),
-            ];
-
-            let critical_point_sn = [20.0, 100.0, 20.0, 120.0];
-            let critical_point_wpp= [130.0, 260.0, 20.0, 120.0];
-
-            room_map_spawn(ui, &mut new_current_world, &current_world, room_point_sn, min.clone(), &painter, critical_point_sn, CurrentWorld::SunlitNursery);
-            room_map_spawn(ui, &mut new_current_world, &current_world, room_point_wpp, min.clone(), &painter, critical_point_wpp, CurrentWorld::WarmPawsPorch);
-        });
-    });
-}
-
-fn room_map_spawn(
-    ui: &mut egui::Ui,
-    new_current_world: &mut NextState<CurrentWorld>,
-    current_world: &CurrentWorld,
-    room_point: Vec<egui::Pos2>,
-    min: egui::Pos2,
-    painter: &egui::Painter,
-    critical_point: [f32; 4],
-    location: CurrentWorld,
-) {
-    let mouse_pos = ui.input(|i| i.pointer.hover_pos());
-    let is_click = ui.input(|i| i.pointer.any_click());
-
-    let mut fill_color = if *current_world == location {
-        egui::Color32::from_gray(60)
-    } else {
-        egui::Color32::from_gray(20)
-    };
-    
-    if let Some(m_pos) = mouse_pos {
-        if m_pos.x > min.x + critical_point[0] && m_pos.x < min.x + critical_point[1]
-            && m_pos.y > min.y + critical_point[2] && m_pos.y < min.y + critical_point[3] {
-            fill_color = egui::Color32::from_rgba_unmultiplied(140, 150, 75, 200);
-                    
-            if is_click && *current_world != location{
-                new_current_world.set(location);
-            };
-        };
-    };
-
-    let center_x = min.x + (critical_point[0] + critical_point[1]) / 2.0;
-    let center_y = min.y + (critical_point[2] + critical_point[3]) / 2.0;
-    
-    painter.add(egui::Shape::convex_polygon(
-        room_point,
-        fill_color,
-           egui::Stroke::new(2.0, egui::Color32::from_rgba_unmultiplied(100, 190, 50, 180))
-        ));
-
-    painter.text(
-        egui::pos2(center_x, center_y),
-        egui::Align2::CENTER_CENTER,
-        location.to_string(),
-        egui::FontId::proportional(12.0),
-        egui::Color32::WHITE
-    );
+    (trade * wholesale_supply_upgrade).floor()
 }

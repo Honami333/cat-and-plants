@@ -1,9 +1,10 @@
 use bevy::{prelude::*, time::common_conditions::on_timer};
-use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+use bevy_egui::EguiPlugin;
 use crate::schema::{types_and_states::*};
 use std::time::Duration;
+use ui::UiPlugin;
 
-mod egui_overlay;
+mod ui;
 mod interaction;
 mod lifecycle;
 mod simulation;
@@ -15,10 +16,11 @@ pub struct SystemPlugin;
 impl Plugin for SystemPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(EguiPlugin::default());
+        app.add_plugins(UiPlugin);
 
         app.add_systems(
             OnEnter(GameState::Playing),
-            camera_spawn
+            lifecycle::camera_spawn
         );
 
         app.add_systems(OnExit(CurrentWorld::WarmPawsPorch), lifecycle::cleanup_system);
@@ -28,11 +30,6 @@ impl Plugin for SystemPlugin {
         app.add_systems(OnEnter(CurrentWorld::WarmPawsPorch), lifecycle::spawm_world_system);
         app.add_systems(OnEnter(CurrentWorld::SunlitNursery), lifecycle::spawm_world_system);
         
-        app.add_systems(EguiPrimaryContextPass, (
-            egui_overlay::trading_ui_system,
-            egui_overlay::map_ui_system
-        ).chain());
-
         app.add_systems(
             Update, (
             visials::update_plant_appearance,
@@ -56,11 +53,6 @@ impl Plugin for SystemPlugin {
 
         app.add_observer(visials::sync_plant_state);
     }
-}
-
-
-fn camera_spawn(mut commands: Commands) {
-    commands.spawn(Camera2d::default());
 }
 
 

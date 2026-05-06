@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use crate::schema::{types_and_states::*, world_components::*};
-use crate::world::sunlit_nursery::{PL_TOMATO};
+use crate::content::world::sunlit_nursery::*;
 
 
 
@@ -108,7 +108,16 @@ pub fn harvest(
     mut inv: ResMut<GlobalInventory>,
     mut resources_inv: ResMut<Economy>,
     current_world: Res<CurrentWorld>,
+    upgrade_storege: Res<UpgradeStorege>,
 ) {
+    let mut fertile_soil_upgrade = 1.0;
+
+    for upgrade in upgrade_storege.global.iter() {
+        if upgrade.id == UpgradeUID::FertileSoil && upgrade.current_level > 0 {
+            fertile_soil_upgrade = upgrade.levels[upgrade.current_level - 1].value;
+        };
+    };
+
     let Some(inv_world) = current_world.get_inv_mut(&mut inv) else { return; };
 
     for (_, slot_item) in query_item.get(trigger.entity).iter_mut() {
@@ -118,9 +127,9 @@ pub fn harvest(
 
         if plant.state != PlantStateGrowth::Mature(PlantStateUpdate::Idle) { continue; };
 
-        resources_inv.add(plant.species_id as usize + 1, plant.gather_amount);
+        resources_inv.add(plant.species_id as usize + 1, plant.gather_amount * fertile_soil_upgrade);
 
         plant.state = PlantStateGrowth::Seed(PlantStateUpdate::Idle);
-        plant.growth_score = 0;
+        plant.growth_score = 0.0;
     }
 }

@@ -3,8 +3,8 @@ use bevy::window::PrimaryWindow;
 use bevy::ui::UiScale;
 use crate::schema::{resources::*, config::*, types_and_states::*, world_components::*};
 use crate::systems::lifecycle::item_spawn;
-use crate::world::sunlit_nursery::{SN_PLANT_RES};
-use crate::world::warm_paws_porch::{WPP_PLANT_RES};
+use crate::content::world::sunlit_nursery::*;
+use crate::content::world::warm_paws_porch::*;
 
 
 // Обновление визуала в инвенторе
@@ -83,8 +83,17 @@ pub fn sync_plant_state(
     trigger: On<Add, SlotItem>,
     mut inv: ResMut<GlobalInventory>,
     current_world: Res<State<CurrentWorld>>,
-    query_item: Query<&SlotItem>
+    query_item: Query<&SlotItem>,
+    upgrade_storege: Res<UpgradeStorege>,
 ) {
+    let mut selective_breeding_upgrade = 1.0;
+
+    for upgrade in upgrade_storege.global.iter() {
+        if upgrade.id == UpgradeUID::SelectiveBreeding && upgrade.current_level > 0 {
+            selective_breeding_upgrade = upgrade.levels[upgrade.current_level - 1].value;
+        };
+    };
+    
     let entity = trigger.entity;
 
     let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
@@ -93,18 +102,16 @@ pub fn sync_plant_state(
         let Some(slot_state) = inventory.get_mut(slot_info.uid as usize) else { return; };
 
         let SlotState::Occupied(plant) = slot_state else { return; };
-        
-        let growth_pct: f32 = plant.growth_score as f32 / plant.growth_thereshold as f32;
+
+        let growth_pct = plant.growth_score / (plant.growth_thereshold / selective_breeding_upgrade);
 
         match growth_pct {
             p if p >= 0.25 && p < 0.50 => plant.state = PlantStateGrowth::Seed(PlantStateUpdate::Idle),
             p if p >= 0.50 && p < 0.75 => plant.state = PlantStateGrowth::Sprout(PlantStateUpdate::Idle),
             p if p >= 0.75 && p < 1.0 => plant.state = PlantStateGrowth::Sapling(PlantStateUpdate::Idle),
-            p if p == 1.0 => plant.state = PlantStateGrowth::Mature(PlantStateUpdate::Idle),
+            p if p >= 1.0 => plant.state = PlantStateGrowth::Mature(PlantStateUpdate::Idle),
             _ => {}
         };
-        println!("{}", plant.growth_score);
-        println!("{:?}", plant.state);
     };
 }
 

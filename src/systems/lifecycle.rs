@@ -1,8 +1,13 @@
 use bevy::prelude::*;
 use crate::schema::{config::*, resources::*, types_and_states::*, world_components::*};
-use crate::world::sunlit_nursery::{BUT_TOMATO_CFG, SN_DATA, SN_SLOT_CFG};
-use crate::world::warm_paws_porch::{WPP_DATA};
+use crate::content::world::sunlit_nursery::*;
+use crate::content::world::warm_paws_porch::*;
 
+
+
+pub fn camera_spawn(mut commands: Commands) {
+    commands.spawn(Camera2d::default());
+}
 
 
 // Общий спаун мира

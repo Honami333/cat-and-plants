@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::render::render_resource::*;
 use bevy::reflect::TypePath;
-use crate::schema::types_and_states::{TypeButton, TypePlant, PlantStateGrowth, ResourceType};
+use crate::schema::types_and_states::*;
 
 
 // Конфиги
@@ -27,9 +27,9 @@ pub struct WorldSettingsSlot { // Слот инвенторя
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Plant { // Растение
-    pub growth_score: u32,
-    pub growth_thereshold: u32,
-    pub growth_rate: u32,
+    pub growth_score: f64,
+    pub growth_thereshold: f64,
+    pub growth_rate: f64,
     pub gather_amount: f64,
     pub species_id: TypePlant,
     pub slot_uid: usize,
@@ -57,4 +57,19 @@ pub struct  ShaderMaterial { // Конфиг фейдеров
     pub shader_type: u32,
     pub original_scale: f32,
     pub mash_scale: f32,
+}
+
+#[derive(Clone, Copy)]
+pub struct Upgrade {
+    pub id: UpgradeUID,
+    pub icon: &'static str,
+    pub current_level: usize,
+    pub levels: &'static [UpgradeLevel],
+}
+
+#[derive(Clone, Copy)]
+pub struct UpgradeLevel {
+    pub resource_types: &'static [ResourceType],
+    pub costs: &'static [f64],
+    pub value: f64,
 }

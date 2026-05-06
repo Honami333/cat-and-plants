@@ -4,10 +4,10 @@ use bevy::{prelude::*, window::WindowMode};
 use systems::SystemPlugin;
 use schema::SchemaPlugin;
 
+mod content;
 mod schema;
 mod systems;
 mod assets;
-mod world;
 
 
 fn main() {

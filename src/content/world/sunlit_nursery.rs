@@ -4,20 +4,20 @@ pub const TRADEWELL: TradeWell = TradeWell {
     well: [1.0, 2.0, 5.0, 20.0, 0.0]
 };
 
-pub mod sunlit_nursery {
+
     // Константы для мира Sunlit Nursery 
-    use bevy::prelude::*;
-    use crate::schema::{types_and_states::*, config::*};
+use bevy::prelude::*;
+use crate::schema::{types_and_states::*, config::*};
 
     
-    pub const SN_DATA: ScaleBackground = ScaleBackground { wh: Vec2::new(640.0, 360.0) };
+pub const SN_DATA: ScaleBackground = ScaleBackground { wh: Vec2::new(640.0, 360.0) };
 
-    pub const SN_SLOT_CFG: WorldSettingsSlot = WorldSettingsSlot {
+pub const SN_SLOT_CFG: WorldSettingsSlot = WorldSettingsSlot {
         slot_start_pos: Vec2::new(-182.0, -22.0),
         step_x: Vec2::new(63.0, 31.5),
         step_y: Vec2::new(63.0, -31.5),
         slot_grid_scale: 4,
-    };
+};
 
     pub const BUT_TOMATO_CFG: ButtonCFG = ButtonCFG {
         pos: Vec2::new(224.0, -156.0),
@@ -27,9 +27,9 @@ pub mod sunlit_nursery {
     
 
     pub const PL_TOMATO: Plant = Plant {
-        growth_score: 0,
-        growth_thereshold: 10,
-        growth_rate: 1,
+        growth_score: 0.0,
+        growth_thereshold: 10.0,
+        growth_rate: 1.0,
         gather_amount: 5.0,
         species_id: TypePlant::Tomato,
         slot_uid: 0,
@@ -47,24 +47,3 @@ pub mod sunlit_nursery {
         plant_icon2: "🌽",
         plant_icon3: "🎃",
     };
-}
-
-pub mod warm_paws_porch {
-    use bevy::prelude::*;
-    use crate::schema::{config::*, types_and_states::*};
-
-    pub const WPP_DATA: ScaleBackground = ScaleBackground { wh: Vec2::new(640.0, 360.0) };
-
-
-    pub const WPP_PLANT_RES: PlantResource = PlantResource {
-        plant0: ResourceType::None,
-        plant1: ResourceType::None,
-        plant2: ResourceType::None,
-        plant3: ResourceType::None,
-        plant_icon0: "",
-        plant_icon1: "",
-        plant_icon2: "",
-        plant_icon3: "",
-    };
-}
-

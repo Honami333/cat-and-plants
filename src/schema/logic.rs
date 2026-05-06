@@ -3,6 +3,7 @@ use bevy::shader::ShaderRef;
 use bevy::sprite_render::{AlphaMode2d, Material2d};
 use crate::schema::types_and_states::*;
 use crate::schema::config::{Plant, ShaderMaterial};
+use crate::content::upgrades::global::*;
 
 
 // Логика
@@ -119,6 +120,19 @@ impl Material2d for ShaderMaterial { // Настройки шейдеров
 }
 
 
+impl Default for UpgradeStorege {
+    fn default() -> Self {
+        Self {
+            global: vec![
+                FERTILE_SOIL.clone(),
+                GROWTH_SPEED.clone(),
+                JOY_BOOST.clone()
+            ],
+            sunlit_nursery: Vec::new(),
+        }
+    }
+}
+
 impl CurrentWorld {
     pub fn get_inv<'a>(
         &self,
@@ -174,6 +188,14 @@ impl Default for TradeState {
             selected_item: EGUIResourceType::All,
             selected_percent: 100,
             selected_economy: 0.0,
+        }
+    }
+}
+
+impl Default for UpgradeState {
+    fn default() -> Self {
+        Self {
+            selected_categories: EGUISelectedCategories::Global,
         }
     }
 }

@@ -11,6 +11,7 @@ pub mod world_components;
 
 
 pub struct SchemaPlugin;
+
 impl Plugin for SchemaPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<types_and_states::GameState>();
@@ -21,7 +22,9 @@ impl Plugin for SchemaPlugin {
             .init_resource::<types_and_states::DragItem>()
             .init_resource::<types_and_states::WorldScale>()
             .init_resource::<types_and_states::TradeState>()
-            .init_resource::<types_and_states::Economy>();
+            .init_resource::<types_and_states::UpgradeState>()
+            .init_resource::<types_and_states::Economy>()
+            .init_resource::<types_and_states::UpgradeStorege>();
 
 
         app.add_plugins(Material2dPlugin::<config::ShaderMaterial>::default());
