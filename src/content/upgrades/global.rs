@@ -1,5 +1,5 @@
 use crate::schema::config::{Upgrade, UpgradeLevel};
-use crate::schema::types_and_states::{UpgradeUID, ResourceType};
+use crate::schema::types_and_states::{ResourceType, UpgradeUID};
 
 pub const FERTILE_SOIL: Upgrade = Upgrade {
     id: UpgradeUID::FertileSoil,
@@ -9,35 +9,31 @@ pub const FERTILE_SOIL: Upgrade = Upgrade {
 };
 
 pub const SOIL_1: UpgradeLevel = UpgradeLevel {
-    resource_types: &[
-        ResourceType::CatHappiness,
-        ResourceType::Tomatoes
-    ],
-    costs: &[50.0, 30.0],
+    resource_types: &[ResourceType::CatHappiness, ResourceType::Tomatoes],
+    costs: &[80.0, 30.0],
     value: 2.0,
 };
 
 pub const SOIL_2: UpgradeLevel = UpgradeLevel {
     resource_types: &[
-        ResourceType::CatHappiness, 
-        ResourceType::Tomatoes, 
-        ResourceType::Cucumbers
+        ResourceType::CatHappiness,
+        ResourceType::Tomatoes,
+        ResourceType::Cucumbers,
     ],
-    costs: &[200.0, 100.0, 40.0],
+    costs: &[600.0, 100.0, 40.0],
     value: 3.0,
 };
 
 pub const SOIL_3: UpgradeLevel = UpgradeLevel {
     resource_types: &[
-        ResourceType::CatHappiness, 
-        ResourceType::Tomatoes, 
+        ResourceType::CatHappiness,
+        ResourceType::Tomatoes,
         ResourceType::Cucumbers,
-        ResourceType::Corn
+        ResourceType::Corn,
     ],
-    costs: &[800.0, 300.0, 150.0, 60.0],
+    costs: &[2000.0, 300.0, 150.0, 60.0],
     value: 4.0,
 };
-
 
 pub const GROWTH_SPEED: Upgrade = Upgrade {
     id: UpgradeUID::SelectiveBreeding,
@@ -47,35 +43,31 @@ pub const GROWTH_SPEED: Upgrade = Upgrade {
 };
 
 pub const SPD_1: UpgradeLevel = UpgradeLevel {
-    resource_types: &[
-        ResourceType::CatHappiness,
-        ResourceType::Tomatoes
-    ],
-    costs: &[80.0, 50.0],
+    resource_types: &[ResourceType::CatHappiness, ResourceType::Tomatoes],
+    costs: &[120.0, 50.0],
     value: 1.2,
 };
 
 pub const SPD_2: UpgradeLevel = UpgradeLevel {
     resource_types: &[
-        ResourceType::CatHappiness, 
-        ResourceType::Tomatoes, 
-        ResourceType::Cucumbers
+        ResourceType::CatHappiness,
+        ResourceType::Tomatoes,
+        ResourceType::Cucumbers,
     ],
-    costs: &[300.0, 150.0, 50.0],
+    costs: &[600.0, 150.0, 50.0],
     value: 1.5,
 };
 
 pub const SPD_3: UpgradeLevel = UpgradeLevel {
     resource_types: &[
-        ResourceType::CatHappiness, 
-        ResourceType::Tomatoes, 
+        ResourceType::CatHappiness,
+        ResourceType::Tomatoes,
         ResourceType::Cucumbers,
-        ResourceType::Corn
+        ResourceType::Corn,
     ],
-    costs: &[1200.0, 400.0, 150.0, 80.0],
+    costs: &[250.0, 400.0, 150.0, 80.0],
     value: 2.0,
 };
-
 
 pub const JOY_BOOST: Upgrade = Upgrade {
     id: UpgradeUID::WholesaleSupply,
@@ -85,31 +77,28 @@ pub const JOY_BOOST: Upgrade = Upgrade {
 };
 
 pub const JOY_1: UpgradeLevel = UpgradeLevel {
-    resource_types: &[
-        ResourceType::CatHappiness,
-        ResourceType::Tomatoes
-    ],
-    costs: &[100.0, 80.0],
+    resource_types: &[ResourceType::CatHappiness, ResourceType::Tomatoes],
+    costs: &[200.0, 80.0],
     value: 1.25,
 };
 
 pub const JOY_2: UpgradeLevel = UpgradeLevel {
     resource_types: &[
-        ResourceType::CatHappiness, 
-        ResourceType::Tomatoes, 
-        ResourceType::Cucumbers
+        ResourceType::CatHappiness,
+        ResourceType::Tomatoes,
+        ResourceType::Cucumbers,
     ],
-    costs: &[500.0, 200.0, 80.0],
+    costs: &[1000.0, 200.0, 80.0],
     value: 1.75,
 };
 
 pub const JOY_3: UpgradeLevel = UpgradeLevel {
     resource_types: &[
-        ResourceType::CatHappiness, 
-        ResourceType::Tomatoes, 
+        ResourceType::CatHappiness,
+        ResourceType::Tomatoes,
         ResourceType::Cucumbers,
-        ResourceType::Pumpkin
+        ResourceType::Pumpkin,
     ],
-    costs: &[2000.0, 500.0, 200.0, 50.0],
+    costs: &[5000.0, 500.0, 200.0, 50.0],
     value: 2.5,
 };

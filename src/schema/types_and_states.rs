@@ -1,19 +1,19 @@
-use bevy::prelude::*;
-use strum_macros::{AsRefStr, Display, EnumIter};
 use crate::schema::config::{Plant, Upgrade};
-
+use bevy::{math::f64, prelude::*};
+use strum_macros::{AsRefStr, Display, EnumIter};
 
 // Типы и Состояния
 #[derive(States, Debug, Clone, Eq, PartialEq, Hash, Default)]
-pub enum GameState { // Стадии загрузки
+pub enum GameState {
+    // Стадии загрузки
     #[default]
     Loading,
-    Playing
+    Playing,
 }
 
 #[derive(States, Hash, Resource, Default, Clone, Copy, PartialEq, Eq, Debug, Display)]
-pub enum CurrentWorld { // Выбраный мир
-    
+pub enum CurrentWorld {
+    // Выбраный мир
     WarmPawsPorch,
     #[default]
     SunlitNursery,
@@ -24,7 +24,6 @@ pub enum EGUICurrntWorld {
     All,
     SunlitNursery,
 }
-
 
 #[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display)]
 pub enum EGUIResourceType {
@@ -42,39 +41,37 @@ pub enum EGUIResourceType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct  TradeWell {
+pub struct TradeWell {
     pub well: [f64; 5],
 }
 
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
-pub enum TypeButton { // Тип кнопки
+pub enum TypeButton {
+    // Тип кнопки
     TomatoButton,
+    SlotsUnLocking,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum SlotState { // Состояние слота
+pub enum SlotState {
+    // Состояние слота
     Locked,
     Empty,
     Occupied(Plant),
 }
 
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
-pub enum TypePlant { // Тип растения
+pub enum TypePlant {
+    // Тип растения
     Tomato,
 }
 
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
 pub enum PlantStateGrowth {
-    Seed(PlantStateUpdate),
-    Sprout(PlantStateUpdate),
-    Sapling(PlantStateUpdate),
-    Mature(PlantStateUpdate),
-}
-
-#[derive(Component, Clone, Copy, PartialEq, Debug)]
-pub enum PlantStateUpdate {
-    Growth,
-    Idle,
+    Seed,
+    Sprout,
+    Sapling,
+    Mature,
 }
 
 #[derive(Debug, Clone, Copy, EnumIter, AsRefStr, PartialEq)]
@@ -104,16 +101,16 @@ pub enum UpgradeUID {
 #[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display)]
 pub enum EGUISelectedCategories {
     Global,
-    SunlitNursery
+    SunlitNursery,
 }
 
 // Список инвенторей
-#[derive(Resource, Clone, Copy)]
+#[derive(Resource)]
 pub struct GlobalInventory {
     pub sunlit_nursery_inv: [SlotState; 16],
 }
 
-#[derive(Resource, Default, Clone, Copy)]
+#[derive(Resource, Default)]
 pub struct Economy {
     pub storage: [f64; 6],
 }
@@ -126,12 +123,13 @@ pub struct UpgradeStorege {
 
 // Глобальные действия
 #[derive(Resource, Default)]
-pub struct DragItem { // Обьект курсора
+pub struct DragItem {
+    // Обьект курсора
     pub entity: Option<Entity>,
 }
 
 #[derive(Resource, Default)]
-pub struct  WorldScale {
+pub struct WorldScale {
     pub scale: f32,
 }
 
@@ -146,4 +144,9 @@ pub struct TradeState {
 #[derive(Resource)]
 pub struct UpgradeState {
     pub selected_categories: EGUISelectedCategories,
+}
+
+#[derive(Resource, Default)]
+pub struct CountItemType {
+    pub sunlit_nursery_inv: [usize; 4],
 }

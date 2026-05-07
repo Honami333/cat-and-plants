@@ -1,69 +1,101 @@
+use crate::content::upgrades::global::*;
+use crate::schema::config::{Plant, ShaderMaterial};
+use crate::schema::types_and_states::*;
 use bevy::prelude::*;
 use bevy::shader::ShaderRef;
 use bevy::sprite_render::{AlphaMode2d, Material2d};
-use crate::schema::types_and_states::*;
-use crate::schema::config::{Plant, ShaderMaterial};
-use crate::content::upgrades::global::*;
-
 
 // Логика
-impl Default for GlobalInventory { // Все Инвентари по умолчанию
+impl Default for GlobalInventory {
+    // Все Инвентари по умолчанию
     fn default() -> Self {
         let mut slots = [SlotState::Locked; 16];
-        
+
         for i in 0..4 {
             slots[i] = SlotState::Empty;
         }
 
         Self {
-            sunlit_nursery_inv: slots
+            sunlit_nursery_inv: slots,
         }
     }
 }
 
-impl GlobalInventory { 
-    pub fn add_plant( // Добавление предмета в инвентарь
+impl GlobalInventory {
+    pub fn add_plant(
+        // Добавление предмета в инвентарь
         &mut self,
-        loc: CurrentWorld,
-        new_plant: Plant
+        current_world: &State<CurrentWorld>,
+        new_plant: Plant,
     ) {
-        let invetory_array = match loc {
-            CurrentWorld::SunlitNursery => &mut self.sunlit_nursery_inv,
-            CurrentWorld::WarmPawsPorch => return,
-        };
         
-        for  slot in invetory_array.iter_mut() {
-        if *slot == SlotState::Empty {
-            *slot = SlotState::Occupied(new_plant);
-            break;
-        }}
+        let Some(invetory_array) = current_world.get_inv_mut(self) else { return; };
+
+        for slot in invetory_array.iter_mut() {
+            if *slot == SlotState::Empty {
+                *slot = SlotState::Occupied(new_plant);
+                break;
+            }
+        }
     }
 
-    pub fn move_plant( // Перемещение предмета в инвентаре
+    pub fn move_plant(
+        // Перемещение предмета в инвентаре
         &mut self,
-        loc: CurrentWorld,
+        current_world: &State<CurrentWorld>,
         old_id: usize,
         new_id: usize,
     ) {
-        let invetory_array = match loc {
-            CurrentWorld::SunlitNursery => &mut self.sunlit_nursery_inv,
-            CurrentWorld::WarmPawsPorch => return,
-        };
-        if invetory_array[new_id] == SlotState::Locked {
-        }
+        let Some(invetory_array) = current_world.get_inv_mut(self) else { return; };
 
-        if matches!(invetory_array[new_id], SlotState::Occupied(_) | SlotState::Empty) {
+        if invetory_array[new_id] == SlotState::Locked {}
+
+        if matches!(
+            invetory_array[new_id],
+            SlotState::Occupied(_) | SlotState::Empty
+        ) {
             invetory_array.swap(old_id, new_id);
         }
+    }
+
+    pub fn slots_unlocking(
+        &mut self,
+        economy: &Economy,
+        current_world: &State<CurrentWorld>,
+        prices: &'static [f64],
+    ) -> (bool, Option<usize>) {
+        let Some(invetory_array) = current_world.get_inv_mut(self) else { return (false, None); };
+
+        if let Some((i, _)) = invetory_array.iter().enumerate().find(|(_, i)| matches!(i, SlotState::Locked) ) {
+            if economy.get_item(ResourceType::CatHappiness as usize) < prices[i - 4] { return (false, None) };
+
+            invetory_array[i] =  SlotState::Empty;
+            return (true, Some(i - 4));
+        };
+
+        (false, None)
+    }
+
+    pub fn get_slots_unlocking(
+        &self,
+        current_world: &State<CurrentWorld>,
+    ) -> Option<usize> {
+        let Some(invetory_array) = current_world.get_inv(self) else { return None;};
+
+        if let Some((i, _)) = invetory_array.iter().enumerate().find(|(_, i)| matches!(i, SlotState::Locked) ) {
+            return Some(i - 4);
+        }
+
+        return None;
     }
 }
 
 impl Economy {
-    pub fn get(&self, res: ResourceType) -> f64 {
-        self.storage[res as usize]
+    pub fn get_item(&self, res: usize) -> f64 {
+        self.storage[res]
     }
 
-    pub fn egui_get(&self, res: EGUIResourceType) -> f64 {
+    pub fn egui_get_item(&self, res: EGUIResourceType) -> f64 {
         if res == EGUIResourceType::All {
             let mut count = 0.0;
             for (i, count_inv) in self.storage.iter().enumerate() {
@@ -76,7 +108,7 @@ impl Economy {
         self.storage[res as usize]
     }
 
-    pub fn get_egui_all(&self, well: TradeWell, percent: f64) -> f64 {
+    pub fn egui_get_item_all(&self, well: TradeWell, percent: f64) -> f64 {
         let mut all_trade = 0.0;
 
         for (i, item_count) in self.storage.iter().enumerate() {
@@ -108,17 +140,16 @@ impl Economy {
     }
 }
 
-
-impl Material2d for ShaderMaterial { // Настройки шейдеров
+impl Material2d for ShaderMaterial {
+    // Настройки шейдеров
     fn fragment_shader() -> ShaderRef {
         "shaders/combined_window.wgsl".into()
-    } 
+    }
 
     fn alpha_mode(&self) -> bevy::sprite_render::AlphaMode2d {
         AlphaMode2d::Blend
     }
 }
-
 
 impl Default for UpgradeStorege {
     fn default() -> Self {
@@ -126,7 +157,7 @@ impl Default for UpgradeStorege {
             global: vec![
                 FERTILE_SOIL.clone(),
                 GROWTH_SPEED.clone(),
-                JOY_BOOST.clone()
+                JOY_BOOST.clone(),
             ],
             sunlit_nursery: Vec::new(),
         }
@@ -134,20 +165,17 @@ impl Default for UpgradeStorege {
 }
 
 impl CurrentWorld {
-    pub fn get_inv<'a>(
-        &self,
-        inv: &'a Res<GlobalInventory>,
-    ) -> Option<&'a [SlotState; 16]> {
+    pub fn get_inv(self, inv: &GlobalInventory) -> Option<&[SlotState; 16]> {
         match self {
             CurrentWorld::SunlitNursery => Some(&inv.sunlit_nursery_inv),
             CurrentWorld::WarmPawsPorch => None,
         }
     }
 
-    pub fn get_inv_mut<'a>(
-        &self,
-        inv: &'a mut ResMut<GlobalInventory>,
-    ) -> Option<&'a mut [SlotState; 16]> {
+    pub fn get_inv_mut(
+        self,
+        inv: &mut GlobalInventory,
+    ) -> Option<&mut [SlotState; 16]> {
         match self {
             CurrentWorld::SunlitNursery => Some(&mut inv.sunlit_nursery_inv),
             CurrentWorld::WarmPawsPorch => None,
@@ -156,27 +184,12 @@ impl CurrentWorld {
 }
 
 impl PlantStateGrowth {
-    pub fn check_state(&self) -> PlantStateUpdate {
-        match self {
-            Self::Seed(s) | Self::Sprout(s) | Self::Sapling(s) | Self::Mature(s) => *s
-        }
-    }
-
     pub fn atlas_texture_id(&self) -> u32 {
         match self {
-            Self::Seed(_) => 0,
-            Self::Sprout(_) => 1,
-            Self::Sapling(_) => 2,
-            Self::Mature(_) => 3,
-        }
-    }
-
-    pub fn next_state(&self) -> PlantStateGrowth {
-        match self {
-            Self::Seed(_) => Self::Sprout(PlantStateUpdate::Idle),
-            Self::Sprout(_) => Self::Sapling(PlantStateUpdate::Idle),
-            Self::Sapling(_) => Self::Mature(PlantStateUpdate::Idle),
-            Self::Mature(_) => Self::Mature(PlantStateUpdate::Idle),
+            Self::Seed => 0,
+            Self::Sprout => 1,
+            Self::Sapling => 2,
+            Self::Mature => 3,
         }
     }
 }
@@ -197,5 +210,49 @@ impl Default for UpgradeState {
         Self {
             selected_categories: EGUISelectedCategories::Global,
         }
+    }
+}
+
+impl UpgradeStorege {
+    pub fn get_global_modifier(&self, upgrade_id: UpgradeUID) -> f64 {
+        for upgrade in self.global.iter() {
+            if upgrade.id == upgrade_id && upgrade.current_level > 0 {
+                return upgrade.levels[upgrade.current_level - 1].value;
+            };
+        }
+
+        1.0
+    }
+}
+
+
+impl CountItemType {
+    pub fn get_inv<'a>(
+        &self,
+        current_world: &State<CurrentWorld>,
+    ) -> Option<&[usize; 4]> {
+        match current_world.get() {
+            CurrentWorld::SunlitNursery => Some(&self.sunlit_nursery_inv),
+            CurrentWorld::WarmPawsPorch => None,
+        }
+    }
+
+    pub fn get_inv_mut<'a>(
+        &mut self,
+        current_world: &State<CurrentWorld>,
+    ) -> Option<&mut [usize; 4]> {
+        match current_world.get() {
+            CurrentWorld::SunlitNursery => Some(&mut self.sunlit_nursery_inv),
+            CurrentWorld::WarmPawsPorch => None,
+        }
+    }
+
+    pub fn add(
+        &mut self,
+        res: usize,
+        current_world: &State<CurrentWorld>,
+    ) {
+        let Some(count_inv) = self.get_inv_mut(current_world) else { return; };
+        count_inv[res] += 1;
     }
 }

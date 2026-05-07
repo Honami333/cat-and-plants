@@ -5,7 +5,7 @@ struct VertexOutput {
 
 struct Globals {
     time: f32,
-    defta_time: f32,
+    delta_time: f32,
     frame_count: u32,
 }
 

@@ -1,11 +1,10 @@
-use bevy::prelude::*;
-use bevy::window::PrimaryWindow;
-use bevy::ui::UiScale;
-use crate::schema::{resources::*, config::*, types_and_states::*, world_components::*};
-use crate::systems::lifecycle::item_spawn;
 use crate::content::world::sunlit_nursery::*;
 use crate::content::world::warm_paws_porch::*;
-
+use crate::schema::{config::*, resources::*, types_and_states::*, world_components::*};
+use crate::systems::lifecycle::item_spawn;
+use bevy::prelude::*;
+use bevy::ui::UiScale;
+use bevy::window::PrimaryWindow;
 
 // Обновление визуала в инвенторе
 pub fn sync_inventory_visuals(
@@ -16,27 +15,39 @@ pub fn sync_inventory_visuals(
     query_slots: Query<&Slot>,
     current_world: Res<State<CurrentWorld>>,
 ) {
-    let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
-    
+    let Some(inventory) = current_world.get_inv_mut(&mut inv) else {
+        return;
+    };
+
     // Спаун преметов в слотах
     for (idx, slot_state) in inventory.iter_mut().enumerate() {
         if let SlotState::Occupied(plant) = slot_state {
-        if let Some(target_slot) = query_slots.iter().find( |s| s.id == idx) {
+            if let Some(target_slot) = query_slots.iter().find(|s| s.id == idx) {
+                let existing_item = query_items
+                    .iter_mut()
+                    .find(|(_, item)| item.uid == plant.slot_uid);
 
-        let existing_item = query_items.iter_mut().find( | (_ , item) | item.uid == plant.slot_uid);
-
-        if let Some((_, mut item)) = existing_item {
-        if item.slot_id != idx {
-            item.slot_id = idx;
-            plant.slot_uid = idx;
-        }} else {
-            item_spawn(&mut commands, &assets, &query_slots, target_slot.id, plant.species_id);
-        }}}
+                if let Some((_, mut item)) = existing_item {
+                    if item.slot_id != idx {
+                        item.slot_id = idx;
+                        plant.slot_uid = idx;
+                    }
+                } else {
+                    item_spawn(
+                        &mut commands,
+                        &assets,
+                        &query_slots,
+                        target_slot.id,
+                        plant.species_id,
+                    );
+                }
+            }
+        }
     }
 
     // Удаление призраков
     for (entity, item) in query_items.iter() {
-        let is_still_in_inventory = inventory.iter().any( |slot| {
+        let is_still_in_inventory = inventory.iter().any(|slot| {
             if let SlotState::Occupied(plant) = slot {
                 plant.slot_uid == item.uid
             } else {
@@ -50,74 +61,35 @@ pub fn sync_inventory_visuals(
     }
 }
 
-
 // Обновление визула роста ростения
 pub fn update_plant_appearance(
     mut query_item: Query<(&mut Sprite, &mut SlotItem)>,
     mut inv: ResMut<GlobalInventory>,
     current_world: Res<State<CurrentWorld>>,
 ) {
-    let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
+    let Some(inventory) = current_world.get_inv_mut(&mut inv) else {
+        return;
+    };
 
     for (mut sprite, slot_info) in query_item.iter_mut() {
-        let Some(slot_state) = inventory.get_mut(slot_info.uid as usize) else { continue; };
-
-        let SlotState::Occupied(plant) = slot_state else { continue; };
-
-        if plant.state.check_state() == PlantStateUpdate::Growth {
-            let Some(atlas) = &mut sprite.texture_atlas else { continue; };
-
-            atlas.index = plant.state.atlas_texture_id() as usize + 1;
-
-            plant.state = plant.state.next_state()
-        } else if plant.state.check_state() == PlantStateUpdate::Idle {
-            let Some(atlas) = &mut sprite.texture_atlas else { continue; };
-
-            atlas.index = plant.state.atlas_texture_id() as usize;
+        let Some(slot_state) = inventory.get_mut(slot_info.uid as usize) else {
+            continue;
         };
+
+        let SlotState::Occupied(plant) = slot_state else {
+            continue;
+        };
+
+        let Some(atlas) = &mut sprite.texture_atlas else {
+            continue;
+        };
+
+        atlas.index = plant.state.atlas_texture_id() as usize;
     }
 }
 
-
-pub fn sync_plant_state(
-    trigger: On<Add, SlotItem>,
-    mut inv: ResMut<GlobalInventory>,
-    current_world: Res<State<CurrentWorld>>,
-    query_item: Query<&SlotItem>,
-    upgrade_storege: Res<UpgradeStorege>,
-) {
-    let mut selective_breeding_upgrade = 1.0;
-
-    for upgrade in upgrade_storege.global.iter() {
-        if upgrade.id == UpgradeUID::SelectiveBreeding && upgrade.current_level > 0 {
-            selective_breeding_upgrade = upgrade.levels[upgrade.current_level - 1].value;
-        };
-    };
-    
-    let entity = trigger.entity;
-
-    let Some(inventory) = current_world.get_inv_mut(&mut inv) else { return; };
-
-    if let Ok(slot_info) = query_item.get(entity) {
-        let Some(slot_state) = inventory.get_mut(slot_info.uid as usize) else { return; };
-
-        let SlotState::Occupied(plant) = slot_state else { return; };
-
-        let growth_pct = plant.growth_score / (plant.growth_thereshold / selective_breeding_upgrade);
-
-        match growth_pct {
-            p if p >= 0.25 && p < 0.50 => plant.state = PlantStateGrowth::Seed(PlantStateUpdate::Idle),
-            p if p >= 0.50 && p < 0.75 => plant.state = PlantStateGrowth::Sprout(PlantStateUpdate::Idle),
-            p if p >= 0.75 && p < 1.0 => plant.state = PlantStateGrowth::Sapling(PlantStateUpdate::Idle),
-            p if p >= 1.0 => plant.state = PlantStateGrowth::Mature(PlantStateUpdate::Idle),
-            _ => {}
-        };
-    };
-}
-
-
 // Z сортировка, анимация перестаскивание и маштабировние предметов
-pub fn grag_item_anim_and_zsort(
+pub fn grad_item_anim_and_zsort(
     worlds: Res<WorldScale>,
     mut item_slot_query: Query<(&mut Transform, &SlotItem)>,
 ) {
@@ -135,7 +107,7 @@ pub fn update_scene_scale(
         Query<(&mut Transform, &ScaleBackground)>,
         Query<(&mut Transform, &Slot)>,
         Query<(&mut Transform, &MyButton)>,
-        Query<&mut Transform, With<ShaderMash>>,
+        Query<&mut Transform, With<ShaderMesh>>,
     )>,
     mut materials: ResMut<Assets<ShaderMaterial>>,
     mut ui_scale: ResMut<UiScale>,
@@ -148,7 +120,9 @@ pub fn update_scene_scale(
         let s = (window.width() / bg_info.wh.x).min(window.height() / bg_info.wh.y);
         bg_trans.scale = Vec3::splat(s);
         s
-    } else { return; };
+    } else {
+        return;
+    };
 
     worlds.scale = scale;
 
@@ -166,11 +140,11 @@ pub fn update_scene_scale(
 
     // Шейдеры
     for material_handle in shader_query.iter() {
-    if let Some(material) = materials.get_mut(&material_handle.0) {
-        material.scale = material.original_scale / scale;
+        if let Some(material) = materials.get_mut(&material_handle.0) {
+            material.scale = material.original_scale / scale;
 
-        for mut transform in set.p3().iter_mut() {
-            transform.scale = Vec3::splat(material.mash_scale * scale);
+            for mut transform in set.p3().iter_mut() {
+                transform.scale = Vec3::splat(material.mesh_scale * scale);
             }
         }
     }
@@ -178,34 +152,34 @@ pub fn update_scene_scale(
     ui_scale.0 = scale;
 }
 
-
 pub fn shader_animation(
     mut materials: ResMut<Assets<ShaderMaterial>>,
     shader_query: Query<&MeshMaterial2d<ShaderMaterial>>,
     time: Res<Time>,
 ) {
     for material_handle in shader_query.iter() {
-    if let Some(material) = materials.get_mut(&material_handle.0) {
-        match material.shader_type {
-            0 => {
-                let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
-                material.color.set_alpha(material.color.alpha + sin_time);
-            },
-            1 => {
-                let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
-                material.color.set_alpha(material.color.alpha + sin_time);
-            }
-            _ => return,
-        };
-    }}
+        if let Some(material) = materials.get_mut(&material_handle.0) {
+            match material.shader_type {
+                0 => {
+                    let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
+                    material.color.set_alpha(material.color.alpha + sin_time);
+                }
+                1 => {
+                    let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
+                    material.color.set_alpha(material.color.alpha + sin_time);
+                }
+                _ => return,
+            };
+        }
+    }
 }
 
 pub fn update_resourse_text(
-    mut text_query: Query<(&mut VisualCounter, &mut Text, &MyText)>,
-    current_world: Res<CurrentWorld>,
+    mut text_query: Query<(&mut VisualCounter, &mut Text2d, &EconomyText)>,
+    current_world: Res<State<CurrentWorld>>,
     economy: Res<Economy>,
 ) {
-    let plant_res = match *current_world {
+    let plant_res = match current_world.get() {
         CurrentWorld::SunlitNursery => SN_PLANT_RES,
         CurrentWorld::WarmPawsPorch => WPP_PLANT_RES,
     };
@@ -222,38 +196,83 @@ pub fn update_resourse_text(
             _ => continue,
         };
 
-        counter.target_value = economy.get(resource_type);
-        
+        counter.target_value = economy.get_item(resource_type as usize);
+
         if counter.display_value > 0.0 || resource_type == ResourceType::CatHappiness {
             let formatted_val = format_number(counter.display_value);
-            
 
             text.0 = format!("{} {}", icon, formatted_val);
-        } else {  text.0 = format!("") };
+        } else {
+            text.0 = format!("")
+        };
     }
 }
 
 pub fn animate_counters(
     time: Res<Time>,
-    mut text_query: Query<(&mut VisualCounter, &MyText)>,
+    mut text_query: Query<(&mut VisualCounter, &EconomyText)>,
 ) {
     for (mut counter, _) in text_query.iter_mut() {
         if (counter.display_value - counter.target_value).abs() < 0.1 {
             counter.display_value = counter.target_value;
         } else {
-            let step = (counter.target_value - counter.display_value) * time.delta_secs() as f64 * 5.0;
+            let step =
+                (counter.target_value - counter.display_value) * time.delta_secs() as f64 * 5.0;
             counter.display_value += step;
         };
     }
 }
 
-pub fn format_number(n : f64) -> String {
+pub fn format_number(n: f64) -> String {
     match n {
         x if x >= 1e15 => format!("{:.1}Q", n / 1e15),
         x if x >= 1e12 => format!("{:.1}T", n / 1e12),
         x if x >= 1e9 => format!("{:.1}B", n / 1e9),
         x if x >= 1e6 => format!("{:.1}M", n / 1e6),
         x if x >= 1e3 => format!("{:.1}K", n / 1e3),
-        _ => format!("{:.0}", n)
+        _ => format!("{:.0}", n),
+    }
+}
+
+pub fn price_button_text(
+    mut query_button_text: Query<(&mut Text2d, &ButtonText)>,
+    current_world: Res<State<CurrentWorld>>,
+    inventory: Res<GlobalInventory>,
+    count_item_type: Res<CountItemType>,
+) {
+    for (mut text, info) in query_button_text.iter_mut() {
+        let ButtonText(b_type) = info;
+
+        let Some(count_item) = count_item_type.get_inv(&current_world) else {
+            continue;
+        };
+
+        let final_count = count_item[ResourceType::Tomatoes as usize - 1];
+
+        text.0 = match b_type {
+            TypeButton::TomatoButton => {
+                if final_count < PL_TOMATO.max_count {
+                    format!(
+                        "😸 {}\ncount:\n{} / {}",
+                        format_number(PL_TOMATO.price[final_count]),
+                        final_count,
+                        PL_TOMATO.max_count
+                    )
+                } else {
+                    "   MAX".to_string()
+                }
+            }
+            TypeButton::SlotsUnLocking => {
+                if let Some(index_slot) = inventory.get_slots_unlocking(&current_world) {
+                    format!(
+                        "😸 {}\ncount:\n{} / 16",
+                        format_number(SLOT_PRICES.prices[index_slot]),
+                        index_slot + 4
+                    )
+                } else {
+                    "   MAX".to_string()
+                }
+            }
+        };
     }
 }

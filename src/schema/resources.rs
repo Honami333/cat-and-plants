@@ -1,10 +1,10 @@
-use bevy::prelude::*;
 use crate::schema::config::ShaderMaterial;
-
+use bevy::prelude::*;
 
 // Ассеты
 #[derive(Resource, Debug, Clone)]
-pub struct GameAssets { // Изображения
+pub struct GameAssets {
+    // Изображения
     pub pot_stands: Handle<Image>,
     pub sunlit_nursery: Handle<Image>,
     pub button_buy_tomato: Handle<Image>,
@@ -12,7 +12,8 @@ pub struct GameAssets { // Изображения
 }
 
 #[derive(Resource)]
-pub struct ShaderAssets { // Общий список шейдеров
+pub struct ShaderAssets {
+    // Общий список шейдеров
     pub sn_window_light: Handle<ShaderMaterial>,
     pub wpp_window_light: Handle<ShaderMaterial>,
 }
@@ -20,14 +21,10 @@ pub struct ShaderAssets { // Общий список шейдеров
 #[derive(Resource)]
 pub struct AtlasAssets {
     pub tomato_pot_atlas: Handle<Image>,
-    pub common_layot: Handle<TextureAtlasLayout>,
+    pub common_layout: Handle<TextureAtlasLayout>,
 }
 
 #[derive(Resource, Debug, Clone)]
 pub struct FontAssets {
     pub emoji_font: Handle<Font>,
 }
-
-
-
-
