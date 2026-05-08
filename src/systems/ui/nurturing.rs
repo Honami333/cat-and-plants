@@ -15,7 +15,9 @@ pub fn trading_ui_system(
     font: Res<FontAssets>,
     upgrade_storege: Res<UpgradeStorege>,
 ) {
-    if *current_world.get() != CurrentWorld::WarmPawsPorch { return; };
+    if *current_world.get() != CurrentWorld::WarmPawsPorch {
+        return;
+    };
 
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
@@ -48,6 +50,7 @@ pub fn trading_ui_system(
         .default_open(true)
         .fixed_size([600.0, 300.0])
         .resizable(false)
+        .constrain(true)
         .show(ctx, |ui| {
             ui.columns(3, |columns| {
                 columns[0].label("Choice");

@@ -16,6 +16,7 @@ pub struct ButtonCFG {
     pub pos: Vec2,
     pub _text: &'static str,
     pub b_type: TypeButton,
+    pub text_pos: Vec2,
 }
 
 #[derive(Component, Default)]

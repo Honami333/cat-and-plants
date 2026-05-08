@@ -4,10 +4,16 @@ use bevy::prelude::*;
 // Загруста ассетов
 pub fn load_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
     let assets = GameAssets {
-        pot_stands: asset_server.load("pot_stands.png"),
-        button_buy_tomato: asset_server.load("button_buy_tomato.png"),
+        pot_stands: asset_server.load("slots/pot_stands.png"),
+
         sunlit_nursery: asset_server.load("world/sunlit_nursery.png"),
         warm_paws_porch: asset_server.load("world/warm_paws_porch.png"),
+
+        button_buy_tomato: asset_server.load("button/button_buy_tomato.png"),
+        button_buy_cucumber: asset_server.load("button/button_buy_cucumber.png"),
+        button_buy_corn: asset_server.load("button/button_buy_corn.png"),
+        button_buy_pumpkin: asset_server.load("button/button_buy_pumpkin.png"),
+        button_slots_unlocking: asset_server.load("button/button_slots_unlocking.png"),
     };
     commands.insert_resource(assets);
 }
@@ -48,7 +54,10 @@ pub fn load_atlas(
     ));
 
     let atlas = AtlasAssets {
-        tomato_pot_atlas: asset_server.load("tomato_pot_atlas.png"),
+        tomato_pot_atlas: asset_server.load("plant/tomato_pot_atlas.png"),
+        cucumber_pot_atlas: asset_server.load("plant/cucumber_pot_atlas.png"),
+        corn_pot_atlas: asset_server.load("plant/corn_pot_atlas.png"),
+        pumpkin_pot_atlas: asset_server.load("plant/pumpkin_pot_atlas.png"),
         common_layout: layout_4x1,
     };
     commands.insert_resource(atlas);

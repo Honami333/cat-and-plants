@@ -1,5 +1,5 @@
 use crate::content::world::sunlit_nursery::*;
-use crate::schema::{config::*, types_and_states::*, world_components::*};
+use crate::schema::{types_and_states::*, world_components::*};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
@@ -14,16 +14,16 @@ pub fn button_check(
 ) {
     if let Ok(button_data) = button_type_query.get(trigger.entity) {
         match button_data {
-            TypeButton::TomatoButton => add_plant_and_lock(
+            TypeButton::SlotsUnLocking => {
+                try_slots_unlocking(&mut inventory, &mut economy, &current_world)
+            }
+            _ => add_plant_and_lock(
                 &mut inventory,
                 &mut economy,
                 &mut count_item_type,
                 &current_world,
-                PL_TOMATO,
+                &button_data,
             ),
-            TypeButton::SlotsUnLocking => {
-                try_slots_unlocking(&mut inventory, &mut economy, &current_world)
-            }
         }
     };
 }
@@ -53,9 +53,17 @@ fn add_plant_and_lock(
     economy: &mut Economy,
     count_item_type: &mut CountItemType,
     current_world: &State<CurrentWorld>,
-    plant: Plant,
+    button_data: &TypeButton,
 ) {
+    if inventory.get_slots_empty(&current_world) == false {
+        return;
+    };
+
     let Some(count_inv) = count_item_type.get_inv_mut(&current_world) else {
+        return;
+    };
+
+    let Some(plant) = button_data.get_plant_cfg() else {
         return;
     };
 

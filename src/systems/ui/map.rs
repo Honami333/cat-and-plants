@@ -6,7 +6,7 @@ pub fn map_ui_system(
     mut contexts: EguiContexts,
     mut new_current_world: ResMut<NextState<CurrentWorld>>,
     current_world: Res<State<CurrentWorld>>,
-    world_scale: Res<WorldScale>
+    world_scale: Res<WorldScale>,
 ) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
@@ -21,12 +21,13 @@ pub fn map_ui_system(
         ..default()
     };
 
-    egui::Window::new("") 
+    egui::Window::new("")
         .anchor(egui::Align2::RIGHT_TOP, [-10.0 * s, 10.0 * s])
         .fixed_size([320.0 * s, 240.0 * s])
         .collapsible(false)
         .title_bar(false)
         .resizable(false)
+        .constrain(true)
         .frame(my_frame)
         .show(ctx, |ui| {
             ui.vertical_centered(|ui| {
@@ -69,6 +70,7 @@ pub fn map_ui_system(
                     &painter,
                     critical_point_sn,
                     CurrentWorld::SunlitNursery,
+                    s,
                 );
                 room_map_spawn(
                     ui,
@@ -79,6 +81,7 @@ pub fn map_ui_system(
                     &painter,
                     critical_point_wpp,
                     CurrentWorld::WarmPawsPorch,
+                    s,
                 );
             });
         });
@@ -93,6 +96,7 @@ fn room_map_spawn(
     painter: &egui::Painter,
     critical_point: [f32; 4],
     location: CurrentWorld,
+    s: f32,
 ) {
     let mouse_pos = ui.input(|i| i.pointer.hover_pos());
     let is_click = ui.input(|i| i.pointer.any_click());
@@ -133,7 +137,7 @@ fn room_map_spawn(
         egui::pos2(center_x, center_y),
         egui::Align2::CENTER_CENTER,
         location.to_string(),
-        egui::FontId::proportional(12.0),
+        egui::FontId::proportional(12.0 * s),
         egui::Color32::WHITE,
     );
 }

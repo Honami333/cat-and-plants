@@ -47,8 +47,10 @@ pub struct TradeWell {
 
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
 pub enum TypeButton {
-    // Тип кнопки
     TomatoButton,
+    CucumberButton,
+    CornButton,
+    PumpkinButton,
     SlotsUnLocking,
 }
 
@@ -64,6 +66,9 @@ pub enum SlotState {
 pub enum TypePlant {
     // Тип растения
     Tomato,
+    Cucumber,
+    Corn,
+    Pumpkin,
 }
 
 #[derive(Component, Clone, Copy, PartialEq, Debug)]

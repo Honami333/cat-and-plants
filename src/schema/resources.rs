@@ -6,9 +6,15 @@ use bevy::prelude::*;
 pub struct GameAssets {
     // Изображения
     pub pot_stands: Handle<Image>,
+
     pub sunlit_nursery: Handle<Image>,
-    pub button_buy_tomato: Handle<Image>,
     pub warm_paws_porch: Handle<Image>,
+
+    pub button_buy_tomato: Handle<Image>,
+    pub button_buy_cucumber: Handle<Image>,
+    pub button_buy_corn: Handle<Image>,
+    pub button_buy_pumpkin: Handle<Image>,
+    pub button_slots_unlocking: Handle<Image>,
 }
 
 #[derive(Resource)]
@@ -21,6 +27,9 @@ pub struct ShaderAssets {
 #[derive(Resource)]
 pub struct AtlasAssets {
     pub tomato_pot_atlas: Handle<Image>,
+    pub cucumber_pot_atlas: Handle<Image>,
+    pub corn_pot_atlas: Handle<Image>,
+    pub pumpkin_pot_atlas: Handle<Image>,
     pub common_layout: Handle<TextureAtlasLayout>,
 }
 

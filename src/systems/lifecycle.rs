@@ -4,12 +4,10 @@ use crate::schema::{config::*, resources::*, types_and_states::*, world_componen
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 
-
 pub fn add_start(mut economy: ResMut<Economy>) {
     economy.add(ResourceType::CatHappiness as usize, 100000.0);
     economy.add(ResourceType::Tomatoes as usize, 0.0);
 }
-
 
 pub fn camera_spawn(mut commands: Commands) {
     commands.spawn(Camera2d::default());
@@ -29,36 +27,50 @@ pub fn spawn_world_system(
             bg_spawn(&mut commands, assets.sunlit_nursery.clone(), SN_DATA, &font);
             shader_spawn(&mut commands, &mut meshes, shaders.sn_window_light.clone());
             spawn_slots(&mut commands, &SN_SLOT_CFG, assets.pot_stands.clone());
-            spawn_button(
+            button_spawn_meneger(
                 &mut commands,
-                &BUT_TOMATO_CFG,
-                assets.button_buy_tomato.clone(),
-                &font,
-            );
-            spawn_button(
-                &mut commands,
-                &BUT_SLOTSUNLOKING_CFG,
-                assets.button_buy_tomato.clone(),
+                &[
+                    (&BUT_TOMATO_CFG, assets.button_buy_tomato.clone()),
+                    (&BUT_CUCUMBER_CFG, assets.button_buy_cucumber.clone()),
+                    (&BUT_CORN_CFG, assets.button_buy_corn.clone()),
+                    (&BUT_PUMPKIN_CFG, assets.button_buy_pumpkin.clone()),
+                    (
+                        &BUT_SLOTSLOCK_CFG,
+                        assets.button_slots_unlocking.clone(),
+                    ),
+                ],
                 &font,
             );
         }
         CurrentWorld::WarmPawsPorch => {
-            bg_spawn(&mut commands, assets.warm_paws_porch.clone(), WPP_DATA, &font);
+            bg_spawn(
+                &mut commands,
+                assets.warm_paws_porch.clone(),
+                WPP_DATA,
+                &font,
+            );
             shader_spawn(&mut commands, &mut meshes, shaders.wpp_window_light.clone());
         }
     };
 }
 
-pub fn bg_spawn(commands: &mut Commands, bg_image: Handle<Image>, bg_data: ScaleBackground, font: &FontAssets) {
-    commands.spawn((
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        Sprite::from_image(bg_image),
-        bg_data.clone(),
-        Room,
-        CleanupMarker,
-    )).with_children(|parent| {
-        spawn_resourse_text(parent, &font, bg_data);
-    });
+pub fn bg_spawn(
+    commands: &mut Commands,
+    bg_image: Handle<Image>,
+    bg_data: ScaleBackground,
+    font: &FontAssets,
+) {
+    commands
+        .spawn((
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            Sprite::from_image(bg_image),
+            bg_data.clone(),
+            Room,
+            CleanupMarker,
+        ))
+        .with_children(|parent| {
+            spawn_resourse_text(parent, &font, bg_data);
+        });
 }
 
 pub fn shader_spawn(
@@ -99,6 +111,16 @@ pub fn spawn_slots(
     }
 }
 
+fn button_spawn_meneger(
+    commands: &mut Commands,
+    configs_and_image: &[(&ButtonCFG, Handle<Image>)],
+    font: &FontAssets,
+) {
+    for (config, image) in configs_and_image {
+        spawn_button(commands, &config, image.clone(), &font)
+    }
+}
+
 // Спаун кнопок
 pub fn spawn_button(
     commands: &mut Commands,
@@ -106,31 +128,33 @@ pub fn spawn_button(
     button_image_handle: Handle<Image>,
     font: &FontAssets,
 ) {
-    commands.spawn((
-        config.b_type.clone(),
-        Sprite::from_image(button_image_handle),
-        Transform::from_xyz(config.pos.x, config.pos.y, 5.0),
-        Pickable::default(),
-        MyButton {
-            base_pos: Vec2::new(config.pos.x, config.pos.y),
-        },
-        CleanupMarker,
-    )).with_children(|parent| {
-        parent.spawn((
-            Text2d::new(" "),
-            TextColor(Color::WHITE),
-            TextFont {
-                font: font.emoji_font.clone(),
-                font_size: 8.0,
-                ..default()
+    commands
+        .spawn((
+            config.b_type.clone(),
+            Sprite::from_image(button_image_handle),
+            Transform::from_xyz(config.pos.x, config.pos.y, 5.0),
+            Pickable::default(),
+            MyButton {
+                base_pos: Vec2::new(config.pos.x, config.pos.y),
             },
-            Anchor::CENTER_LEFT,
-            Transform::from_xyz(65.0, 0.0, 0.1),
-            TextLayout::new(Justify::Left, LineBreak::NoWrap),
-            ButtonText(config.b_type),
             CleanupMarker,
-        ));
-    });
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text2d::new(" "),
+                TextColor(Color::WHITE),
+                TextFont {
+                    font: font.emoji_font.clone(),
+                    font_size: 8.0,
+                    ..default()
+                },
+                Anchor::CENTER_LEFT,
+                Transform::from_xyz(config.text_pos.x, config.text_pos.y, 0.1),
+                TextLayout::new(Justify::Left, LineBreak::NoWrap),
+                ButtonText(config.b_type),
+                CleanupMarker,
+            ));
+        });
 }
 
 // Спаун предметов
@@ -141,12 +165,7 @@ pub fn item_spawn(
     target_id: usize,
     plant_type: TypePlant,
 ) {
-    let (image_handle, layout_type) = match plant_type {
-        TypePlant::Tomato => (
-            assets.tomato_pot_atlas.clone(),
-            assets.common_layout.clone(),
-        ),
-    };
+    let (image_handle, layout_type) = plant_type.get_plant_image(assets);
 
     if let Some(slot) = query_slots.iter().find(|slot| slot.id == target_id) {
         commands.spawn((
@@ -172,14 +191,17 @@ pub fn item_spawn(
     }
 }
 
-pub fn spawn_resourse_text(main_parent: &mut ChildSpawnerCommands, font: &FontAssets, bg_data: ScaleBackground) {
+pub fn spawn_resourse_text(
+    main_parent: &mut ChildSpawnerCommands,
+    font: &FontAssets,
+    bg_data: ScaleBackground,
+) {
     main_parent
         .spawn((
-        Transform::from_xyz(-bg_data.wh.x / 2.0, bg_data.wh.y / 2.0 - 20.0, 0.1),
-        Visibility::default(),
-        InheritedVisibility::default(),
-        CleanupMarker,
-    ))
+            Transform::from_xyz(-bg_data.wh.x / 2.0, bg_data.wh.y / 2.0 - 20.0, 0.1),
+            Visibility::default(),
+            InheritedVisibility::default(),
+        ))
         .with_children(|parent| {
             for i in 0..5 {
                 parent.spawn((
@@ -198,7 +220,6 @@ pub fn spawn_resourse_text(main_parent: &mut ChildSpawnerCommands, font: &FontAs
                         display_value: 0.0,
                         target_value: 0.0,
                     },
-                    CleanupMarker,
                 ));
             }
         });

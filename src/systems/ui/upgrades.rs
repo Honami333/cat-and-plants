@@ -8,7 +8,7 @@ pub fn show_upgrade_grid(
     mut upgrade_storege: ResMut<UpgradeStorege>,
     mut upgrade_state: ResMut<UpgradeState>,
     mut economy: ResMut<Economy>,
-    world_scale: Res<WorldScale>
+    world_scale: Res<WorldScale>,
 ) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
@@ -27,11 +27,12 @@ pub fn show_upgrade_grid(
         .anchor(egui::Align2::CENTER_BOTTOM, [0.0 * s, -10.0 * s])
         .fixed_size([880.0 * s, 360.0 * s])
         .resizable(false)
+        .constrain(true)
         // .collapsible(false)
         .frame(my_frame)
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.allocate_ui(egui::vec2(710.0 * s, 340.0 * s),|ui| {
+                ui.allocate_ui(egui::vec2(710.0 * s, 340.0 * s), |ui| {
                     ui.vertical_centered(|ui| {
                         ui.label("Upgrades");
                         ui.separator();
@@ -70,7 +71,7 @@ pub fn show_upgrade_grid(
                     });
                 });
 
-                ui.vertical( |ui| {
+                ui.vertical(|ui| {
                     ui.vertical_centered(|ui| {
                         ui.label("Categories");
                         ui.separator();

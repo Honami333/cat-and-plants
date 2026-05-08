@@ -1,5 +1,7 @@
 use crate::content::upgrades::global::*;
+use crate::content::world::sunlit_nursery::*;
 use crate::schema::config::{Plant, ShaderMaterial};
+use crate::schema::resources::AtlasAssets;
 use crate::schema::types_and_states::*;
 use bevy::prelude::*;
 use bevy::shader::ShaderRef;
@@ -28,8 +30,9 @@ impl GlobalInventory {
         current_world: &State<CurrentWorld>,
         new_plant: Plant,
     ) {
-        
-        let Some(invetory_array) = current_world.get_inv_mut(self) else { return; };
+        let Some(invetory_array) = current_world.get_inv_mut(self) else {
+            return;
+        };
 
         for slot in invetory_array.iter_mut() {
             if *slot == SlotState::Empty {
@@ -46,7 +49,9 @@ impl GlobalInventory {
         old_id: usize,
         new_id: usize,
     ) {
-        let Some(invetory_array) = current_world.get_inv_mut(self) else { return; };
+        let Some(invetory_array) = current_world.get_inv_mut(self) else {
+            return;
+        };
 
         if invetory_array[new_id] == SlotState::Locked {}
 
@@ -64,29 +69,55 @@ impl GlobalInventory {
         current_world: &State<CurrentWorld>,
         prices: &'static [f64],
     ) -> (bool, Option<usize>) {
-        let Some(invetory_array) = current_world.get_inv_mut(self) else { return (false, None); };
+        let Some(invetory_array) = current_world.get_inv_mut(self) else {
+            return (false, None);
+        };
 
-        if let Some((i, _)) = invetory_array.iter().enumerate().find(|(_, i)| matches!(i, SlotState::Locked) ) {
-            if economy.get_item(ResourceType::CatHappiness as usize) < prices[i - 4] { return (false, None) };
+        if let Some((i, _)) = invetory_array
+            .iter()
+            .enumerate()
+            .find(|(_, i)| matches!(i, SlotState::Locked))
+        {
+            if economy.get_item(ResourceType::CatHappiness as usize) < prices[i - 4] {
+                return (false, None);
+            };
 
-            invetory_array[i] =  SlotState::Empty;
+            invetory_array[i] = SlotState::Empty;
             return (true, Some(i - 4));
         };
 
         (false, None)
     }
 
-    pub fn get_slots_unlocking(
-        &self,
-        current_world: &State<CurrentWorld>,
-    ) -> Option<usize> {
-        let Some(invetory_array) = current_world.get_inv(self) else { return None;};
+    pub fn get_slots_unlocking(&self, current_world: &State<CurrentWorld>) -> Option<usize> {
+        let Some(invetory_array) = current_world.get_inv(self) else {
+            return None;
+        };
 
-        if let Some((i, _)) = invetory_array.iter().enumerate().find(|(_, i)| matches!(i, SlotState::Locked) ) {
+        if let Some((i, _)) = invetory_array
+            .iter()
+            .enumerate()
+            .find(|(_, i)| matches!(i, SlotState::Locked))
+        {
             return Some(i - 4);
         }
 
         return None;
+    }
+
+    pub fn get_slots_empty(&self, current_world: &State<CurrentWorld>) -> bool {
+        let Some(invetory_array) = current_world.get_inv(self) else {
+            return false;
+        };
+
+        if let Some(_) = invetory_array
+            .iter()
+            .find(|i| matches!(i, SlotState::Empty))
+        {
+            return true;
+        }
+
+        return false;
     }
 }
 
@@ -172,10 +203,7 @@ impl CurrentWorld {
         }
     }
 
-    pub fn get_inv_mut(
-        self,
-        inv: &mut GlobalInventory,
-    ) -> Option<&mut [SlotState; 16]> {
+    pub fn get_inv_mut(self, inv: &mut GlobalInventory) -> Option<&mut [SlotState; 16]> {
         match self {
             CurrentWorld::SunlitNursery => Some(&mut inv.sunlit_nursery_inv),
             CurrentWorld::WarmPawsPorch => None,
@@ -225,12 +253,8 @@ impl UpgradeStorege {
     }
 }
 
-
 impl CountItemType {
-    pub fn get_inv<'a>(
-        &self,
-        current_world: &State<CurrentWorld>,
-    ) -> Option<&[usize; 4]> {
+    pub fn get_inv<'a>(&self, current_world: &State<CurrentWorld>) -> Option<&[usize; 4]> {
         match current_world.get() {
             CurrentWorld::SunlitNursery => Some(&self.sunlit_nursery_inv),
             CurrentWorld::WarmPawsPorch => None,
@@ -247,12 +271,45 @@ impl CountItemType {
         }
     }
 
-    pub fn add(
-        &mut self,
-        res: usize,
-        current_world: &State<CurrentWorld>,
-    ) {
-        let Some(count_inv) = self.get_inv_mut(current_world) else { return; };
+    pub fn add(&mut self, res: usize, current_world: &State<CurrentWorld>) {
+        let Some(count_inv) = self.get_inv_mut(current_world) else {
+            return;
+        };
         count_inv[res] += 1;
+    }
+}
+
+impl TypeButton {
+    pub fn get_plant_cfg(&self) -> Option<Plant> {
+        return match *self {
+            TypeButton::TomatoButton => Some(PL_TOMATO),
+            TypeButton::CucumberButton => Some(PL_CUCUMBER),
+            TypeButton::CornButton => Some(PL_CORN),
+            TypeButton::PumpkinButton => Some(PL_PUMPKIN),
+            TypeButton::SlotsUnLocking => None,
+        };
+    }
+}
+
+impl TypePlant {
+    pub fn get_plant_image(&self, assets: &AtlasAssets) -> (Handle<Image>, Handle<TextureAtlasLayout>) {
+        return match self {
+            TypePlant::Tomato => (
+                assets.tomato_pot_atlas.clone(),
+                assets.common_layout.clone(),
+            ),
+            TypePlant::Cucumber => (
+                assets.cucumber_pot_atlas.clone(),
+                assets.common_layout.clone(),
+            ),
+            TypePlant::Corn => (
+                assets.corn_pot_atlas.clone(),
+                assets.common_layout.clone(),
+            ),
+            TypePlant::Pumpkin => (
+                assets.pumpkin_pot_atlas.clone(),
+                assets.common_layout.clone(),
+            ),
+        };
     }
 }

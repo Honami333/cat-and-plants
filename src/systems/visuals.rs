@@ -247,32 +247,47 @@ pub fn price_button_text(
             continue;
         };
 
-        let final_count = count_item[ResourceType::Tomatoes as usize - 1];
-
-        text.0 = match b_type {
-            TypeButton::TomatoButton => {
-                if final_count < PL_TOMATO.max_count {
-                    format!(
-                        "😸 {}\ncount:\n{} / {}",
-                        format_number(PL_TOMATO.price[final_count]),
-                        final_count,
-                        PL_TOMATO.max_count
-                    )
-                } else {
-                    "   MAX".to_string()
-                }
-            }
-            TypeButton::SlotsUnLocking => {
-                if let Some(index_slot) = inventory.get_slots_unlocking(&current_world) {
-                    format!(
-                        "😸 {}\ncount:\n{} / 16",
-                        format_number(SLOT_PRICES.prices[index_slot]),
-                        index_slot + 4
-                    )
-                } else {
-                    "   MAX".to_string()
-                }
-            }
+        let new_text = match b_type {
+            TypeButton::SlotsUnLocking => button_slots_unlocking(&inventory, &current_world),
+            _ => button_buy_text(count_item, &b_type),
         };
+
+        text.0 = new_text;
+    }
+}
+
+fn button_buy_text(count_item: &[usize], b_type: &TypeButton) -> String {
+    let Some(plant) = b_type.get_plant_cfg() else {
+        return "".into();
+    };
+
+    let final_count = count_item[plant.species_id as usize];
+
+    if final_count < plant.max_count {
+        format!(
+            "😸 {}\ncount:\n{} / {}",
+            format_number(plant.price[final_count]),
+            final_count,
+            plant.max_count
+        )
+    } else {
+        "   MAX".to_string()
+    }
+}
+
+fn button_slots_unlocking(
+    inventory: &GlobalInventory,
+    current_world: &State<CurrentWorld>,
+) -> String {
+    {
+        if let Some(index_slot) = inventory.get_slots_unlocking(&current_world) {
+            format!(
+                "😸 {}\ncount:\n{} / 16",
+                format_number(SLOT_PRICES.prices[index_slot]),
+                index_slot + 4
+            )
+        } else {
+            "   MAX".to_string()
+        }
     }
 }
