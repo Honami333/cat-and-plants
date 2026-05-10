@@ -213,7 +213,7 @@ fn trade_well(
     economy: &Economy,
     upgrade_storege: &UpgradeStorege,
 ) -> f64 {
-    let wholesale_supply_upgrade = upgrade_storege.get_global_modifier(UpgradeUID::WholesaleSupply);
+    let (value, _) = upgrade_storege.get_global_modifier(UpgradeUID::WholesaleSupply);
 
     let mut cur_well = 0.0;
 
@@ -232,5 +232,5 @@ fn trade_well(
         _ => cur_well * trade_state.selected_economy,
     };
 
-    (trade * wholesale_supply_upgrade).floor()
+    (trade * value).floor()
 }

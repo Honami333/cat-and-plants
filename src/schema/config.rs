@@ -72,6 +72,9 @@ pub struct Upgrade {
     pub icon: &'static str,
     pub current_level: usize,
     pub levels: &'static [UpgradeLevel],
+    pub dependencies: &'static [UpgradeUID],
+    pub category: EGUISelectedCategories,
+    pub grid_pos: (usize, usize),
 }
 
 #[derive(Clone, Copy)]

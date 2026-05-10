@@ -5,8 +5,11 @@ use bevy::prelude::*;
 use bevy::sprite::Anchor;
 
 pub fn add_start(mut economy: ResMut<Economy>) {
-    economy.add(ResourceType::CatHappiness as usize, 100000.0);
-    economy.add(ResourceType::Tomatoes as usize, 0.0);
+    economy.add(ResourceType::CatHappiness as usize, 10000.0);
+    economy.add(ResourceType::Tomatoes as usize, 1000.0);
+    economy.add(ResourceType::Cucumbers as usize, 1000.0);
+    economy.add(ResourceType::Corn as usize, 1000.0);
+    economy.add(ResourceType::Pumpkin as usize, 1000.0);
 }
 
 pub fn camera_spawn(mut commands: Commands) {

@@ -1,8 +1,9 @@
-use crate::content::upgrades::global::*;
+use crate::content::upgrades::{global::*, sunlit_nursery::*};
 use crate::content::world::sunlit_nursery::*;
-use crate::schema::config::{Plant, ShaderMaterial};
+use crate::schema::config::{Plant, ShaderMaterial, Upgrade};
 use crate::schema::resources::AtlasAssets;
 use crate::schema::types_and_states::*;
+use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use bevy::shader::ShaderRef;
 use bevy::sprite_render::{AlphaMode2d, Material2d};
@@ -184,13 +185,22 @@ impl Material2d for ShaderMaterial {
 
 impl Default for UpgradeStorege {
     fn default() -> Self {
+        let global_item = [
+            (FERTILE_SOIL.grid_pos, FERTILE_SOIL.clone()),
+            (GROWTH_SPEED.grid_pos, GROWTH_SPEED.clone()),
+            (JOY_BOOST.grid_pos, JOY_BOOST.clone()),
+            (CARDBOARD_BOX.grid_pos, CARDBOARD_BOX.clone()),
+        ];
+
+        let sunlit_nursery_item = [
+            (UNLOCK_CUCUMBER.grid_pos, UNLOCK_CUCUMBER.clone()),
+            (UNLOCK_CORN.grid_pos, UNLOCK_CORN.clone()),
+            (UNLOCK_PUMPKIN.grid_pos, UNLOCK_PUMPKIN.clone()),
+        ];
+
         Self {
-            global: vec![
-                FERTILE_SOIL.clone(),
-                GROWTH_SPEED.clone(),
-                JOY_BOOST.clone(),
-            ],
-            sunlit_nursery: Vec::new(),
+            global: global_item.into_iter().collect(),
+            sunlit_nursery: sunlit_nursery_item.into_iter().collect(),
         }
     }
 }
@@ -242,14 +252,26 @@ impl Default for UpgradeState {
 }
 
 impl UpgradeStorege {
-    pub fn get_global_modifier(&self, upgrade_id: UpgradeUID) -> f64 {
-        for upgrade in self.global.iter() {
-            if upgrade.id == upgrade_id && upgrade.current_level > 0 {
-                return upgrade.levels[upgrade.current_level - 1].value;
-            };
-        }
+    fn all_upgrages(&self) -> impl Iterator<Item = &Upgrade> {
+        self.global.values().chain(self.sunlit_nursery.values())
+    }
 
-        1.0
+    pub fn get_global_modifier(&self, upgrade_id: UpgradeUID) -> (f64, bool) {
+
+         self.all_upgrages()
+         .find(|u| u.id == upgrade_id && u.current_level > 0 )
+         .map(|u| (u.levels[u.current_level - 1].value, true))
+         .unwrap_or((1.0, false))
+    }
+
+    pub fn get_storege_category(
+        &self,
+        category: EGUISelectedCategories,
+    ) -> &HashMap<(usize, usize), Upgrade> {
+        match category {
+            EGUISelectedCategories::Global => &self.global,
+            EGUISelectedCategories::SunlitNursery => &self.sunlit_nursery,
+        }
     }
 }
 
@@ -289,10 +311,22 @@ impl TypeButton {
             TypeButton::SlotsUnLocking => None,
         };
     }
+
+    pub fn get_dependencies_upgrade(&self) -> Option<UpgradeUID> {
+        return match *self {
+            TypeButton::CucumberButton => Some(UpgradeUID::UnlockCucumber),
+            TypeButton::CornButton => Some(UpgradeUID::UnlockCorn),
+            TypeButton::PumpkinButton => Some(UpgradeUID::UnlockPumpkin),
+            _ => None,
+        };
+    }
 }
 
 impl TypePlant {
-    pub fn get_plant_image(&self, assets: &AtlasAssets) -> (Handle<Image>, Handle<TextureAtlasLayout>) {
+    pub fn get_plant_image(
+        &self,
+        assets: &AtlasAssets,
+    ) -> (Handle<Image>, Handle<TextureAtlasLayout>) {
         return match self {
             TypePlant::Tomato => (
                 assets.tomato_pot_atlas.clone(),
@@ -302,14 +336,24 @@ impl TypePlant {
                 assets.cucumber_pot_atlas.clone(),
                 assets.common_layout.clone(),
             ),
-            TypePlant::Corn => (
-                assets.corn_pot_atlas.clone(),
-                assets.common_layout.clone(),
-            ),
+            TypePlant::Corn => (assets.corn_pot_atlas.clone(), assets.common_layout.clone()),
             TypePlant::Pumpkin => (
                 assets.pumpkin_pot_atlas.clone(),
                 assets.common_layout.clone(),
             ),
         };
+    }
+}
+
+impl Upgrade {
+    pub fn get_dependencies(&self, upgrade_storege: &UpgradeStorege) -> bool {
+        self.dependencies.iter().all(|def_ip| {
+            let storege = upgrade_storege.get_storege_category(self.category);
+
+            storege
+                .values()
+                .find(|u| u.id == *def_ip)
+                .is_some_and(|u| u.current_level > 0)
+        })
     }
 }

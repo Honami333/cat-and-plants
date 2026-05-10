@@ -1,20 +1,23 @@
 use crate::schema::config::{Upgrade, UpgradeLevel};
-use crate::schema::types_and_states::{ResourceType, UpgradeUID};
+use crate::schema::types_and_states::{EGUISelectedCategories, ResourceType, UpgradeUID};
 
 pub const FERTILE_SOIL: Upgrade = Upgrade {
     id: UpgradeUID::FertileSoil,
     icon: "SOIL",
     current_level: 0,
     levels: &[SOIL_1, SOIL_2, SOIL_3],
+    dependencies: &[],
+    category: EGUISelectedCategories::Global,
+    grid_pos: (0, 0),
 };
 
-pub const SOIL_1: UpgradeLevel = UpgradeLevel {
+const SOIL_1: UpgradeLevel = UpgradeLevel {
     resource_types: &[ResourceType::CatHappiness, ResourceType::Tomatoes],
     costs: &[80.0, 30.0],
     value: 2.0,
 };
 
-pub const SOIL_2: UpgradeLevel = UpgradeLevel {
+const SOIL_2: UpgradeLevel = UpgradeLevel {
     resource_types: &[
         ResourceType::CatHappiness,
         ResourceType::Tomatoes,
@@ -24,7 +27,7 @@ pub const SOIL_2: UpgradeLevel = UpgradeLevel {
     value: 3.0,
 };
 
-pub const SOIL_3: UpgradeLevel = UpgradeLevel {
+const SOIL_3: UpgradeLevel = UpgradeLevel {
     resource_types: &[
         ResourceType::CatHappiness,
         ResourceType::Tomatoes,
@@ -40,15 +43,18 @@ pub const GROWTH_SPEED: Upgrade = Upgrade {
     icon: "SPD",
     current_level: 0,
     levels: &[SPD_1, SPD_2, SPD_3],
+    dependencies: &[],
+    category: EGUISelectedCategories::Global,
+    grid_pos: (0, 1),
 };
 
-pub const SPD_1: UpgradeLevel = UpgradeLevel {
+const SPD_1: UpgradeLevel = UpgradeLevel {
     resource_types: &[ResourceType::CatHappiness, ResourceType::Tomatoes],
     costs: &[120.0, 50.0],
     value: 1.2,
 };
 
-pub const SPD_2: UpgradeLevel = UpgradeLevel {
+const SPD_2: UpgradeLevel = UpgradeLevel {
     resource_types: &[
         ResourceType::CatHappiness,
         ResourceType::Tomatoes,
@@ -58,7 +64,7 @@ pub const SPD_2: UpgradeLevel = UpgradeLevel {
     value: 1.5,
 };
 
-pub const SPD_3: UpgradeLevel = UpgradeLevel {
+const SPD_3: UpgradeLevel = UpgradeLevel {
     resource_types: &[
         ResourceType::CatHappiness,
         ResourceType::Tomatoes,
@@ -74,15 +80,18 @@ pub const JOY_BOOST: Upgrade = Upgrade {
     icon: "JOY",
     current_level: 0,
     levels: &[JOY_1, JOY_2, JOY_3],
+    dependencies: &[],
+    category: EGUISelectedCategories::Global,
+    grid_pos: (0, 2),
 };
 
-pub const JOY_1: UpgradeLevel = UpgradeLevel {
+const JOY_1: UpgradeLevel = UpgradeLevel {
     resource_types: &[ResourceType::CatHappiness, ResourceType::Tomatoes],
     costs: &[200.0, 80.0],
     value: 1.25,
 };
 
-pub const JOY_2: UpgradeLevel = UpgradeLevel {
+const JOY_2: UpgradeLevel = UpgradeLevel {
     resource_types: &[
         ResourceType::CatHappiness,
         ResourceType::Tomatoes,
@@ -92,7 +101,7 @@ pub const JOY_2: UpgradeLevel = UpgradeLevel {
     value: 1.75,
 };
 
-pub const JOY_3: UpgradeLevel = UpgradeLevel {
+const JOY_3: UpgradeLevel = UpgradeLevel {
     resource_types: &[
         ResourceType::CatHappiness,
         ResourceType::Tomatoes,
@@ -102,3 +111,46 @@ pub const JOY_3: UpgradeLevel = UpgradeLevel {
     costs: &[5000.0, 500.0, 200.0, 50.0],
     value: 2.5,
 };
+
+pub const CARDBOARD_BOX: Upgrade = Upgrade {
+    id: UpgradeUID::CardboardBox,
+    icon: "BOX",
+    current_level: 0,
+    levels: &[BOX_LVL_1, BOX_LVL_2, BOX_LVL_3],
+    dependencies: &[
+        UpgradeUID::FertileSoil,
+        UpgradeUID::WholesaleSupply,
+        UpgradeUID::SelectiveBreeding,
+    ],
+    category: EGUISelectedCategories::Global,
+    grid_pos: (3, 0),
+};
+
+const BOX_LVL_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[ResourceType::CatHappiness, ResourceType::Tomatoes],
+    costs: &[1000.0, 200.0],
+    value: 0.95,
+};
+
+const BOX_LVL_2: UpgradeLevel = UpgradeLevel {
+    resource_types: &[ResourceType::CatHappiness, ResourceType::Cucumbers],
+    costs: &[2000.0, 200.0],
+    value: 0.9,
+};
+
+const BOX_LVL_3: UpgradeLevel = UpgradeLevel {
+    resource_types: &[ResourceType::CatHappiness, ResourceType::Corn],
+    costs: &[4000.0, 200.0],
+    value: 0.85,
+};
+
+// Стеклянная теплица: Повышает доход в локации Sunlit Nursery
+// Полка для рассады: Позволяет хранить один слот «в запасе». что иметь возможность собирать уражай с какого либо растения на любой локации
+// Усиленное удобрение: +1 к gather_amount для томатов.
+// Минеральные соли: +1 к gather_amount для огурцов.
+// Селекция семян: +1 к gather_amount для кукурузы.
+// Гормональный буст: +1 к gather_amount для тыквы
+// Возможность перетаскивать растения
+// Все виды суперс улучшений на каждое растение
+
+// Информация о улучшении,

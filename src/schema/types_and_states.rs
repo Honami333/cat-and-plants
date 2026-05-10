@@ -1,5 +1,5 @@
 use crate::schema::config::{Plant, Upgrade};
-use bevy::{math::f64, prelude::*};
+use bevy::{math::f64, platform::collections::HashMap, prelude::*};
 use strum_macros::{AsRefStr, Display, EnumIter};
 
 // Типы и Состояния
@@ -101,6 +101,10 @@ pub enum UpgradeUID {
     FertileSoil,
     WholesaleSupply,
     SelectiveBreeding,
+    UnlockCucumber,
+    UnlockCorn,
+    UnlockPumpkin,
+    CardboardBox,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display)]
@@ -120,10 +124,10 @@ pub struct Economy {
     pub storage: [f64; 6],
 }
 
-#[derive(Resource)]
+#[derive(Resource, Clone)]
 pub struct UpgradeStorege {
-    pub global: Vec<Upgrade>,
-    pub sunlit_nursery: Vec<Upgrade>,
+    pub global: HashMap<(usize, usize), Upgrade>,
+    pub sunlit_nursery: HashMap<(usize, usize), Upgrade>,
 }
 
 // Глобальные действия

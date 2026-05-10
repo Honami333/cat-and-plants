@@ -9,6 +9,7 @@ pub fn button_check(
     mut inventory: ResMut<GlobalInventory>,
     mut economy: ResMut<Economy>,
     mut count_item_type: ResMut<CountItemType>,
+    upgrade_storege: Res<UpgradeStorege>,
     button_type_query: Query<&TypeButton>,
     current_world: Res<State<CurrentWorld>>,
 ) {
@@ -21,6 +22,7 @@ pub fn button_check(
                 &mut inventory,
                 &mut economy,
                 &mut count_item_type,
+                &upgrade_storege,
                 &current_world,
                 &button_data,
             ),
@@ -52,10 +54,22 @@ fn add_plant_and_lock(
     inventory: &mut GlobalInventory,
     economy: &mut Economy,
     count_item_type: &mut CountItemType,
+    upgrade_storege: &UpgradeStorege,
     current_world: &State<CurrentWorld>,
     button_data: &TypeButton,
 ) {
     if inventory.get_slots_empty(&current_world) == false {
+        return;
+    };
+
+    let availability = if let Some(upgrade_id) = button_data.get_dependencies_upgrade() {
+        let (_, available) = upgrade_storege.get_global_modifier(upgrade_id);
+        available
+    } else {
+        true
+    };
+
+    if !availability {
         return;
     };
 
@@ -196,7 +210,7 @@ pub fn harvest(
     current_world: Res<State<CurrentWorld>>,
     upgrade_storege: Res<UpgradeStorege>,
 ) {
-    let fertile_soil_upgrade = upgrade_storege.get_global_modifier(UpgradeUID::FertileSoil);
+    let (value, _) = upgrade_storege.get_global_modifier(UpgradeUID::FertileSoil);
 
     let Some(inv_world) = current_world.get_inv_mut(&mut inv) else {
         return;
@@ -215,10 +229,7 @@ pub fn harvest(
             continue;
         };
 
-        resources_inv.add(
-            plant.species_id as usize + 1,
-            plant.gather_amount * fertile_soil_upgrade,
-        );
+        resources_inv.add(plant.species_id as usize + 1, plant.gather_amount * value);
 
         plant.state = PlantStateGrowth::Seed;
         plant.growth_score = 0.0;

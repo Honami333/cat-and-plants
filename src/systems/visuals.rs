@@ -266,7 +266,9 @@ fn button_buy_text(count_item: &[usize], b_type: &TypeButton) -> String {
     if final_count < plant.max_count {
         format!(
             "😸 {}\ncount:\n{} / {}",
-            format_number(plant.price[final_count]),
+            format_number(
+
+            plant.price[final_count]),
             final_count,
             plant.max_count
         )
