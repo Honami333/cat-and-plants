@@ -1,0 +1,81 @@
+use crate::schema::{config::*, resources::*, types_and_states::*};
+use bevy::prelude::*;
+
+// Загруста ассетов
+pub fn load_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let assets = GameAssets {
+        pot_stands: asset_server.load("slots/pot_stands.png"),
+
+        sunlit_nursery: asset_server.load("world/sunlit_nursery.png"),
+        warm_paws_porch: asset_server.load("world/warm_paws_porch.png"),
+
+        button_buy_tomato: asset_server.load("button/button_buy_tomato.png"),
+        button_buy_cucumber: asset_server.load("button/button_buy_cucumber.png"),
+        button_buy_corn: asset_server.load("button/button_buy_corn.png"),
+        button_buy_pumpkin: asset_server.load("button/button_buy_pumpkin.png"),
+        button_slots_unlocking: asset_server.load("button/button_slots_unlocking.png"),
+    };
+    commands.insert_resource(assets);
+}
+
+//Загрузка шейдеров
+pub fn load_shaders(mut commands: Commands, mut materials: ResMut<Assets<ShaderMaterial>>) {
+    let shaders = ShaderAssets {
+        sn_window_light: materials.add(ShaderMaterial {
+            color: LinearRgba::new(1.0, 0.6, 0.5, 0.2),
+            scale: 0.004,
+            original_scale: 0.004,
+            mesh_scale: 650.0,
+            shader_type: ShaderType::SNWindowLight as u32,
+        }),
+        wpp_window_light: materials.add(ShaderMaterial {
+            color: LinearRgba::new(1.0, 0.6, 0.5, 0.2),
+            scale: 0.004,
+            original_scale: 0.004,
+            mesh_scale: 650.0,
+            shader_type: ShaderType::WPPWindowLight as u32,
+        }),
+    };
+    commands.insert_resource(shaders);
+}
+
+//Загрузка атласов
+pub fn load_atlas(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut layouts: ResMut<Assets<TextureAtlasLayout>>,
+) {
+    let layout_4x1x128 = layouts.add(TextureAtlasLayout::from_grid(
+        UVec2::new(128, 128),
+        4,
+        1,
+        None,
+        None,
+    ));
+
+    let layout_4x1x40 = layouts.add(TextureAtlasLayout::from_grid(
+        UVec2::new(40, 40),
+        4,
+        1,
+        None,
+        None,
+    ));
+
+    let atlas = AtlasAssets {
+        pockets_of_improvements: asset_server.load("pockets_of_improvements.png"),
+        tomato_pot_atlas: asset_server.load("plant/tomato_pot_atlas.png"),
+        cucumber_pot_atlas: asset_server.load("plant/cucumber_pot_atlas.png"),
+        corn_pot_atlas: asset_server.load("plant/corn_pot_atlas.png"),
+        pumpkin_pot_atlas: asset_server.load("plant/pumpkin_pot_atlas.png"),
+        common_layout_x40: layout_4x1x40,
+        common_layout_x128: layout_4x1x128,
+    };
+    commands.insert_resource(atlas);
+}
+
+pub fn load_font(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = FontAssets {
+        emoji_font: asset_server.load("fonts/segoe-ui-emoji_0.ttf"),
+    };
+    commands.insert_resource(font);
+}
