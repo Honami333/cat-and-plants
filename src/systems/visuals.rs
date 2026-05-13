@@ -1,10 +1,9 @@
 use crate::content::world::sunlit_nursery::*;
 use crate::content::world::warm_paws_porch::*;
-use crate::schema::{config::*, resources::*, types_and_states::*, world_components::*};
+use crate::schema::{config::*, resources::*, types_and_states::*, world_components::*, save_file::*};
 use crate::systems::lifecycle::item_spawn;
 use bevy::prelude::*;
 use bevy::ui::UiScale;
-use bevy::window::PrimaryWindow;
 use bevy::ecs::relationship::Relationship;
 
 // Обновление визуала в инвенторе
@@ -112,45 +111,39 @@ pub fn update_scene_scale(
     )>,
     mut materials: ResMut<Assets<ShaderMaterial>>,
     mut ui_scale: ResMut<UiScale>,
-    mut worlds: ResMut<WorldScale>,
-    window: Single<&Window, With<PrimaryWindow>>,
+    world_scale: ResMut<WorldScale>,
     shader_query: Query<&MeshMaterial2d<ShaderMaterial>>,
 ) {
-    // Задний фон и общий скейл
-    let scale = if let Ok((mut bg_trans, bg_info)) = set.p0().single_mut() {
-        let s = (window.width() / bg_info.wh.x).min(window.height() / bg_info.wh.y);
-        bg_trans.scale = Vec3::splat(s);
-        s
-    } else {
-        return;
-    };
+    let s = world_scale.scale;
 
-    worlds.scale = scale;
+    if let Ok((mut bg_trans, _)) = set.p0().single_mut() {
+        bg_trans.scale = Vec3::splat(s);
+    } else { return; }
 
     // Слоты
     for (mut slot_trans, slot_info) in set.p1().iter_mut() {
-        slot_trans.translation = (slot_info.base_pos * scale).extend(1.0);
-        slot_trans.scale = Vec3::splat(scale);
+        slot_trans.translation = (slot_info.base_pos * s).extend(1.0);
+        slot_trans.scale = Vec3::splat(s);
     }
 
     // Кнопки
     for (mut button_trans, button_info) in set.p2().iter_mut() {
-        button_trans.translation = (button_info.base_pos * scale).extend(5.0);
-        button_trans.scale = Vec3::splat(scale);
+        button_trans.translation = (button_info.base_pos * s).extend(5.0);
+        button_trans.scale = Vec3::splat(s);
     }
 
     // Шейдеры
     for material_handle in shader_query.iter() {
         if let Some(material) = materials.get_mut(&material_handle.0) {
-            material.scale = material.original_scale / scale;
+            material.scale = material.original_scale / s;
 
             for mut transform in set.p3().iter_mut() {
-                transform.scale = Vec3::splat(material.mesh_scale * scale);
+                transform.scale = Vec3::splat(material.mesh_scale * s);
             }
         }
     }
 
-    ui_scale.0 = scale;
+    ui_scale.0 = s;
 }
 
 pub fn shader_animation(

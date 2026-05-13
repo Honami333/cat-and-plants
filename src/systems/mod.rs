@@ -6,6 +6,7 @@ use ui::UiPlugin;
 
 mod interaction;
 mod lifecycle;
+mod save;
 mod simulation;
 mod ui;
 mod visuals;
@@ -17,27 +18,27 @@ impl Plugin for SystemPlugin {
         app.add_plugins(EguiPlugin::default());
         app.add_plugins(UiPlugin);
 
-        app.add_systems(OnEnter(GameState::Playing), (
+        app.add_systems(OnEnter(GameState::Menu), (
             lifecycle::camera_spawn,
-            lifecycle::add_start
         ));
 
-        app.add_systems(
-            OnExit(CurrentWorld::WarmPawsPorch),
-            lifecycle::cleanup_system,
-        );
-        app.add_systems(
-            OnExit(CurrentWorld::SunlitNursery),
-            lifecycle::cleanup_system,
-        );
+        app.add_systems(OnEnter(GameState::LoadGame), (
+            save::final_load_game,
+        ));
+
+        app.add_systems(OnEnter(GameState::Playing), (
+            lifecycle::spawn_world_system,
+        ));
+        
+        app.add_systems(Update, simulation::set_global_scale);
 
         app.add_systems(
-            OnEnter(CurrentWorld::WarmPawsPorch),
-            lifecycle::spawn_world_system,
-        );
-        app.add_systems(
-            OnEnter(CurrentWorld::SunlitNursery),
-            lifecycle::spawn_world_system,
+            Update, (
+                lifecycle::cleanup_system,
+                lifecycle::spawn_world_system,
+        )
+            .chain()
+            .run_if(state_changed::<CurrentWorld>.and(in_state(GameState::Playing)))
         );
 
         app.add_systems(
@@ -57,6 +58,9 @@ impl Plugin for SystemPlugin {
                 .chain()
                 .run_if(in_state(GameState::Playing)),
         );
+
+        app.add_systems(Update, save::auto_save_system.run_if(in_state(GameState::Playing)));
+        app.add_systems(Last, save::auto_save_system.run_if(in_state(GameState::Playing)));
 
         app.add_observer(interaction::end_drag_item);
         app.add_observer(interaction::start_drag_item);

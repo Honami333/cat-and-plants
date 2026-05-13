@@ -1,5 +1,5 @@
 use crate::content::world::sunlit_nursery::*;
-use crate::schema::{resources::*, types_and_states::*};
+use crate::schema::{resources::*, types_and_states::*, save_file::*};
 use crate::systems::visuals::format_number;
 use bevy::prelude::*;
 use crate::systems::ui::*;
@@ -16,13 +16,9 @@ pub fn trading_ui_system(
     font: Res<FontAssets>,
     upgrade_storege: Res<UpgradeStorege>,
 ) {
-    if *current_world.get() != CurrentWorld::WarmPawsPorch {
-        return;
-    };
+    if *current_world.get() != CurrentWorld::WarmPawsPorch { return; };
 
-    let Ok(ctx) = contexts.ctx_mut() else {
-        return;
-    };
+    let Ok(ctx) = contexts.ctx_mut() else { return; };
 
     *fonts_loaded = func_fonts_loaded(ctx, *fonts_loaded, &all_fonts, &font);
 

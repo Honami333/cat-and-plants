@@ -4,7 +4,6 @@
 use bevy::prelude::*;
 use schema::SchemaPlugin;
 use systems::SystemPlugin;
-
 mod assets;
 mod content;
 mod schema;

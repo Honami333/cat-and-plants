@@ -2,6 +2,17 @@ use crate::schema::types_and_states::*;
 use bevy::prelude::*;
 use bevy::reflect::TypePath;
 use bevy::render::render_resource::*;
+use serde::{Serialize, Deserialize};
+
+
+fn default_static_slice<T>() -> &'static [T] {
+    &[]
+}
+
+fn default_static_str() -> &'static str {
+    ""
+}
+
 
 // Конфиги
 #[derive(Component, Clone, Copy)]
@@ -25,7 +36,7 @@ pub struct WorldSettingsSlot { // Слот инвенторя
     pub slot_grid_scale: u8,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Plant { // Растение
     pub growth_score: f64,
     pub growth_thereshold: f64,
@@ -36,6 +47,7 @@ pub struct Plant { // Растение
     pub state: PlantStateGrowth,
     pub max_count: usize,
 
+    #[serde(skip, default = "default_static_slice")]
     pub price: &'static [f64],
 }
 
@@ -62,16 +74,22 @@ pub struct ShaderMaterial { // Конфиг шейдеров
     pub mesh_scale: f32,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct Upgrade {
+    #[serde(skip, default = "default_static_str")]
     pub name: &'static str,
+    #[serde(skip, default = "default_static_str")]
     pub description: &'static str,
+
+    #[serde(skip, default = "default_static_slice")]
+    pub levels: &'static [UpgradeLevel],
+    #[serde(skip, default = "default_static_slice")]
+    pub dependencies: &'static [UpgradeUID],
+
 
     pub id: UpgradeUID,
     pub texture_stage: UpgradeStage,
     pub current_level: usize,
-    pub levels: &'static [UpgradeLevel],
-    pub dependencies: &'static [UpgradeUID],
     pub category: EGUISelectedCategories,
     pub grid_pos: (usize, usize),
 }
@@ -85,4 +103,11 @@ pub struct UpgradeLevel {
 
 pub struct SlotPrices {
     pub prices: &'static [f64],
+}
+
+#[derive(Clone, Copy, Default)]
+pub struct SaveSlot {
+    pub stage: SlotTextureState,
+    pub click: usize,
+    pub last_data_text: &'static str,
 }

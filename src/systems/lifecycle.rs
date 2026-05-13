@@ -4,13 +4,6 @@ use crate::schema::{config::*, resources::*, types_and_states::*, world_componen
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 
-pub fn add_start(mut economy: ResMut<Economy>) {
-    economy.add(ResourceType::CatHappiness as usize, 10.0);
-    economy.add(ResourceType::Tomatoes as usize, 0.0);
-    economy.add(ResourceType::Cucumbers as usize, 0.0);
-    economy.add(ResourceType::Corn as usize, 0.0);
-    economy.add(ResourceType::Pumpkin as usize, 0.0);
-}
 
 pub fn camera_spawn(mut commands: Commands) {
     commands.spawn(Camera2d::default());

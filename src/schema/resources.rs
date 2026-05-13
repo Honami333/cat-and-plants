@@ -27,11 +27,15 @@ pub struct ShaderAssets {
 #[derive(Resource)]
 pub struct AtlasAssets {
     pub pockets_of_improvements: Handle<Image>,
+    pub save_slots_atlas: Handle<Image>,
+
     pub tomato_pot_atlas: Handle<Image>,
     pub cucumber_pot_atlas: Handle<Image>,
     pub corn_pot_atlas: Handle<Image>,
     pub pumpkin_pot_atlas: Handle<Image>,
+
     pub common_layout_x128: Handle<TextureAtlasLayout>,
+    pub common_layout_x100_240: Handle<TextureAtlasLayout>,
     pub common_layout_x40: Handle<TextureAtlasLayout>,
 }
 

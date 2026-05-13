@@ -77,7 +77,7 @@ const SPD_3: UpgradeLevel = UpgradeLevel {
         ResourceType::Cucumbers,
         ResourceType::Corn,
     ],
-    costs: &[250.0, 400.0, 150.0, 80.0],
+    costs: &[2500.0, 400.0, 150.0, 80.0],
     value: Some(2.0),
 };
 

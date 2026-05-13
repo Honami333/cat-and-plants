@@ -1,6 +1,7 @@
-use crate::schema::config::{Plant, Upgrade};
-use bevy::{math::f64, platform::collections::HashMap, prelude::*};
+use crate::schema::config::Plant;
+use bevy::{math::f64, prelude::*};
 use strum_macros::{AsRefStr, Display, EnumIter};
+use serde::{Serialize, Deserialize};
 
 // Типы и Состояния
 #[derive(States, Debug, Clone, Eq, PartialEq, Hash, Default)]
@@ -8,14 +9,37 @@ pub enum GameState {
     // Стадии загрузки
     #[default]
     Loading,
+    Menu,
+    LoadGame,
     Playing,
 }
 
-#[derive(States, Hash, Resource, Default, Clone, Copy, PartialEq, Eq, Debug, Display)]
-pub enum CurrentWorld {
-    // Выбраный мир
-    WarmPawsPorch,
+#[derive(Default, PartialEq, Eq, Debug, Clone, Copy)]
+pub enum MenuPage {
     #[default]
+    Main,
+    SaveSlot,
+    Settings,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Default, Clone, Copy)]
+pub enum SlotTextureState {
+    #[default]
+    Empty = 0,
+    Occupied = 1,
+}
+
+#[derive(States, Hash, Clone, Copy, PartialEq, Eq, Debug, Display)]
+pub enum SvSlBT {
+    Start,
+    Continue,
+    Delete
+}
+
+#[derive(States, Hash, Resource, Default, Clone, Copy, PartialEq, Eq, Debug, Display)]
+pub enum CurrentWorld { // Выбраный мир
+    #[default]
+    WarmPawsPorch,
     SunlitNursery,
 }
 
@@ -54,7 +78,7 @@ pub enum TypeButton {
     SlotsUnLocking,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum SlotState {
     // Состояние слота
     Locked,
@@ -62,7 +86,7 @@ pub enum SlotState {
     Occupied(Plant),
 }
 
-#[derive(Component, Clone, Copy, PartialEq, Debug)]
+#[derive(Component, Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub enum TypePlant {
     // Тип растения
     Tomato,
@@ -71,7 +95,7 @@ pub enum TypePlant {
     Pumpkin,
 }
 
-#[derive(Component, Clone, Copy, PartialEq, Debug)]
+#[derive(Component, Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub enum PlantStateGrowth {
     Seed,
     Sprout,
@@ -101,7 +125,7 @@ pub enum ShaderType {
     WPPWindowLight = 1,
 }
 
-#[derive(Clone, Copy, PartialEq, Display, EnumIter)]
+#[derive(Clone, Copy, PartialEq, Display, EnumIter, Serialize, Deserialize)]
 pub enum UpgradeUID {
     #[strum(serialize = "Fertile Soil")]
     FertileSoil,
@@ -119,7 +143,7 @@ pub enum UpgradeUID {
     UnlockPumpkin,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum UpgradeStage {
     Locked,
     Available,
@@ -127,27 +151,10 @@ pub enum UpgradeStage {
     Max,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display)]
+#[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display, Serialize, Deserialize)]
 pub enum EGUISelectedCategories {
     Global,
     SunlitNursery,
-}
-
-// Список инвенторей
-#[derive(Resource)]
-pub struct GlobalInventory {
-    pub sunlit_nursery_inv: [SlotState; 16],
-}
-
-#[derive(Resource, Default)]
-pub struct Economy {
-    pub storage: [f64; 6],
-}
-
-#[derive(Resource, Clone)]
-pub struct UpgradeStorege {
-    pub global: HashMap<(usize, usize), Upgrade>,
-    pub sunlit_nursery: HashMap<(usize, usize), Upgrade>,
 }
 
 // Глобальные действия
@@ -175,7 +182,7 @@ pub struct UpgradeState {
     pub selected_categories: EGUISelectedCategories,
 }
 
-#[derive(Resource, Default)]
-pub struct CountItemType {
-    pub sunlit_nursery_inv: [usize; 4],
+#[derive(Debug, Resource, Default)]
+pub struct MenuCurPage {
+    pub page: MenuPage,
 }

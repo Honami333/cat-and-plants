@@ -61,14 +61,26 @@ pub fn load_atlas(
         None,
     ));
 
+    let layout_2x1x100x240 = layouts.add(TextureAtlasLayout::from_grid(
+        UVec2::new(100, 240),
+        2,
+        1,
+        None,
+        None,
+    ));
+
     let atlas = AtlasAssets {
         pockets_of_improvements: asset_server.load("pockets_of_improvements.png"),
+        save_slots_atlas: asset_server.load("save_slots_atlas.png"),
+
         tomato_pot_atlas: asset_server.load("plant/tomato_pot_atlas.png"),
         cucumber_pot_atlas: asset_server.load("plant/cucumber_pot_atlas.png"),
         corn_pot_atlas: asset_server.load("plant/corn_pot_atlas.png"),
         pumpkin_pot_atlas: asset_server.load("plant/pumpkin_pot_atlas.png"),
+
         common_layout_x40: layout_4x1x40,
         common_layout_x128: layout_4x1x128,
+        common_layout_x100_240: layout_2x1x100x240,
     };
     commands.insert_resource(atlas);
 }

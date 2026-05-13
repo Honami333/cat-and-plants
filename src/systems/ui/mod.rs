@@ -1,9 +1,10 @@
 use bevy::prelude::*;
-use bevy_egui::{EguiPrimaryContextPass, egui::{self, Context}};
+use bevy_egui::{EguiPrimaryContextPass, egui::{self, Context}, EguiContexts, EguiTextureHandle};
 
-use crate::schema::resources::FontAssets;
+use crate::schema::{resources::FontAssets, types_and_states::GameState};
 
 mod map;
+mod menu;
 mod nurturing;
 mod upgrades;
 
@@ -18,7 +19,13 @@ impl Plugin for UiPlugin {
                 map::map_ui_system,
                 upgrades::show_upgrade_grid,
             )
-                .chain(),
+                .chain()
+                .run_if(in_state(GameState::Playing))
+        );
+
+        app.add_systems(EguiPrimaryContextPass, (
+                menu::game_menu
+            ).run_if(in_state(GameState::Menu))
         );
     }
 }
@@ -46,4 +53,48 @@ pub fn func_fonts_loaded(ctx: &mut Context, fonts_loaded: bool, all_fonts: &Asse
 
         true
     } else { false }
+}
+
+pub fn create_image<'a> (
+    handle_texture_id: egui::TextureId,
+    atlas_layout: &'a TextureAtlasLayout,
+    i: usize,
+    size: (f32, f32),
+    s: f32
+) -> egui::Image<'a> {
+    let rect = atlas_layout.textures[i];
+
+    let atlas_size = atlas_layout.size.as_vec2();
+
+    let uv  = egui::Rect::from_min_max(
+        egui::pos2(rect.min.x as f32 / atlas_size.x, rect.min.y as f32 / atlas_size.y), 
+        egui::pos2(rect.max.x as f32 / atlas_size.x, rect.max.y as f32 / atlas_size.y)
+    );
+
+    let image = egui::Image::new(egui::load::SizedTexture::new(
+        handle_texture_id,
+        [size.0 * s, size.1 * s],
+    )).uv(uv)
+    .bg_fill(egui::Color32::TRANSPARENT);
+
+    image
+}
+
+pub fn func_assets_loaded<'a> (
+    mut assets_loaded: bool,
+    mut handle_texture_id: egui::TextureId,
+    contexts: &mut EguiContexts,
+    layouts: &'a Assets<TextureAtlasLayout>,
+    get_image: Handle<Image>,
+    get_layouts: &Handle<TextureAtlasLayout>,
+) -> (bool, Option<&'a TextureAtlasLayout>, egui::TextureId) {
+    if !assets_loaded {
+        assets_loaded = true;
+
+        handle_texture_id = contexts.add_image(EguiTextureHandle::Strong(get_image.clone()));
+    }
+
+    let atlas_layout = layouts.get(get_layouts);
+
+    return (assets_loaded, atlas_layout, handle_texture_id);
 }

@@ -6,6 +6,7 @@ use bevy::{prelude::*, sprite_render::Material2dPlugin};
 pub mod config;
 pub mod logic;
 pub mod resources;
+pub mod save_file;
 pub mod types_and_states;
 pub mod world_components;
 
@@ -16,14 +17,16 @@ impl Plugin for SchemaPlugin {
         app.init_state::<types_and_states::GameState>();
         app.init_state::<types_and_states::CurrentWorld>();
 
-        app.init_resource::<types_and_states::GlobalInventory>()
+        app.init_resource::<save_file::GlobalInventory>()
+            .init_resource::<save_file::Economy>()
+            .init_resource::<save_file::CountItemType>()
+            .init_resource::<save_file::UpgradeStorege>()
+            .init_resource::<save_file::SaveSlotInv>()
             .init_resource::<types_and_states::DragItem>()
             .init_resource::<types_and_states::WorldScale>()
             .init_resource::<types_and_states::TradeState>()
             .init_resource::<types_and_states::UpgradeState>()
-            .init_resource::<types_and_states::Economy>()
-            .init_resource::<types_and_states::CountItemType>()
-            .init_resource::<types_and_states::UpgradeStorege>();
+            .init_resource::<types_and_states::MenuCurPage>();
 
         app.add_plugins(Material2dPlugin::<config::ShaderMaterial>::default());
 
@@ -47,6 +50,6 @@ pub fn check_assets_ready(
     font: Option<Res<FontAssets>>,
 ) {
     if assets.is_some() && shaders.is_some() && atlas.is_some() && font.is_some() {
-        next_state.set(types_and_states::GameState::Playing)
+        next_state.set(types_and_states::GameState::Menu)
     }
 }

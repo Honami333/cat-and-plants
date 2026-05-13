@@ -1,7 +1,7 @@
-use crate::schema::{config::Upgrade, resources::*, types_and_states::*};
+use crate::schema::{config::Upgrade, resources::*, types_and_states::*, save_file::*};
 use bevy::prelude::*;
 use crate::systems::{ui::*, visuals::*};
-use bevy_egui::{EguiContexts, EguiTextureHandle, egui};
+use bevy_egui::{EguiContexts, egui};
 use strum::IntoEnumIterator;
 
 pub fn show_upgrade_grid(
@@ -18,15 +18,21 @@ pub fn show_upgrade_grid(
     all_fonts: Res<Assets<Font>>,
     font: Res<FontAssets>,
 ) {
-    if !*assets_loaded {
-        *assets_loaded = true;
-
-        *handle_texture_id = contexts.add_image(EguiTextureHandle::Strong(assets.pockets_of_improvements.clone()));
-    }
+    let (new_bool, Some(atlas_layout), text_id) = 
+        func_assets_loaded(
+            *assets_loaded,
+            *handle_texture_id,
+            &mut contexts,
+            &layouts,
+            assets.pockets_of_improvements.clone(),
+            &assets.common_layout_x40,
+        ) else { return; };
     
+    *assets_loaded = new_bool;
+    *handle_texture_id = text_id;
+
     let Ok(ctx) = contexts.ctx_mut() else { return; };
 
-    let Some(atlas_layout) = layouts.get(&assets.common_layout_x40) else { return; };
 
     *fonts_loaded = func_fonts_loaded(ctx, *fonts_loaded, &all_fonts, &font);
 
@@ -40,7 +46,7 @@ pub fn show_upgrade_grid(
     };
 
     egui::Window::new("Garden Upgrades")
-        .anchor(egui::Align2::CENTER_BOTTOM, [0.0 * s, -10.0 * s])
+        .anchor(egui::Align2::CENTER_BOTTOM, [0.0, -10.0 * s])
         .fixed_size([880.0 * s, 400.0 * s])
         .resizable(false)
         .constrain(true)
@@ -70,7 +76,7 @@ pub fn show_upgrade_grid(
                                         if let Some(upgrade) = cur_storage.get_mut(&(row, col)) {
                                             let i = upgrade.texture_stage as usize;
                                             
-                                            let image = create_image(*handle_texture_id, &atlas_layout, i, s);
+                                            let image = create_image(*handle_texture_id, &atlas_layout, i,  (80.0, 80.0), s);
 
                                             add_upgrade(ui, upgrade, &mut economy, &upgrade_storege_clone, s.clone(), image);
                                         } else {
@@ -147,7 +153,8 @@ fn add_upgrade(
     egui::Image) {
     let mut up_value =  1.0;
     
-    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::CardboardBox) {up_value = value};
+    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::CardboardBox) &&
+        upgrade.id != UpgradeUID::CardboardBox {up_value = value};
 
     let size = egui::vec2(80.0 * s, 80.0 * s);
 
@@ -160,14 +167,14 @@ fn add_upgrade(
     if response.clicked() && dependencies { upgrade_lvl_up(upgrade_storege, upgrade, economy); };
 
     response.on_hover_ui(|ui| {
-        ui.set_max_width(400.0);
+        ui.set_max_width(400.0 * s);
 
         ui.heading(upgrade.name);
 
         ui.label(upgrade.description);
 
         if !dependencies {
-            ui.add_space(5.0);
+            ui.add_space(5.0 * s);
 
             ui.colored_label(block_color, format!("Required dependencies: {}", upgrade.dependencies.len()));
 
@@ -237,36 +244,17 @@ fn add_upgrade(
                         columns[1].separator();
 
                         for (res, cost) in (level.resource_types).iter().zip(level.costs) {
+                            let cur_eco_res = economy.get_item(*res as usize);
 
-                            let is_economy_color = if economy.get_item(*res as usize) >= *cost * up_value { next_lvl_color } else { block_color };
+                            let is_economy_color = if cur_eco_res >= *cost * up_value { next_lvl_color } else { block_color };
 
                             columns[1].add_space(5.0);
 
-                            columns[1].colored_label(is_economy_color, format!("{}: {}", res.to_string(), format_number(*cost * up_value)));
+                            columns[1].colored_label(is_economy_color, format!("{}: {} / {}", res.to_string(), format_number(cur_eco_res), format_number(*cost * up_value)));
                         }
                     };
                 };
             };
         });
     });
-}
-
-
-fn create_image<'a> (handle_texture_id: egui::TextureId, atlas_layout: &'a TextureAtlasLayout, i: usize, s: f32) -> egui::Image<'a> {
-    let rect = atlas_layout.textures[i];
-
-    let atlas_size = atlas_layout.size.as_vec2();
-
-    let uv  = egui::Rect::from_min_max(
-        egui::pos2(rect.min.x as f32 / atlas_size.x, rect.min.y as f32 / atlas_size.y), 
-        egui::pos2(rect.max.x as f32 / atlas_size.x, rect.max.y as f32 / atlas_size.y)
-    );
-
-    let image = egui::Image::new(egui::load::SizedTexture::new(
-        handle_texture_id,
-        [80.0 * s, 80.0 * s],
-    )).uv(uv)
-    .bg_fill(egui::Color32::TRANSPARENT);
-
-    image
 }

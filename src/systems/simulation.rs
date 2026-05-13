@@ -1,5 +1,5 @@
-use crate::schema::types_and_states::*;
-use bevy::prelude::*;
+use crate::schema::{types_and_states::*, save_file::*};
+use bevy::{prelude::*, window::PrimaryWindow};
 
 // Механика роста
 pub fn plant_growth(mut inv: ResMut<GlobalInventory>, upgrade_storege: Res<UpgradeStorege>) {
@@ -27,4 +27,14 @@ pub fn plant_growth(mut inv: ResMut<GlobalInventory>, upgrade_storege: Res<Upgra
             }
         }
     }
+}
+
+
+pub fn set_global_scale(
+    mut world_scale: ResMut<WorldScale>,
+    window: Single<&Window, With<PrimaryWindow>>,
+) {
+    let s  = (window.width() / 640.0).min(window.height() / 360.0);
+
+    world_scale.scale = s;
 }
