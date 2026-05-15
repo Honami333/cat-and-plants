@@ -107,12 +107,11 @@ pub fn update_scene_scale(
         Query<(&mut Transform, &ScaleBackground)>,
         Query<(&mut Transform, &Slot)>,
         Query<(&mut Transform, &MyButton)>,
-        Query<&mut Transform, With<ShaderMesh>>,
+        Query<(&mut Transform, &MeshMaterial2d<ShaderMaterial>), With<ShaderMesh>>,
     )>,
     mut materials: ResMut<Assets<ShaderMaterial>>,
     mut ui_scale: ResMut<UiScale>,
     world_scale: ResMut<WorldScale>,
-    shader_query: Query<&MeshMaterial2d<ShaderMaterial>>,
 ) {
     let s = world_scale.scale;
 
@@ -133,15 +132,13 @@ pub fn update_scene_scale(
     }
 
     // Шейдеры
-    for material_handle in shader_query.iter() {
+    for (mut transform, material_handle) in set.p3().iter_mut() {
         if let Some(material) = materials.get_mut(&material_handle.0) {
             material.scale = material.original_scale / s;
 
-            for mut transform in set.p3().iter_mut() {
-                transform.scale = Vec3::splat(material.mesh_scale * s);
-            }
-        }
-    }
+            transform.scale = Vec3::splat(material.mesh_scale * s);
+        };
+    };
 
     ui_scale.0 = s;
 }

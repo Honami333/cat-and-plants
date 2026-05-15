@@ -27,6 +27,9 @@ pub fn load_shaders(mut commands: Commands, mut materials: ResMut<Assets<ShaderM
             original_scale: 0.004,
             mesh_scale: 650.0,
             shader_type: ShaderType::SNWindowLight as u32,
+            light_shaders: 1,
+            dust_particles: 1,
+            dust_amount: 1.0,
         }),
         wpp_window_light: materials.add(ShaderMaterial {
             color: LinearRgba::new(1.0, 0.6, 0.5, 0.2),
@@ -34,6 +37,9 @@ pub fn load_shaders(mut commands: Commands, mut materials: ResMut<Assets<ShaderM
             original_scale: 0.004,
             mesh_scale: 650.0,
             shader_type: ShaderType::WPPWindowLight as u32,
+            light_shaders: 1,
+            dust_particles: 1,
+            dust_amount: 1.0,
         }),
     };
     commands.insert_resource(shaders);

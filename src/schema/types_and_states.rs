@@ -36,7 +36,7 @@ pub enum SvSlBT {
     Delete
 }
 
-#[derive(States, Hash, Resource, Default, Clone, Copy, PartialEq, Eq, Debug, Display)]
+#[derive(States, Hash, Resource, Default, Clone, Copy, PartialEq, Eq, Debug, Display, Serialize, Deserialize)]
 pub enum CurrentWorld { // Выбраный мир
     #[default]
     WarmPawsPorch,
@@ -157,6 +157,12 @@ pub enum EGUISelectedCategories {
     SunlitNursery,
 }
 
+#[derive(Resource, Clone, Copy, Serialize, Deserialize, Display, PartialEq, Eq)]
+pub enum ScreenMode  {
+    Windowed,
+    Fullscreen,
+}
+
 // Глобальные действия
 #[derive(Resource, Default)]
 pub struct DragItem {
@@ -185,4 +191,5 @@ pub struct UpgradeState {
 #[derive(Debug, Resource, Default)]
 pub struct MenuCurPage {
     pub page: MenuPage,
+    pub game_menu: bool,
 }

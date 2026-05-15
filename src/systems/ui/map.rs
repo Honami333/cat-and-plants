@@ -21,7 +21,7 @@ pub fn map_ui_system(
         ..default()
     };
 
-    egui::Window::new("")
+    egui::Window::new("Map")
         .anchor(egui::Align2::RIGHT_TOP, [-10.0 * s, 10.0 * s])
         .fixed_size([320.0 * s, 240.0 * s])
         .collapsible(false)

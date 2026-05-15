@@ -1,17 +1,48 @@
 [package]
 name = "cat_and_plants"
-version = "0.1.0"
+version = "0.6.0"
 edition = "2024"
 
+# [lib]
+# name = "cat_and_plants_lib"
+# path = "src/lib.rs"
+
+# [lib]
+# name = "cat_and_plants"
+# crate-type = ["lib", "cdylib"]
+
+# [[bin]]
+# name = "cat_and_plants_bin"
+# path = "src/main.rs"
+
+# [package.metadata.android]
+# package = "com.honami.cat_and_plants"
+# label = "Cat and Plants"
+# assets = "assets"
+# min_sdk_version = 23
+# target_sdk_version = 31
+
+# runtime = "game_activity"
+
+# [package.metadata.android.signing.release]
+# path = "my-release-key.keystore"
+# keystore_password = "123456"
+# key_alias = "my-key-alias"
+# key_password = "123456"
+
+
+# [package.metadata.cargo-apple.ios]
+# frameworks = ["AudioToolbox"]
+
 [dependencies]
-bevy = "0.18"
+bevy = { version = "0.18", features = ["android_shared_stdcxx"] }
 bevy_egui = "0.39.1"
 
 strum = "0.28"
 strum_macros = "0.28"
 
 serde = { version = "1.0", features = ["derive"] }
+ron = "0.8"
 directories = "5.0"
-bincode = "1.3"
 aes-gcm = "0.10"
 chrono = "0.4"

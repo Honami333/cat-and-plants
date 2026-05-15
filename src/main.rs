@@ -1,7 +1,6 @@
-//#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 
-// use bevy::{prelude::*, window::WindowMode};
-use bevy::prelude::*;
+use bevy::{prelude::*, window::WindowMode};
 use schema::SchemaPlugin;
 use systems::SystemPlugin;
 mod assets;
@@ -15,7 +14,9 @@ fn main() {
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        present_mode: bevy::window::PresentMode::AutoVsync,
+                        mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
+                        position: WindowPosition::Centered(MonitorSelection::Primary),
+                        resizable: false,
                         title: "cat and plants".into(),
                         ..default()
                     }),
@@ -28,4 +29,4 @@ fn main() {
         .run();
 }
 
-// mode: WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+

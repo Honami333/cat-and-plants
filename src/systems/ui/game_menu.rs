@@ -1,0 +1,151 @@
+use bevy::prelude::*;
+use bevy_egui::{EguiContexts, egui, egui::Response};
+use crate::schema::{types_and_states::*, save_file::*};
+use crate::systems::{ui::main_menu::exit_clicked, save::*};
+
+
+pub fn game_menu(
+    mut contexts: EguiContexts,
+    mut game_next_state: ResMut<NextState<GameState>>,
+    mut exit_event: MessageWriter<AppExit>,
+    mut menu_page: ResMut<MenuCurPage>,
+    mut save_slot_inv: ResMut<SaveSlotInv>,
+    mut up_storege: ResMut<UpgradeStorege>,
+    mut global_storege: ResMut<GlobalInventory>,
+    mut eco_storege: ResMut<Economy>,
+    mut cit_storege: ResMut<CountItemType>,
+    mut current_world: ResMut<NextState<CurrentWorld>>,
+    world: Res<State<CurrentWorld>>,
+    game_state: Res<State<GameState>>,
+    world_scale: Res<WorldScale>,
+) {
+    if *game_state != GameState::Playing { return; };
+
+    let Ok(ctx) = contexts.ctx_mut() else { return; };
+
+    let s = world_scale.scale;
+
+    let my_frame = egui::Frame {
+        fill: egui::Color32::from_rgba_unmultiplied(0, 0, 0, 0),
+        inner_margin: 5.0.into(),
+        ..default()
+    };
+
+    egui::Window::new("Game Menu")
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+        .fixed_size([160.0 * s, 185.0 * s])
+        .collapsible(false)
+        .resizable(false)
+        .title_bar(false)
+        .frame(my_frame)
+        .show(ctx, |ui| {
+            game_menu_button(ctx, &mut menu_page, s);
+
+            if menu_page.game_menu {
+                ui.allocate_ui(egui::vec2(150.0 * s, 175.0 * s), |ui| {
+                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Continue"));
+
+                    continue_clicked(&response, &mut menu_page);
+
+                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Setting"));
+
+                    exit_to_menu(
+                        &response,
+                        &mut current_world,
+                        &mut game_next_state,
+                        &mut menu_page,
+                        &mut save_slot_inv,
+                        &mut up_storege,
+                        &mut global_storege,
+                        &mut eco_storege,
+                        &mut cit_storege,
+                        &world,
+                        false,
+                    );
+
+                    setting_clicked(&response, &mut menu_page);
+
+                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Exit to the Memu"));
+
+                    exit_to_menu(
+                        &response,
+                        &mut current_world,
+                        &mut game_next_state,
+                        &mut menu_page,
+                        &mut save_slot_inv,
+                        &mut up_storege,
+                        &mut global_storege,
+                        &mut eco_storege,
+                        &mut cit_storege,
+                        &world,
+                        true,
+                    );
+
+                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Exit to the Desktop"));
+
+                    exit_clicked(&response, &mut exit_event);
+                });
+            };
+        });
+}
+
+fn game_menu_button(
+    ctx: & egui::Context,
+    menu_page: &mut MenuCurPage,
+    s: f32,
+) {
+    egui::Area::new(egui::Id::new("game_menu_area"))
+    .fixed_pos([10.0 * s, 10.0 * s])
+    .order(egui::Order::Foreground)
+        .show(ctx, |ui| {
+            let response = ui.add_sized([40.0 * s, 40.0 * s], egui::Button::new("||"));
+
+            if response.clicked() {
+                menu_page.game_menu = !menu_page.game_menu
+            };
+        });
+}
+
+fn continue_clicked(response: &Response, menu_page: &mut MenuCurPage) {
+    if response.clicked() {
+        menu_page.game_menu = !menu_page.game_menu
+    };
+}
+
+fn exit_to_menu(
+    response: &Response,
+    current_world: &mut NextState<CurrentWorld>,
+    game_next_state: &mut NextState<GameState>,
+    menu_page: &mut MenuCurPage,
+    save_slot_inv: &mut SaveSlotInv,
+    up_storege: &mut UpgradeStorege,
+    global_storege: &mut GlobalInventory,
+    eco_storege: &mut Economy,
+    cit_storege: &mut CountItemType,
+    world: &State<CurrentWorld>,
+    slot_reset: bool,
+) {
+    if response.clicked() {
+        auto_save_system(&up_storege, &global_storege, &eco_storege, &cit_storege, &save_slot_inv, world);
+
+        *up_storege = UpgradeStorege::default();
+        *global_storege = GlobalInventory::default();
+        *eco_storege = Economy::default();
+        *cit_storege = CountItemType::default();
+        current_world.set(CurrentWorld::WarmPawsPorch);
+
+        if slot_reset {
+            save_slot_inv.active_slot = None;
+        };
+
+        game_next_state.set(GameState::Menu);
+        menu_page.game_menu = !menu_page.game_menu;
+        menu_page.page = MenuPage::Main;
+    };
+}
+
+fn setting_clicked(response: &Response, menu_page: &mut MenuCurPage,) {
+    if response.clicked() {
+        menu_page.page = MenuPage::Settings;
+    };
+}

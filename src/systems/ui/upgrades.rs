@@ -12,12 +12,20 @@ pub fn show_upgrade_grid(
     mut fonts_loaded: Local<bool>,
     mut assets_loaded: Local<bool>,
     mut handle_texture_id: Local<egui::TextureId>,
+    mut upgrade_menu_lock: Local<bool>,
+    count_item_type: Res<CountItemType>,
     layouts: Res<Assets<TextureAtlasLayout>>,
     assets: Res<AtlasAssets>,
     world_scale: Res<WorldScale>,
     all_fonts: Res<Assets<Font>>,
     font: Res<FontAssets>,
 ) {
+    if *upgrade_menu_lock == false {
+        if count_item_type.sunlit_nursery_inv.iter().sum::<usize>() < 2 { return; };
+
+        *upgrade_menu_lock = true;
+    };
+
     let (new_bool, Some(atlas_layout), text_id) = 
         func_assets_loaded(
             *assets_loaded,

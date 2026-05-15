@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy_egui::{EguiPrimaryContextPass, egui::{self, Context}, EguiContexts, EguiTextureHandle};
-
 use crate::schema::{resources::FontAssets, types_and_states::GameState};
 
+mod game_menu;
+mod main_menu;
 mod map;
-mod menu;
 mod nurturing;
 mod upgrades;
 
@@ -15,6 +15,7 @@ impl Plugin for UiPlugin {
         app.add_systems(
             EguiPrimaryContextPass,
             (
+                game_menu::game_menu,
                 nurturing::trading_ui_system,
                 map::map_ui_system,
                 upgrades::show_upgrade_grid,
@@ -24,7 +25,7 @@ impl Plugin for UiPlugin {
         );
 
         app.add_systems(EguiPrimaryContextPass, (
-                menu::game_menu
+                main_menu::main_menu
             ).run_if(in_state(GameState::Menu))
         );
     }

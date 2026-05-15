@@ -22,6 +22,7 @@ impl Plugin for SchemaPlugin {
             .init_resource::<save_file::CountItemType>()
             .init_resource::<save_file::UpgradeStorege>()
             .init_resource::<save_file::SaveSlotInv>()
+            .init_resource::<save_file::GlobalSettings>()
             .init_resource::<types_and_states::DragItem>()
             .init_resource::<types_and_states::WorldScale>()
             .init_resource::<types_and_states::TradeState>()
@@ -32,7 +33,11 @@ impl Plugin for SchemaPlugin {
 
         app.add_systems(
             OnEnter(types_and_states::GameState::Loading),
-            (load_atlas, load_shaders, load_assets, load_font),
+            (load_atlas,
+                load_shaders,
+                load_assets,
+                load_font, 
+            ),
         );
 
         app.add_systems(

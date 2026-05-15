@@ -1,3 +1,4 @@
+
 use crate::schema::types_and_states::*;
 use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_egui::EguiPlugin;
@@ -18,8 +19,17 @@ impl Plugin for SystemPlugin {
         app.add_plugins(EguiPlugin::default());
         app.add_plugins(UiPlugin);
 
-        app.add_systems(OnEnter(GameState::Menu), (
+        app.add_systems(Startup,  (
             lifecycle::camera_spawn,
+        ));  
+
+        app.add_systems(
+            OnEnter(GameState::Loading),
+            save::save_setting_maneger
+        );            
+
+        app.add_systems(OnEnter(GameState::Menu), (
+            lifecycle::cleanup_system,
         ));
 
         app.add_systems(OnEnter(GameState::LoadGame), (
@@ -54,13 +64,16 @@ impl Plugin for SystemPlugin {
                 visuals::price_button_text,
                 interaction::state_dragg_item,
                 simulation::plant_growth.run_if(on_timer(Duration::from_secs(1))),
+                simulation::update_shader_settings,
             )
-                .chain()
                 .run_if(in_state(GameState::Playing)),
         );
 
-        app.add_systems(Update, save::auto_save_system.run_if(in_state(GameState::Playing)));
-        app.add_systems(Last, save::auto_save_system.run_if(in_state(GameState::Playing)));
+        app.add_systems(Update, save::event_save_system.run_if(in_state(GameState::Playing)));
+        app.add_systems(Last, save::event_save_system.run_if(in_state(GameState::Playing)));
+
+        app.add_systems(Update, simulation::max_fps_sync);
+        app.add_systems(PostUpdate, simulation::fps_limiter_system);
 
         app.add_observer(interaction::end_drag_item);
         app.add_observer(interaction::start_drag_item);

@@ -1,24 +1,39 @@
-use std::{fs::{File, create_dir_all}, io::Write, path::PathBuf, io::Read};
+use std::{fs::{File, create_dir_all}, io::{Read, Write}, path::PathBuf, time::Duration};
 use aes_gcm::{aead::{Aead, KeyInit}, Aes256Gcm, Nonce, Key};
-use crate::schema::{save_file::*, types_and_states::{SlotState, TypePlant, GameState}};
+use crate::schema::{save_file::*, types_and_states::*};
 use crate::content::world::sunlit_nursery::*;
-use bevy::{prelude::*, window::WindowFocused, app::AppExit};
+use crate::systems::simulation::monitor_window_settings;
+use bevy::{prelude::*, window::{WindowFocused, PrimaryWindow}, app::AppExit};
 use directories::ProjectDirs;
 
 const ENCRYPTION_KEY: &[u8; 32] = b"h7X9vK2mN4pQ1rT6wZ8xY0zC3bV5nM7q";
 const CRYPTO_NONCE: &[u8; 12] = b"aB4kL9wP2xZ1";
 
 
-pub fn auto_save_system(
+pub fn event_save_system(    
+    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
     mut exit_events: MessageReader<AppExit>,
     mut focus_events: MessageReader<WindowFocused>,
+    mut timer: Local<Timer>,
+    mut settings: ResMut<GlobalSettings>,
+    time: Res<Time>,
     up_storege: Res<UpgradeStorege>,
     global_storege: Res<GlobalInventory>,
     eco_storege: Res<Economy>,
     cit_storege: Res<CountItemType>,
     save_slot_inv: Res<SaveSlotInv>,
+    world: Res<State<CurrentWorld>>,
 ) {
     let mut need_save = false;
+
+    timer.set_duration(Duration::from_secs_f64(settings.autosave_interval));
+
+    timer.tick(time.delta());
+
+    if timer.is_finished() {
+        need_save = true;
+        timer.reset();
+    };
 
     if exit_events.read().count() > 0 {
         need_save = true;
@@ -32,11 +47,34 @@ pub fn auto_save_system(
 
     if !need_save { return; };
 
+    auto_save_system(&up_storege, &global_storege, &eco_storege, &cit_storege, &save_slot_inv, &world);
+
+    let setting_save_path = get_setting_path();
+
+    
+    let Ok(mut window) = window_query.single_mut() else { return; };
+    
+    if let Err(e) = setting_save(&mut window, &mut settings, setting_save_path) {
+        error!("Critical autosave error: {}", e);
+    } else {
+        info!("Autosave completed successfully!");
+    }
+}
+
+pub fn auto_save_system(
+    up_storege: &UpgradeStorege,
+    global_storege: &GlobalInventory,
+    eco_storege: &Economy,
+    cit_storege: &CountItemType,
+    save_slot_inv: &SaveSlotInv,
+    world: &State<CurrentWorld>,
+) {
     let contener = SaveDataContainer {
         up_storege: up_storege.clone(),
         global_storege: global_storege.clone(),
         eco_storege: eco_storege.clone(),
-        cit_storege: cit_storege.clone()
+        cit_storege: cit_storege.clone(),
+        world: **world,
     };
 
     if let Err(e) = save_game_to_disk(&contener, save_slot_inv.active_slot) {
@@ -50,7 +88,7 @@ fn save_game_to_disk(
     contener: &SaveDataContainer,
     active_slot: Option<usize>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let raw_bytes = bincode::serialize(contener)?;
+    let raw_bytes = ron::to_string(contener)?.into_bytes();
 
     let key = Key::<Aes256Gcm>::from_slice(ENCRYPTION_KEY);
     let cipher = Aes256Gcm::new(key);
@@ -97,7 +135,7 @@ fn load_game_from_disk(i: usize) -> Result<SaveDataContainer, Box<dyn std::error
         .decrypt(nonce, encrypted_bytes.as_slice())
         .map_err(|e| format!("Decryption error: {:?}", e))?;
 
-    let contener: SaveDataContainer = bincode::deserialize(&decrypted_bytes)?;
+    let contener: SaveDataContainer = ron::de::from_bytes(&decrypted_bytes)?;
 
     Ok(contener)
 }
@@ -155,11 +193,12 @@ pub fn final_load_game(
     mut global_storege: ResMut<GlobalInventory>,
     mut eco_storege: ResMut<Economy>,
     mut cit_storege: ResMut<CountItemType>,
+    mut world: ResMut<NextState<CurrentWorld>>,
     save_slot_inv: Res<SaveSlotInv>,
 ) {
     let Some(i) = save_slot_inv.active_slot else { return; };
 
-    let Ok(mut contener) = load_game_from_disk(i) else { return; };
+    let Ok(mut contener) = load_game_from_disk(i) else { info!("Error open save"); return; };
 
     fix_upgrade_references(&mut contener.up_storege);
 
@@ -169,6 +208,60 @@ pub fn final_load_game(
     *global_storege = contener.global_storege;
     *eco_storege = contener.eco_storege;
     *cit_storege = contener.cit_storege;
+    world.set(contener.world);
 
     next_state.set(GameState::Playing);
+}
+
+pub fn setting_save(
+    window: &mut Window,
+    settings: &mut GlobalSettings,
+    path: PathBuf
+) -> Result<()>{
+    let mut file = File::create(path)?;
+
+    let byte = ron::to_string(settings)?.into_bytes();
+    file.write_all(&byte)?;
+
+    monitor_window_settings(window, settings,);
+
+    Ok(())
+}
+
+fn setting_load(path: PathBuf) -> Result<GlobalSettings, Box<dyn std::error::Error>> {
+    let mut file = File::open(path)?;
+    let mut bytes = Vec::new();
+
+    file.read_to_end(&mut bytes)?;
+
+    let new_settings = ron::de::from_bytes(&bytes)?;
+
+    Ok(new_settings)
+}
+
+pub fn get_setting_path() -> PathBuf {
+    let file_name = format!("setting.dat");
+
+    if let Some(proj_dirs) = ProjectDirs::from("com", "Honami", "CatAndPlants") {
+        let save_dir = proj_dirs.data_dir();
+
+        let _ = create_dir_all(save_dir);
+
+        return save_dir.join(file_name);
+    }
+
+    PathBuf::from(file_name)
+}
+
+pub fn save_setting_maneger(
+    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
+    mut settings: ResMut<GlobalSettings>,
+) {
+    let path = get_setting_path();
+
+    *settings = if let Ok(load) = setting_load(path) { load } else { GlobalSettings::default() };
+
+    let Ok(mut window) = window_query.single_mut() else { return; };
+    
+    monitor_window_settings(&mut window, &mut settings,);
 }

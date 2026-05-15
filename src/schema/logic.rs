@@ -9,6 +9,30 @@ use bevy::prelude::*;
 use bevy::shader::ShaderRef;
 use bevy::sprite_render::{AlphaMode2d, Material2d};
 
+
+impl Default for GlobalSettings {
+    fn default() -> Self {
+        Self {
+            fps: MaxFPS {
+                limit: true,
+                max_fps: 60.0,
+                foces_fps: 60.0,
+                unfoces_fps: 5.0,
+            },
+            display: DisplaySettings {
+                screen_mode: ScreenMode::Fullscreen,
+                resolution: [1920.0, 1080.0],
+                max_display: [0.0, 0.0],
+            },
+            shader: ShaderSettings {
+                light_shaders: true,
+                dust_particles: true,
+                dust_amount: 0.5,
+            },
+            autosave_interval: 180.0,
+        }
+    }
+}
 // Логика
 impl Default for GlobalInventory {
     // Все Инвентари по умолчанию
