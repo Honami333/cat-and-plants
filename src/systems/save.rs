@@ -1,6 +1,6 @@
 use std::{fs::{File, create_dir_all}, io::{Read, Write}, path::PathBuf, time::Duration};
 use aes_gcm::{aead::{Aead, KeyInit}, Aes256Gcm, Nonce, Key};
-use crate::schema::{save_file::*, types_and_states::*};
+use crate::{schema::{save_file::*, types_and_states::*}};
 use crate::content::world::sunlit_nursery::*;
 use crate::systems::simulation::monitor_window_settings;
 use bevy::{prelude::*, window::{WindowFocused, PrimaryWindow}, app::AppExit};
@@ -22,6 +22,7 @@ pub fn event_save_system(
     eco_storege: Res<Economy>,
     cit_storege: Res<CountItemType>,
     save_slot_inv: Res<SaveSlotInv>,
+    pristige_room: Res<PrestigeRoom>,
     world: Res<State<CurrentWorld>>,
 ) {
     let mut need_save = false;
@@ -47,7 +48,7 @@ pub fn event_save_system(
 
     if !need_save { return; };
 
-    auto_save_system(&up_storege, &global_storege, &eco_storege, &cit_storege, &save_slot_inv, &world);
+    auto_save_system(&up_storege, &global_storege, &eco_storege, &cit_storege, &save_slot_inv, &world, &pristige_room);
 
     let setting_save_path = get_setting_path();
 
@@ -68,12 +69,14 @@ pub fn auto_save_system(
     cit_storege: &CountItemType,
     save_slot_inv: &SaveSlotInv,
     world: &State<CurrentWorld>,
+    pristige_room: &PrestigeRoom
 ) {
     let contener = SaveDataContainer {
         up_storege: up_storege.clone(),
         global_storege: global_storege.clone(),
         eco_storege: eco_storege.clone(),
         cit_storege: cit_storege.clone(),
+        prestige: pristige_room.clone(),
         world: **world,
     };
 
@@ -193,6 +196,7 @@ pub fn final_load_game(
     mut global_storege: ResMut<GlobalInventory>,
     mut eco_storege: ResMut<Economy>,
     mut cit_storege: ResMut<CountItemType>,
+    mut prestige: ResMut<PrestigeRoom>,
     mut world: ResMut<NextState<CurrentWorld>>,
     save_slot_inv: Res<SaveSlotInv>,
 ) {
@@ -208,6 +212,7 @@ pub fn final_load_game(
     *global_storege = contener.global_storege;
     *eco_storege = contener.eco_storege;
     *cit_storege = contener.cit_storege;
+    *prestige = contener.prestige;
     world.set(contener.world);
 
     next_state.set(GameState::Playing);

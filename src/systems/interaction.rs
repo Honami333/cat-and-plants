@@ -115,7 +115,7 @@ pub fn start_drag_item(
 
     if query_item.get(target).is_ok() {
         if let Ok((_, item)) = query_item.get(target) {
-            let Some(inv_world) = current_world.get_inv(&inv) else {
+            let Some(inv_world) = inv.get_inv(&current_world) else {
                 return;
             };
 
@@ -214,7 +214,7 @@ pub fn harvest(
     
     if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::FertileSoil) {up_value = value};
 
-    let Some(inv_world) = current_world.get_inv_mut(&mut inv) else {return; };
+    let Some(inv_world) = inv.get_inv_mut(&current_world) else {return; };
 
     for (_, slot_item) in query_item.get(trigger.entity).iter_mut() {
         let Some(inv_slot) = inv_world.get_mut(slot_item.slot_id) else { continue; };

@@ -37,6 +37,7 @@ edition = "2024"
 [dependencies]
 bevy = { version = "0.18", features = ["android_shared_stdcxx"] }
 bevy_egui = "0.39.1"
+rand = "0.8"
 
 strum = "0.28"
 strum_macros = "0.28"

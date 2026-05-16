@@ -105,17 +105,16 @@ pub enum PlantStateGrowth {
 
 #[derive(Debug, Clone, Copy, EnumIter, AsRefStr, PartialEq, Display)]
 pub enum ResourceType {
-    #[strum(serialize = "😸")]
-    CatHappiness,
-    #[strum(serialize = "🍅")]
-    Tomatoes,
-    #[strum(serialize = "🥒")]
-    Cucumbers,
-    #[strum(serialize = "🌽")]
-    Corn,
-    #[strum(serialize = "🎃")]
-    Pumpkin,
+    #[strum(serialize = "😸")] CatHappiness,
+    
+    #[strum(serialize = "🍅")] Tomatoes,
+    #[strum(serialize = "🥒")] Cucumbers,
+    #[strum(serialize = "🌽")] Corn,
+    #[strum(serialize = "🎃")] Pumpkin,
+
     None,
+
+    SunSparks,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]

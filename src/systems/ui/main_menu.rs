@@ -424,6 +424,11 @@ pub fn scan_save_slots(save_slot_inv: &mut SaveSlotInv) {
 }
 
 fn add_start(economy: &mut Economy) {
+    // economy.add(ResourceType::CatHappiness as usize, 100000.0);
+    // economy.add(ResourceType::Tomatoes as usize, 100000.0);
+    // economy.add(ResourceType::Cucumbers as usize, 100000.0);
+    // economy.add(ResourceType::Corn as usize, 100000.0);
+    // economy.add(ResourceType::Pumpkin as usize, 100000.0);
     economy.add(ResourceType::Tomatoes as usize, 10.0);
 }
 

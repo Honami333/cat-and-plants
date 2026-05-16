@@ -33,6 +33,8 @@ impl Default for GlobalSettings {
         }
     }
 }
+
+
 // Логика
 impl Default for GlobalInventory {
     // Все Инвентари по умолчанию
@@ -50,13 +52,27 @@ impl Default for GlobalInventory {
 }
 
 impl GlobalInventory {
+    pub fn get_inv(&self, world: &State<CurrentWorld>) -> Option<&[SlotState; 16]> {
+        match world.get() {
+            CurrentWorld::SunlitNursery => Some(&self.sunlit_nursery_inv),
+            CurrentWorld::WarmPawsPorch => None,
+        }
+    }
+
+    pub fn get_inv_mut(&mut self, world: &State<CurrentWorld>) -> Option<&mut [SlotState; 16]> {
+        match world.get() {
+            CurrentWorld::SunlitNursery => Some(&mut self.sunlit_nursery_inv),
+            CurrentWorld::WarmPawsPorch => None,
+        }
+    }
+
     pub fn add_plant(
         // Добавление предмета в инвентарь
         &mut self,
         current_world: &State<CurrentWorld>,
         new_plant: Plant,
     ) {
-        let Some(invetory_array) = current_world.get_inv_mut(self) else {
+        let Some(invetory_array) = self.get_inv_mut(current_world) else {
             return;
         };
 
@@ -75,18 +91,11 @@ impl GlobalInventory {
         old_id: usize,
         new_id: usize,
     ) {
-        let Some(invetory_array) = current_world.get_inv_mut(self) else {
-            return;
-        };
+        let Some(invetory_array) = self.get_inv_mut(current_world) else { return; };
 
-        if invetory_array[new_id] == SlotState::Locked {}
+        if invetory_array[new_id] == SlotState::Locked { return }
 
-        if matches!(
-            invetory_array[new_id],
-            SlotState::Occupied(_) | SlotState::Empty
-        ) {
-            invetory_array.swap(old_id, new_id);
-        }
+        invetory_array.swap(old_id, new_id);
     }
 
     pub fn slots_unlocking(
@@ -95,7 +104,7 @@ impl GlobalInventory {
         current_world: &State<CurrentWorld>,
         prices: &'static [f64],
     ) -> (bool, Option<usize>) {
-        let Some(invetory_array) = current_world.get_inv_mut(self) else {
+        let Some(invetory_array) = self.get_inv_mut(current_world) else {
             return (false, None);
         };
 
@@ -116,7 +125,7 @@ impl GlobalInventory {
     }
 
     pub fn get_slots_unlocking(&self, current_world: &State<CurrentWorld>) -> Option<usize> {
-        let Some(invetory_array) = current_world.get_inv(self) else {
+        let Some(invetory_array) = self.get_inv(current_world) else {
             return None;
         };
 
@@ -132,7 +141,7 @@ impl GlobalInventory {
     }
 
     pub fn get_slots_empty(&self, current_world: &State<CurrentWorld>) -> bool {
-        let Some(invetory_array) = current_world.get_inv(self) else {
+        let Some(invetory_array) =  self.get_inv(current_world) else {
             return false;
         };
 
@@ -195,6 +204,33 @@ impl Economy {
 
         self.storage = new_inv;
     }
+
+    pub fn get_prestige_res(& self, current_world: &State<CurrentWorld>) -> (Vec<ResourceType>, Vec<f64> ){
+        let mut item_res = Vec::new();
+
+        let mut res_vec = Vec::new();
+
+        match current_world.get() {
+            CurrentWorld::SunlitNursery => {
+                res_vec.push(ResourceType::CatHappiness);
+                res_vec.push(ResourceType::Tomatoes);
+                res_vec.push(ResourceType::Cucumbers);
+                res_vec.push(ResourceType::Corn);
+                res_vec.push(ResourceType::Pumpkin);
+            },
+            CurrentWorld::WarmPawsPorch => (),
+        };
+
+        for res in &res_vec {
+            item_res.push(self.get_item(*res as usize));
+        };
+
+        (res_vec, item_res)
+    }
+
+    pub fn add_sparcks(&mut self, res: usize, amount: f64) {
+        self.prestige_sparks[res.saturating_sub(self.storage.len())] += amount;
+    }
 }
 
 impl Material2d for ShaderMaterial {
@@ -231,17 +267,10 @@ impl Default for UpgradeStorege {
 }
 
 impl CurrentWorld {
-    pub fn get_inv(self, inv: &GlobalInventory) -> Option<&[SlotState; 16]> {
+    pub fn get_prestige_cost(&self) -> Option<&[f64]> {
         match self {
-            CurrentWorld::SunlitNursery => Some(&inv.sunlit_nursery_inv),
-            CurrentWorld::WarmPawsPorch => None,
-        }
-    }
-
-    pub fn get_inv_mut(self, inv: &mut GlobalInventory) -> Option<&mut [SlotState; 16]> {
-        match self {
-            CurrentWorld::SunlitNursery => Some(&mut inv.sunlit_nursery_inv),
-            CurrentWorld::WarmPawsPorch => None,
+            CurrentWorld::SunlitNursery => Some(SN_FIRST_PRESTIGE_COST.cost),
+            CurrentWorld::WarmPawsPorch => None
         }
     }
 }
@@ -395,5 +424,28 @@ impl UpgradeStage {
         };
 
         *self = stage;
+    }
+}
+
+impl PrestigeRoom {
+    pub fn get_room<'a>(&self, current_world: &State<CurrentWorld>) -> Option<&usize> {
+        match current_world.get() {
+            CurrentWorld::SunlitNursery => Some(&self.sunlit_nursery),
+            CurrentWorld::WarmPawsPorch => None,
+        }
+    }
+
+    pub fn get_mut_room<'a>(&mut self, current_world: &State<CurrentWorld>) -> Option<&mut usize> {
+        match current_world.get() {
+            CurrentWorld::SunlitNursery => Some(&mut self.sunlit_nursery),
+            CurrentWorld::WarmPawsPorch => None,
+        }
+    }
+
+    pub fn get_sparks_res(&self, current_world: &State<CurrentWorld>) -> Option<ResourceType>{
+        match current_world.get() {
+            CurrentWorld::SunlitNursery => Some(ResourceType::SunSparks),
+            CurrentWorld::WarmPawsPorch => None,
+        }
     }
 }

@@ -1,6 +1,4 @@
 use crate::assets::{load_assets, load_atlas, load_font, load_shaders};
-use crate::schema::resources::{AtlasAssets, FontAssets, GameAssets, ShaderAssets};
-use crate::schema::types_and_states::GameState;
 use bevy::{prelude::*, sprite_render::Material2dPlugin};
 
 pub mod config;
@@ -23,6 +21,7 @@ impl Plugin for SchemaPlugin {
             .init_resource::<save_file::UpgradeStorege>()
             .init_resource::<save_file::SaveSlotInv>()
             .init_resource::<save_file::GlobalSettings>()
+            .init_resource::<save_file::PrestigeRoom>()
             .init_resource::<types_and_states::DragItem>()
             .init_resource::<types_and_states::WorldScale>()
             .init_resource::<types_and_states::TradeState>()
@@ -40,21 +39,21 @@ impl Plugin for SchemaPlugin {
             ),
         );
 
-        app.add_systems(
-            Update,
-            (check_assets_ready).run_if(in_state(types_and_states::GameState::Loading)),
-        );
+        // app.add_systems(
+        //     Update,
+        //     (check_assets_ready).run_if(in_state(types_and_states::GameState::Loading)),
+        // );
     }
 }
 
-pub fn check_assets_ready(
-    mut next_state: ResMut<NextState<GameState>>,
-    assets: Option<Res<GameAssets>>,
-    shaders: Option<Res<ShaderAssets>>,
-    atlas: Option<Res<AtlasAssets>>,
-    font: Option<Res<FontAssets>>,
-) {
-    if assets.is_some() && shaders.is_some() && atlas.is_some() && font.is_some() {
-        next_state.set(types_and_states::GameState::Menu)
-    }
-}
+// pub fn check_assets_ready(
+//     mut next_state: ResMut<NextState<GameState>>,
+//     assets: Option<Res<GameAssets>>,
+//     shaders: Option<Res<ShaderAssets>>,
+//     atlas: Option<Res<AtlasAssets>>,
+//     font: Option<Res<FontAssets>>,
+// ) {
+//     if assets.is_some() && shaders.is_some() && atlas.is_some() && font.is_some() {
+//         next_state.set(types_and_states::GameState::Menu)
+//     }
+// }

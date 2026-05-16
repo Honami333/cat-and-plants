@@ -15,35 +15,7 @@ pub fn sync_inventory_visuals(
     query_slots: Query<&Slot>,
     current_world: Res<State<CurrentWorld>>,
 ) {
-    let Some(inventory) = current_world.get_inv_mut(&mut inv) else {
-        return;
-    };
-
-    // Спаун преметов в слотах
-    for (idx, slot_state) in inventory.iter_mut().enumerate() {
-        if let SlotState::Occupied(plant) = slot_state {
-            if let Some(target_slot) = query_slots.iter().find(|s| s.id == idx) {
-                let existing_item = query_items
-                    .iter_mut()
-                    .find(|(_, item)| item.uid == plant.slot_uid);
-
-                if let Some((_, mut item)) = existing_item {
-                    if item.slot_id != idx {
-                        item.slot_id = idx;
-                        plant.slot_uid = idx;
-                    }
-                } else {
-                    item_spawn(
-                        &mut commands,
-                        &assets,
-                        &query_slots,
-                        target_slot.id,
-                        plant.species_id,
-                    );
-                }
-            }
-        }
-    }
+    let Some(inventory) = inv.get_inv_mut(&current_world) else { return; };
 
     // Удаление призраков
     for (entity, item) in query_items.iter() {
@@ -59,6 +31,41 @@ pub fn sync_inventory_visuals(
             commands.entity(entity).despawn();
         }
     }
+
+    // Спаун преметов в слотах
+    for (idx, slot_state) in inventory.iter_mut().enumerate() {
+        let SlotState::Occupied(plant) = slot_state else { continue; };
+
+        let Some(target_slot) = query_slots.iter().find(|s| s.id == idx)  else { continue; };
+                
+        let existing_item = query_items
+            .iter_mut()
+            .find(|(_, item)| item.uid == plant.slot_uid);
+
+        if let Some((entity,  item)) = existing_item {
+            if item.slot_id != idx {
+                plant.slot_uid = idx;
+
+                commands.entity(entity).despawn();
+
+                item_spawn(
+                    &mut commands,
+                    &assets,
+                    &query_slots,
+                    idx,
+                    plant.species_id,
+                );
+            }
+        } else {
+            item_spawn(
+                &mut commands,
+                &assets,
+                &query_slots,
+                target_slot.id,
+                plant.species_id,
+            );
+        };
+    }
 }
 
 // Обновление визула роста ростения
@@ -67,7 +74,7 @@ pub fn update_plant_appearance(
     mut inv: ResMut<GlobalInventory>,
     current_world: Res<State<CurrentWorld>>,
 ) {
-    let Some(inventory) = current_world.get_inv_mut(&mut inv) else {
+    let Some(inventory) =  inv.get_inv_mut(&current_world) else {
         return;
     };
 

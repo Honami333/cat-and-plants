@@ -116,3 +116,7 @@ pub const SN_PLANT_RES: PlantResource = PlantResource {
 pub const SLOT_PRICES: SlotPrices = SlotPrices {
     prices: &[ 50.0, 100.0, 200.0, 350.0, 500.0, 750.0, 1000.0, 1350.0, 1800.0, 2400.0, 3200.0, 4500.0, ],
 };
+
+pub const SN_FIRST_PRESTIGE_COST: PrestigeCost = PrestigeCost {
+    cost: &[40000.0, 1200.0, 800.0, 300.0, 50.0,]
+};

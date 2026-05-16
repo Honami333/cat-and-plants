@@ -11,6 +11,7 @@ pub struct SaveDataContainer {
     pub eco_storege: Economy,
     pub cit_storege: CountItemType,
     pub world: CurrentWorld,
+    pub prestige: PrestigeRoom,
 }
 
 // Список инвенторей
@@ -28,6 +29,7 @@ pub struct GlobalInventory {
 #[derive(Resource, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct Economy {
     pub storage: [f64; 6],
+    pub prestige_sparks: [f64; 1],
 }
 
 #[derive(Resource, Clone, Copy, Default, Serialize, Deserialize)]
@@ -43,6 +45,7 @@ pub struct SaveSlotInv {
 }
 
 #[derive(Resource, Clone, Copy, Serialize, Deserialize)]
+#[serde(default)]
 pub struct GlobalSettings {
     pub fps: MaxFPS,
     pub display: DisplaySettings,
@@ -70,4 +73,9 @@ pub struct MaxFPS {
     pub max_fps: f64,
     pub foces_fps: f64,
     pub unfoces_fps: f64,
+}
+
+#[derive(Resource, Clone, Copy, Default,  Serialize, Deserialize)]
+pub struct PrestigeRoom {
+    pub sunlit_nursery: usize,
 }

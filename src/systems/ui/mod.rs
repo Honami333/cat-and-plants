@@ -3,6 +3,7 @@ use bevy_egui::{EguiPrimaryContextPass, egui::{self, Context}, EguiContexts, Egu
 use crate::schema::{resources::FontAssets, types_and_states::GameState};
 
 mod game_menu;
+mod loading;
 mod main_menu;
 mod map;
 mod nurturing;
@@ -12,6 +13,8 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(EguiPrimaryContextPass, loading::assets_load_screen.run_if(in_state(GameState::Loading)));
+
         app.add_systems(
             EguiPrimaryContextPass,
             (

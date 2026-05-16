@@ -112,3 +112,7 @@ pub struct SaveSlot {
     pub click: usize,
     pub last_data_text: &'static str,
 }
+
+pub struct PrestigeCost {
+    pub cost: &'static [f64],
+}

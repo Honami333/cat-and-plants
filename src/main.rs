@@ -8,6 +8,9 @@ mod content;
 mod schema;
 mod systems;
 
+pub const GAME_VERSION: &'static str = "0.6.2 pre-release";
+
+
 fn main() {
     App::new()
         .add_plugins(
