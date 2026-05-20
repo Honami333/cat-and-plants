@@ -12,11 +12,12 @@ pub fn button_check(
     upgrade_storege: Res<UpgradeStorege>,
     button_type_query: Query<&TypeButton>,
     current_world: Res<State<CurrentWorld>>,
+    prestige_inv: Res<PrestigeRoom>,
 ) {
     if let Ok(button_data) = button_type_query.get(trigger.entity) {
         match button_data {
             TypeButton::SlotsUnLocking => {
-                try_slots_unlocking(&mut inventory, &mut economy, &current_world)
+                try_slots_unlocking(&mut inventory, &mut economy, &current_world, &prestige_inv)
             }
             _ => add_plant_and_lock(
                 &mut inventory,
@@ -25,6 +26,7 @@ pub fn button_check(
                 &upgrade_storege,
                 &current_world,
                 &button_data,
+                &prestige_inv
             ),
         }
     };
@@ -34,20 +36,24 @@ fn try_slots_unlocking(
     inventory: &mut GlobalInventory,
     economy: &mut Economy,
     current_world: &State<CurrentWorld>,
+    prestige_inv: &PrestigeRoom,
 ) {
     let price = match current_world.get() {
         CurrentWorld::SunlitNursery => SLOT_PRICES,
         CurrentWorld::WarmPawsPorch => return,
     };
 
-    let (try_lock, Some(i)) = inventory.slots_unlocking(&economy, &current_world, &price.prices)
-    else {
-        return;
-    };
+    let mut new_price = Vec::new();
 
-    if try_lock {
-        economy.add(ResourceType::CatHappiness as usize, -price.prices[i]);
-    }
+    let Some(prestige_room) = prestige_inv.get_room(current_world.get()) else { return; };
+
+    for cost in price.prices.iter() {
+        new_price.push(cost + (prestige_room as f64).powf(1.6) * 5500.0);
+    };
+     
+    let (try_lock, Some(i)) = inventory.slots_unlocking(&economy, &current_world, &new_price) else { return; };
+
+    if try_lock { economy.add(ResourceType::CatHappiness as usize, -new_price[i], false); };
 }
 
 fn add_plant_and_lock(
@@ -57,10 +63,9 @@ fn add_plant_and_lock(
     upgrade_storege: &UpgradeStorege,
     current_world: &State<CurrentWorld>,
     button_data: &TypeButton,
+    prestige_inv: &PrestigeRoom,
 ) {
-    if inventory.get_slots_empty(&current_world) == false {
-        return;
-    };
+    if inventory.get_slots_empty(&current_world) == false { return; };
 
     let availability = if let Some(upgrade_id) = button_data.get_dependencies_upgrade() {
         let (_, available) = upgrade_storege.get_global_modifier(upgrade_id);
@@ -69,35 +74,25 @@ fn add_plant_and_lock(
         true
     };
 
-    if !availability {
-        return;
-    };
+    if !availability { return; };
 
-    let Some(count_inv) = count_item_type.get_inv_mut(&current_world) else {
-        return;
-    };
+    let Some(count_inv) = count_item_type.get_inv_mut(&current_world, false) else { return; };
 
-    let Some(plant) = button_data.get_plant_cfg() else {
-        return;
-    };
+    let Some(plant) = button_data.get_plant_cfg() else { return; };
 
     let plant_count = count_inv[plant.species_id as usize];
 
-    if plant_count >= plant.max_count {
-        return;
-    };
+    if plant_count >= plant.max_count { return; };
 
-    let cur_price = plant.price[plant_count];
+    let Some(prestige_room) = prestige_inv.get_room(current_world.get()) else { return; };
 
-    if economy.get_item(ResourceType::CatHappiness as usize) < cur_price {
-        return;
-    };
+    let cur_price = plant.price[plant_count] * (1.0 + (prestige_room as f64).powf(1.6) * 3.0);
 
-    if count_inv[plant.species_id as usize] >= plant.max_count {
-        return;
-    };
+    if economy.get_item(ResourceType::CatHappiness as usize, false) < cur_price { return; };
 
-    economy.add(ResourceType::CatHappiness as usize, -cur_price);
+    if count_inv[plant.species_id as usize] >= plant.max_count { return; };
+
+    economy.add(ResourceType::CatHappiness as usize, -cur_price, false);
     count_item_type.add(plant.species_id as usize, &current_world);
 
     inventory.add_plant(current_world, plant);
@@ -205,25 +200,67 @@ pub fn state_dragg_item(
 pub fn harvest(
     trigger: On<Pointer<Click>>,
     query_item: Query<(Entity, &SlotItem)>,
-    mut inv: ResMut<GlobalInventory>,
+    mut global_inventory: ResMut<GlobalInventory>,
     mut resources_inv: ResMut<Economy>,
+    mut cit_inventory: ResMut<CountItemType>,
     current_world: Res<State<CurrentWorld>>,
     upgrade_storege: Res<UpgradeStorege>,
+    prestige_inv: Res<PrestigeRoom>,
 ) {
-    let mut up_value =  1.0;
-    
-    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::FertileSoil) {up_value = value};
+    let mut up_value_1 =  0.0;
 
-    let Some(inv_world) = inv.get_inv_mut(&current_world) else {return; };
+    let mut up_value_2 =  1.0;
+
+    let mut up_value_3 =  0.0;
+
+    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::OverBlooming) {up_value_1 = value};
+    
+    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::FertileSoil) {up_value_2 = value};
+
+    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::ConcentratedNectar) {up_value_3 = value};
+
+    let Some(global_inv) = global_inventory.get_inv_mut(&current_world) else {return; };
+
+    let prestige_buff = 1.0 + ((prestige_inv.get_all_prestige() as f64).powf(1.25) * up_value_1);
 
     for (_, slot_item) in query_item.get(trigger.entity).iter_mut() {
-        let Some(inv_slot) = inv_world.get_mut(slot_item.slot_id) else { continue; };
+        let Some(inv_slot) = global_inv.get_mut(slot_item.slot_id) else { continue; };
 
         let SlotState::Occupied(plant) = inv_slot else { continue; };
 
         if plant.state != PlantStateGrowth::Mature { continue; };
 
-        resources_inv.add(plant.species_id as usize + 1, plant.gather_amount * up_value);
+        let mut plant_bounty =  0.0;
+
+        let mut modifier_unlocked = false;
+
+        if let (Some(value), is_unlocked ) = upgrade_storege.get_plant_global_modifier(&plant.species_id, PlantGGM::Bounty) {
+            plant_bounty = value;
+            modifier_unlocked = is_unlocked;
+        };
+
+        let mut amount = if modifier_unlocked {
+            match plant.species_id {
+                TypePlant::Pumpkin => ((plant.gather_amount + plant_bounty) * up_value_2 * prestige_buff).floor(),
+                _ => (plant.gather_amount * up_value_2 * prestige_buff * plant_bounty).floor()
+            }
+        } else {
+            (plant.gather_amount * up_value_2 * prestige_buff).floor()
+        };
+
+
+        let mut tomato_bonus = 1.0;
+
+        if plant.species_id == TypePlant::Tomato { 
+            cit_inventory.add_click(plant.species_id as usize, &current_world);
+            tomato_bonus = 2.0;
+        };
+
+        if let Some(cit_inv) = cit_inventory.get_inv(&current_world, true) {
+            amount += (up_value_3 * tomato_bonus * amount * cit_inv[0] as f64).floor();
+        };
+
+        resources_inv.add(plant.species_id as usize + 1, amount, false);
 
         plant.state = PlantStateGrowth::Seed;
         plant.growth_score = 0.0;

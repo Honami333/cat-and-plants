@@ -11,6 +11,7 @@ pub fn trading_ui_system(
     mut trade_state: ResMut<TradeState>,
     mut economy: ResMut<Economy>,
     mut fonts_loaded: Local<bool>,
+    prestige_inv: Res<PrestigeRoom>,
     current_world: Res<State<CurrentWorld>>,
     all_fonts: Res<Assets<Font>>,
     font: Res<FontAssets>,
@@ -19,6 +20,10 @@ pub fn trading_ui_system(
     if *current_world.get() != CurrentWorld::WarmPawsPorch { return; };
 
     let Ok(ctx) = contexts.ctx_mut() else { return; };
+
+    let mut up_value =  0.0;
+
+    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::PurrProfit) {up_value = value};
 
     *fonts_loaded = func_fonts_loaded(ctx, *fonts_loaded, &all_fonts, &font);
 
@@ -29,6 +34,8 @@ pub fn trading_ui_system(
         .constrain(true)
         .show(ctx, |ui| {
             ui.columns(3, |columns| {
+                let prestige_buff = 1.0 + ((prestige_inv.get_all_prestige() as f64).powf(1.25) * up_value);
+
                 columns[0].label("Choice");
                 columns[0].separator();
                 columns[0].horizontal(|ui| {
@@ -88,7 +95,7 @@ pub fn trading_ui_system(
 
                             ui.vertical_centered(|ui| {
                                 ui.add_sized([40.0, 40.0], egui::Label::new("😸"));
-                                ui.add(egui::Label::new(format_number(trade)));
+                                ui.add(egui::Label::new(format_number((trade * prestige_buff).floor())));
                             });
                         });
                     });
@@ -103,11 +110,13 @@ pub fn trading_ui_system(
                             .add_sized([100.0, 40.0], egui::Button::new("Feed"))
                             .clicked()
                         {
-                            economy.add(ResourceType::CatHappiness as usize, trade);
+                            economy.add(ResourceType::CatHappiness as usize, (trade * prestige_buff).floor(), false);
+
                             if trade_state.selected_item != EGUIResourceType::All {
                                 economy.add(
                                     trade_state.selected_item as usize,
-                                    -trade_state.selected_economy,
+                                    -trade_state.selected_economy, 
+                                    false
                                 );
                             } else {
                                 economy.add_all(trade_state.selected_percent as f64);
@@ -189,9 +198,9 @@ fn trade_well(
     economy: &Economy,
     upgrade_storege: &UpgradeStorege,
 ) -> f64 {
-    let mut up_value =  1.0;
+    let mut up_value_1 =  1.0;
     
-    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::WholesaleSupply) {up_value = value};
+    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::WholesaleSupply) {up_value_1 = value};
 
     let mut cur_well = 0.0;
 
@@ -204,11 +213,19 @@ fn trade_well(
 
     let trade = match trade_state.selected_item {
         EGUIResourceType::All => {
-            economy.egui_get_item_all(TRADEWELL, trade_state.selected_percent as f64)
+            economy.egui_get_item_all(TRADEWELL, trade_state.selected_percent as f64,&upgrade_storege)
         }
         EGUIResourceType::None => 0.0,
-        _ => cur_well * trade_state.selected_economy,
+        _ => {
+            let mut up_value_2 =  1.0;
+
+            if let Some(plant) = trade_state.selected_item.into_plant().get(0) {
+                if let (Some(value), _) = upgrade_storege.get_plant_global_modifier(&plant, PlantGGM::Joy) {up_value_2 = value};
+            };
+
+            cur_well * trade_state.selected_economy * up_value_2
+        },
     };
 
-    (trade * up_value).floor()
+    (trade * up_value_1).floor()
 }

@@ -195,7 +195,7 @@ fn spawn_resourse_text(
 ) {
     main_parent
         .spawn((
-            Transform::from_xyz(-bg_data.wh.x / 2.0, bg_data.wh.y / 2.0 - 80.0, 0.1),
+            Transform::from_xyz(-bg_data.wh.x / 2.0, bg_data.wh.y / 2.0 - 80.0, 5.0),
             Visibility::default(),
             InheritedVisibility::default(),
         ))

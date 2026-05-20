@@ -3,7 +3,7 @@ use aes_gcm::{aead::{Aead, KeyInit}, Aes256Gcm, Nonce, Key};
 use crate::{schema::{save_file::*, types_and_states::*}};
 use crate::content::world::sunlit_nursery::*;
 use crate::systems::simulation::monitor_window_settings;
-use bevy::{prelude::*, window::{WindowFocused, PrimaryWindow}, app::AppExit};
+use bevy::{app::AppExit, prelude::*, window::{PrimaryWindow, WindowFocused}};
 use directories::ProjectDirs;
 
 const ENCRYPTION_KEY: &[u8; 32] = b"h7X9vK2mN4pQ1rT6wZ8xY0zC3bV5nM7q";
@@ -138,39 +138,108 @@ fn load_game_from_disk(i: usize) -> Result<SaveDataContainer, Box<dyn std::error
         .decrypt(nonce, encrypted_bytes.as_slice())
         .map_err(|e| format!("Decryption error: {:?}", e))?;
 
-    let contener: SaveDataContainer = ron::de::from_bytes(&decrypted_bytes)?;
+    let parsed: ron::Value = ron::de::from_bytes(&decrypted_bytes)
+         .map_err(|e| format!("RON dynamic parse error: {:?}", e))?;
+
+    let mut contener: SaveDataContainer = SaveDataContainer::default();
+
+    let get_field = |value: &ron::Value, key: &str| -> Option<ron::Value> {
+        let ron::Value::Map(map) = value else { return None; };
+        map.iter()
+            .find(|(k, _)| *k == &ron::Value::String(key.to_string()))
+            .map(|(_, v)| v.clone())
+    };
+
+    if let Some(eco) = get_field(&parsed, "eco_storege") {
+        if let Some(ron::Value::Seq(seq)) = get_field(&eco, "storage") {
+            for (idx, val) in seq.iter().enumerate().take(contener.eco_storege.storage.len()) {
+                if let ron::Value::Number(num) = val {
+                    contener.eco_storege.storage[idx] = num.into_f64();
+                };
+            };
+        };
+
+        if let Some(ron::Value::Seq(seq)) = get_field(&eco, "prestige_sparks") {
+            for (idx, val) in seq.iter().enumerate().take(contener.eco_storege.prestige_sparks.len()) {
+                if let ron::Value::Number(num) = val {
+                    contener.eco_storege.prestige_sparks[idx] = num.into_f64();
+                };
+            };
+        };
+    };
+
+    if let Some(cit) = get_field(&parsed, "cit_storege") {
+        if let Some(ron::Value::Seq(seq)) = get_field(&cit, "sunlit_nursery_inv") {
+            for (idx, val) in seq.iter().enumerate().take(contener.cit_storege.sunlit_nursery_inv.len()) {
+                if let ron::Value::Number(ron::value::Number::Integer(int_val)) = val {
+                    contener.cit_storege.sunlit_nursery_inv[idx] = *int_val as usize;
+                };
+            };
+        };
+
+        if let Some(ron::Value::Seq(seq)) = get_field(&cit, "sunlit_nursery_click") {
+            for (idx, val) in seq.iter().enumerate().take(contener.cit_storege.sunlit_nursery_click.len()) {
+                if let ron::Value::Number(ron::value::Number::Integer(int_val)) = val {
+                    contener.cit_storege.sunlit_nursery_click[idx] = *int_val as usize;
+                };
+            };
+        };
+    };
+
+    if let Some(prestige) = get_field(&parsed, "prestige") {
+        if let Some(ron::Value::Number(ron::value::Number::Integer(int_val))) = get_field(&prestige, "sunlit_nursery") {
+            contener.prestige.sunlit_nursery = int_val as usize;
+        };
+    };
+
+    if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
+        contener.up_storege = full_container.up_storege;
+    }
+
+    if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
+        contener.global_storege = full_container.global_storege;
+    }
+
+    if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
+        contener.world = full_container.world;
+    }
 
     Ok(contener)
 }
 
 fn fix_upgrade_references(inv: &mut UpgradeStorege) {
-    let clean_reference = UpgradeStorege::default();
+    let mut clean_reference = UpgradeStorege::default();
 
-    for (coords, clean_upgrade) in clean_reference.global.iter() {
-        inv.global.entry(*coords).or_insert_with(|| clean_upgrade.clone());
+    for (_, loaded_upgrade) in inv.sparcks.iter() {
+        let Some((_, upgrade)) = clean_reference.sparcks
+            .iter_mut() 
+            .find(|(_, u)| u.id == loaded_upgrade.id) else { continue; };
+
+            upgrade.current_level = loaded_upgrade.current_level;
+            upgrade.texture_stage = loaded_upgrade.texture_stage;
     };
 
-    for (coords, clean_upgrade) in clean_reference.sunlit_nursery.iter() {
-        inv.sunlit_nursery.entry(*coords).or_insert_with(|| clean_upgrade.clone());
+    for (_, loaded_upgrade) in inv.global.iter() {
+        let Some((_, upgrade)) = clean_reference.global
+            .iter_mut() 
+            .find(|(_, u)| u.id == loaded_upgrade.id) else { continue; };
+
+            upgrade.current_level = loaded_upgrade.current_level;
+            upgrade.texture_stage = loaded_upgrade.texture_stage;
     };
 
-    for (coords, loaded_upgrade) in inv.global.iter_mut() {
-        if let Some(clean_upgrade) = clean_reference.global.get(coords) {
-            loaded_upgrade.name = clean_upgrade.name;
-            loaded_upgrade.description = clean_upgrade.description;
-            loaded_upgrade.levels = clean_upgrade.levels;
-            loaded_upgrade.dependencies = clean_upgrade.dependencies;
-        };
+    for (_, loaded_upgrade) in inv.sunlit_nursery.iter() {
+        let Some((_, upgrade)) = clean_reference.sunlit_nursery
+            .iter_mut() 
+            .find(|(_, u)| u.id == loaded_upgrade.id) else { continue; };
+
+            upgrade.current_level = loaded_upgrade.current_level;
+            upgrade.texture_stage = loaded_upgrade.texture_stage;
     };
 
-    for (coords, loaded_upgrade) in inv.sunlit_nursery.iter_mut() {
-        if let Some(clean_upgrade) = clean_reference.sunlit_nursery.get(coords) {
-            loaded_upgrade.name = clean_upgrade.name;
-            loaded_upgrade.description = clean_upgrade.description;
-            loaded_upgrade.levels = clean_upgrade.levels;
-            loaded_upgrade.dependencies = clean_upgrade.dependencies;
-        };
-    };
+    inv.sparcks = clean_reference.sparcks;
+    inv.global = clean_reference.global;
+    inv.sunlit_nursery = clean_reference.sunlit_nursery;
 }
 
 fn get_plant_static_price(plant: TypePlant) -> &'static [f64] {

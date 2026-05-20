@@ -114,7 +114,7 @@ pub enum ResourceType {
 
     None,
 
-    SunSparks,
+    #[strum(serialize = "SUN ✨")] SunSparks,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -124,25 +124,34 @@ pub enum ShaderType {
     WPPWindowLight = 1,
 }
 
-#[derive(Clone, Copy, PartialEq, Display, EnumIter, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Display, EnumIter, Serialize, Deserialize, Debug)]
 pub enum UpgradeUID {
-    #[strum(serialize = "Fertile Soil")]
-    FertileSoil,
-    #[strum(serialize = "Growth Catalysts")]
-    WholesaleSupply,
-    #[strum(serialize = "Catnip Infusion")]
-    SelectiveBreeding,
-    #[strum(serialize = "Wholesale Supplies")]
-    CardboardBox,
-    #[strum(serialize = "Crunchy Snack")]
-    UnlockCucumber,
-    #[strum(serialize = "Sweet Kernels")]
-    UnlockCorn,
-    #[strum(serialize = "Festive Feast")]
-    UnlockPumpkin,
+    #[strum(serialize = "Purr Profit")] PurrProfit,
+    #[strum(serialize = "Over Blooming")] OverBlooming,
+    #[strum(serialize = "Fertile Soil")] FertileSoil,
+    #[strum(serialize = "Growth Catalysts")] WholesaleSupply,
+    #[strum(serialize = "Catnip Infusion")] SelectiveBreeding,
+    #[strum(serialize = "Wholesale Supplies")] CardboardBox,
+    #[strum(serialize = "Juicy Red Ball")] UnlockTomato,
+    #[strum(serialize = "Crunchy Snack")] UnlockCucumber,
+    #[strum(serialize = "Sweet Kernels")] UnlockCorn,
+    #[strum(serialize = "Festive Feast")] UnlockPumpkin,
+    #[strum(serialize = "Hyperfocus Pomodoro")] ConcentratedNectar,
+    #[strum(serialize = "Heavy Vines")] TomatoBounty,
+    #[strum(serialize = "Greenhouse Warmth")] TomatoGrowth,
+    #[strum(serialize = "Gourmet Puree")] TomatoJoy,
+    #[strum(serialize = "Crisp Rows")] CucumberBounty,
+    #[strum(serialize = "Moisture Control")] CucumberGrowth,
+    #[strum(serialize = "Chilled Slices")] CucumberJoy,
+    CornBounty,
+    CornGrowth,
+    CornJoy,
+    PumpkinBounty,
+    PumpkinGrowth,
+    PumpkinJoy,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
 pub enum UpgradeStage {
     Locked,
     Available,
@@ -150,8 +159,15 @@ pub enum UpgradeStage {
     Max,
 }
 
+pub enum PlantGGM {
+    Bounty,
+    Growth,
+    Joy
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display, Serialize, Deserialize)]
 pub enum EGUISelectedCategories {
+    Sparcks,
     Global,
     SunlitNursery,
 }

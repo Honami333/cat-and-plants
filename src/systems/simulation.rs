@@ -6,18 +6,35 @@ use std::time::{Duration, Instant};
 pub fn plant_growth(mut inv: ResMut<GlobalInventory>, upgrade_storege: Res<UpgradeStorege>) {
     let invetories = [&mut inv.sunlit_nursery_inv];
 
-    let mut up_value =  1.0;
+    let mut up_value_1 =  1.0;
 
-    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::SelectiveBreeding) {up_value = value};
+    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::SelectiveBreeding) {up_value_1 = value};
 
     for inventory in invetories {
         for slot in inventory.iter_mut() {
             if let SlotState::Occupied(plant) = slot {
-                if plant.growth_score < (plant.growth_thereshold / up_value) {
-                    plant.growth_score += plant.growth_rate;
-                }
+                let mut up_value_2 = 1.0;
 
-                let p = plant.growth_score / (plant.growth_thereshold / up_value);
+                let mut modifier_unlocked = false;
+
+                if let (Some(value), is_unlocked) = upgrade_storege.get_plant_global_modifier(&plant.species_id, PlantGGM::Growth) {
+                    up_value_2 = value;
+                    modifier_unlocked = is_unlocked;
+
+                    if plant.growth_score < (plant.growth_thereshold / (up_value_1 * value)) {
+                        plant.growth_score += plant.growth_rate;
+                    }
+                } else {
+                    if plant.growth_score < (plant.growth_thereshold / up_value_1) {
+                        plant.growth_score += plant.growth_rate;
+                    }
+                };
+
+                let p = if modifier_unlocked {
+                    (plant.growth_score / (plant.growth_thereshold / (up_value_1 * up_value_2))).clamp(0.0, 1.0)
+                } else {
+                    (plant.growth_score / (plant.growth_thereshold / up_value_1)).clamp(0.0, 1.0)
+                };
 
                 plant.state = match p {
                     _ if p <= 0.25 => PlantStateGrowth::Seed,

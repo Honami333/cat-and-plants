@@ -182,6 +182,7 @@ pub fn update_resourse_text(
         CurrentWorld::WarmPawsPorch => WPP_PLANT_RES,
     };
 
+
     for (mut counter, mut text, marker) in text_query.iter_mut() {
         let i = marker.0;
 
@@ -194,7 +195,7 @@ pub fn update_resourse_text(
             _ => continue,
         };
 
-        counter.target_value = economy.get_item(resource_type as usize);
+        counter.target_value = economy.get_item(resource_type as usize, false);
 
         if counter.display_value > 0.0 || resource_type == ResourceType::CatHappiness {
             let formatted_val = format_number(counter.display_value);
@@ -238,6 +239,7 @@ pub fn price_button_text(
     current_world: Res<State<CurrentWorld>>,
     inventory: Res<GlobalInventory>,
     count_item_type: Res<CountItemType>,
+    prestige_inv: Res<PrestigeRoom>,
 ) {
     for (parent, mut text, info) in query_button_text.iter_mut() {
         let ButtonText(b_type) = info;
@@ -246,11 +248,11 @@ pub fn price_button_text(
 
         if let Ok(parent_data) = query_button.get(parent.get()) { my_parent = parent_data.text } else { my_parent = ""; };
 
-        let Some(count_item) = count_item_type.get_inv(&current_world) else { continue; };
+        let Some(count_item) = count_item_type.get_inv(&current_world, false) else { continue; };
 
         let new_text = match b_type {
-            TypeButton::SlotsUnLocking => button_slots_unlocking(&inventory, &current_world,  &my_parent),
-            _ => button_buy_text(count_item, &b_type, &my_parent),
+            TypeButton::SlotsUnLocking => button_slots_unlocking(&inventory, &current_world,  &my_parent, &prestige_inv),
+            _ => button_buy_text(count_item, &current_world, &b_type, &my_parent, &prestige_inv),
         };
 
         text.0 = new_text;
@@ -259,21 +261,27 @@ pub fn price_button_text(
 
 fn button_buy_text(
     count_item: &[usize],
+    current_world: &State<CurrentWorld>,
     b_type: &TypeButton,
-    b_text: &str
+    b_text: &str,
+    prestige_inv: &PrestigeRoom,
 ) -> String {
     let Some(plant) = b_type.get_plant_cfg() else {
         return "".into();
     };
 
+    let Some(prestige_room) = prestige_inv.get_room(current_world.get()) else { return "".into(); };
+
     let final_count = count_item[plant.species_id as usize];
 
     if final_count < plant.max_count {
+        let final_price = plant.price[final_count] * (1.0 + (prestige_room as f64).powf(1.6) * 3.0);
+        
         format!(
             "{}\n😸 {}\ncount:\n{} / {}",
             b_text,
             format_number(
-            plant.price[final_count]),
+            final_price),
             final_count,
             plant.max_count
         )
@@ -285,18 +293,30 @@ fn button_buy_text(
 fn button_slots_unlocking(
     inventory: &GlobalInventory,
     current_world: &State<CurrentWorld>,
-    b_text: &str
+    b_text: &str,
+    prestige_inv: &PrestigeRoom,
 ) -> String {
-    {
-        if let Some(index_slot) = inventory.get_slots_unlocking(&current_world) {
-            format!(
-                "{}\n😸 {}\ncount:\n{} / 16",
-                b_text,
-                format_number(SLOT_PRICES.prices[index_slot]),
-                index_slot + 4
-            )
-        } else {
-            "   MAX".to_string()
-        }
+    let price = match current_world.get() {
+        CurrentWorld::SunlitNursery => SLOT_PRICES,
+        CurrentWorld::WarmPawsPorch => return "".into(),
+    };
+
+    let mut new_price = Vec::new();
+
+    let Some(prestige_room) = prestige_inv.get_room(current_world.get()) else { return "".into(); };
+
+    for cost in price.prices.iter() {
+        new_price.push(cost + (prestige_room as f64).powf(1.6) * 5500.0);
+    };
+
+    if let Some(index_slot) = inventory.get_slots_unlocking(&current_world) {
+        format!(
+            "{}\n😸 {}\ncount:\n{} / 16",
+            b_text,
+            format_number(new_price[index_slot]),
+            index_slot + 4
+        )
+    } else {
+        "   MAX".to_string()
     }
 }

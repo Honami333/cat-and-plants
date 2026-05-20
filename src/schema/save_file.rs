@@ -3,7 +3,7 @@ use bevy::{math::f64, platform::collections::HashMap, prelude::*};
 use serde::{Serialize, Deserialize};
 
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(default)]
 pub struct SaveDataContainer {
     pub up_storege: UpgradeStorege,
@@ -15,26 +15,32 @@ pub struct SaveDataContainer {
 }
 
 // Список инвенторей
-#[derive(Resource, Clone, Serialize, Deserialize)]
+#[derive(Resource, Clone, Serialize, Deserialize, Debug)]
+#[serde(default)]
 pub struct UpgradeStorege {
+    pub sparcks: HashMap<(usize, usize), Upgrade>,
     pub global: HashMap<(usize, usize), Upgrade>,
     pub sunlit_nursery: HashMap<(usize, usize), Upgrade>,
 }
 
-#[derive(Resource, Clone, Copy, Serialize, Deserialize)]
+#[derive(Resource, Clone, Copy, Serialize, Deserialize, Debug)]
+#[serde(default)]
 pub struct GlobalInventory {
     pub sunlit_nursery_inv: [SlotState; 16],
 }
 
-#[derive(Resource, Clone, Copy, Default, Serialize, Deserialize)]
+#[derive(Resource, Clone, Copy, Default, Serialize, Deserialize, Debug)]
+#[serde(default)]
 pub struct Economy {
     pub storage: [f64; 6],
     pub prestige_sparks: [f64; 1],
 }
 
-#[derive(Resource, Clone, Copy, Default, Serialize, Deserialize)]
+#[derive(Resource, Clone, Copy, Default, Serialize, Deserialize, Debug)]
+#[serde(default)]
 pub struct CountItemType {
     pub sunlit_nursery_inv: [usize; 4],
+    pub sunlit_nursery_click: [usize; 4],
 }
 
 #[derive(Resource, Clone, Copy, Default)]
@@ -75,7 +81,7 @@ pub struct MaxFPS {
     pub unfoces_fps: f64,
 }
 
-#[derive(Resource, Clone, Copy, Default,  Serialize, Deserialize)]
+#[derive(Resource, Clone, Copy, Default,  Serialize, Deserialize, Debug)]
 pub struct PrestigeRoom {
     pub sunlit_nursery: usize,
 }

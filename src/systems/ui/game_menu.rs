@@ -15,7 +15,7 @@ pub fn game_menu(
     mut eco_storege: ResMut<Economy>,
     mut cit_storege: ResMut<CountItemType>,
     mut current_world: ResMut<NextState<CurrentWorld>>,
-    pristige_room: Res<PrestigeRoom>,
+    mut pristige_room: ResMut<PrestigeRoom>,
     world: Res<State<CurrentWorld>>,
     game_state: Res<State<GameState>>,
     world_scale: Res<WorldScale>,
@@ -60,7 +60,7 @@ pub fn game_menu(
                         &mut global_storege,
                         &mut eco_storege,
                         &mut cit_storege,
-                        &pristige_room,
+                        &mut pristige_room,
                         &world,
                         false,
                     );
@@ -79,7 +79,7 @@ pub fn game_menu(
                         &mut global_storege,
                         &mut eco_storege,
                         &mut cit_storege,
-                        &pristige_room,
+                        &mut pristige_room,
                         &world,
                         true,
                     );
@@ -125,7 +125,7 @@ fn exit_to_menu(
     global_storege: &mut GlobalInventory,
     eco_storege: &mut Economy,
     cit_storege: &mut CountItemType,
-    pristige_room: &PrestigeRoom,
+    pristige_room: &mut PrestigeRoom,
     world: &State<CurrentWorld>,
     slot_reset: bool,
 ) {
@@ -136,6 +136,7 @@ fn exit_to_menu(
         *global_storege = GlobalInventory::default();
         *eco_storege = Economy::default();
         *cit_storege = CountItemType::default();
+        *pristige_room = PrestigeRoom::default();
         current_world.set(CurrentWorld::WarmPawsPorch);
 
         if slot_reset {

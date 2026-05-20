@@ -10,6 +10,7 @@ pub const FERTILE_SOIL: Upgrade = Upgrade {
     current_level: 0,
     levels: &[SOIL_1, SOIL_2, SOIL_3],
     dependencies: &[],
+    location_prestige_req: (None, None),
     category: EGUISelectedCategories::Global,
     grid_pos: (0, 0),
 };
@@ -50,6 +51,7 @@ pub const GROWTH_SPEED: Upgrade = Upgrade {
     current_level: 0,
     levels: &[SPD_1, SPD_2, SPD_3],
     dependencies: &[],
+    location_prestige_req: (None, None),
     category: EGUISelectedCategories::Global,
     grid_pos: (0, 1),
 };
@@ -90,6 +92,7 @@ pub const JOY_BOOST: Upgrade = Upgrade {
     current_level: 0,
     levels: &[JOY_1, JOY_2, JOY_3],
     dependencies: &[],
+    location_prestige_req: (None, None),
     category: EGUISelectedCategories::Global,
     grid_pos: (0, 2),
 };
@@ -134,6 +137,7 @@ pub const CARDBOARD_BOX: Upgrade = Upgrade {
         UpgradeUID::WholesaleSupply,
         UpgradeUID::SelectiveBreeding,
     ],
+    location_prestige_req: (None, None),
     category: EGUISelectedCategories::Global,
     grid_pos: (3, 0),
 };
@@ -158,11 +162,7 @@ const BOX_LVL_3: UpgradeLevel = UpgradeLevel {
 
 // Стеклянная теплица: Повышает доход в локации Sunlit Nursery
 // Полка для рассады: Позволяет хранить один слот «в запасе». что иметь возможность собирать уражай с какого либо растения на любой локации
-// Усиленное удобрение: +1 к gather_amount для томатов.
-// Минеральные соли: +1 к gather_amount для огурцов.
 // Селекция семян: +1 к gather_amount для кукурузы.
 // Гормональный буст: +1 к gather_amount для тыквы
 // Возможность перетаскивать растения
 // Все виды суперс улучшений на каждое растение
-
-// Информация о улучшении,

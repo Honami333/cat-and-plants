@@ -1,4 +1,4 @@
-use crate::content::upgrades::{global::*, sunlit_nursery::*};
+use crate::content::upgrades::{prestige::*, global::*, sunlit_nursery::*};
 use crate::content::world::sunlit_nursery::*;
 use crate::schema::config::{Plant, ShaderMaterial, Upgrade};
 use crate::schema::resources::AtlasAssets;
@@ -7,6 +7,7 @@ use crate::schema::save_file::*;
 use bevy::platform::collections::HashMap;
 use bevy::prelude::*;
 use bevy::shader::ShaderRef;
+use std::borrow::Borrow;
 use bevy::sprite_render::{AlphaMode2d, Material2d};
 
 
@@ -102,7 +103,7 @@ impl GlobalInventory {
         &mut self,
         economy: &Economy,
         current_world: &State<CurrentWorld>,
-        prices: &'static [f64],
+        prices: &Vec<f64>,
     ) -> (bool, Option<usize>) {
         let Some(invetory_array) = self.get_inv_mut(current_world) else {
             return (false, None);
@@ -113,7 +114,7 @@ impl GlobalInventory {
             .enumerate()
             .find(|(_, i)| matches!(i, SlotState::Locked))
         {
-            if economy.get_item(ResourceType::CatHappiness as usize) < prices[i - 4] {
+            if economy.get_item(ResourceType::CatHappiness as usize, false) < prices[i - 4] {
                 return (false, None);
             };
 
@@ -157,8 +158,9 @@ impl GlobalInventory {
 }
 
 impl Economy {
-    pub fn get_item(&self, res: usize) -> f64 {
-        self.storage[res]
+    pub fn get_item(&self, res: usize, is_sparck: bool) -> f64 {
+        if !is_sparck { return self.storage[res] }
+        else { return self.prestige_sparks[res.saturating_sub(6)] };
     }
 
     pub fn egui_get_item(&self, res: EGUIResourceType) -> f64 {
@@ -174,13 +176,22 @@ impl Economy {
         self.storage[res as usize]
     }
 
-    pub fn egui_get_item_all(&self, well: TradeWell, percent: f64) -> f64 {
+    pub fn egui_get_item_all(&self, well: TradeWell, percent: f64, upgrade_storege: &UpgradeStorege) -> f64 {
         let mut all_trade = 0.0;
 
         for (i, item_count) in self.storage.iter().enumerate() {
             if *item_count > 0.0 && i != 0 && i != self.storage.len() - 1 {
                 if let Some(cur_well) = well.well.get(i - 1) {
-                    let s = (item_count * percent / 100.0).floor() * cur_well;
+                    let trade_state = EGUIResourceType::All;
+
+                    let mut up_value_2 =  1.0;
+
+                    if let Some(plant) = trade_state.into_plant().get(i.saturating_sub(1)) {
+                        if let (Some(value), _) = upgrade_storege.get_plant_global_modifier(&plant, PlantGGM::Joy) {up_value_2 = value};
+                    };
+                    
+                    let s = (item_count * percent / 100.0).floor() * cur_well * up_value_2;
+
                     all_trade += s;
                 }
             }
@@ -189,8 +200,9 @@ impl Economy {
         all_trade
     }
 
-    pub fn add(&mut self, res: usize, amount: f64) {
-        self.storage[res] += amount;
+    pub fn add(&mut self, res: usize, amount: f64, is_sparck: bool) {
+        if !is_sparck { self.storage[res] += amount; }
+        else { self.prestige_sparks[res.saturating_sub(6)] += amount; };
     }
 
     pub fn add_all(&mut self, percent: f64) {
@@ -222,7 +234,7 @@ impl Economy {
         };
 
         for res in &res_vec {
-            item_res.push(self.get_item(*res as usize));
+            item_res.push(self.get_item(*res as usize, false));
         };
 
         (res_vec, item_res)
@@ -246,6 +258,11 @@ impl Material2d for ShaderMaterial {
 
 impl Default for UpgradeStorege {
     fn default() -> Self {
+        let sparcks_item = [
+            (PURR_PROFIT.grid_pos, PURR_PROFIT.clone()),
+            (OVER_BLOOMING.grid_pos, OVER_BLOOMING.clone()),
+        ];
+
         let global_item = [
             (FERTILE_SOIL.grid_pos, FERTILE_SOIL.clone()),
             (GROWTH_SPEED.grid_pos, GROWTH_SPEED.clone()),
@@ -254,12 +271,21 @@ impl Default for UpgradeStorege {
         ];
 
         let sunlit_nursery_item = [
+            (UNLOCK_TOMATO.grid_pos, UNLOCK_TOMATO.clone()),
             (UNLOCK_CUCUMBER.grid_pos, UNLOCK_CUCUMBER.clone()),
             (UNLOCK_CORN.grid_pos, UNLOCK_CORN.clone()),
             (UNLOCK_PUMPKIN.grid_pos, UNLOCK_PUMPKIN.clone()),
+            (CONCENTRATED_NECTAR.grid_pos, CONCENTRATED_NECTAR.clone()),
+            (TOMATO_BOUNTY.grid_pos, TOMATO_BOUNTY.clone()),
+            (TOMATO_GROWTH.grid_pos, TOMATO_GROWTH.clone()),
+            (TOMATO_JOY.grid_pos, TOMATO_JOY.clone()),
+            (CUCUMBER_BOUNTY.grid_pos, CUCUMBER_BOUNTY.clone()),
+            (CUCUMBER_GROWTH.grid_pos, CUCUMBER_GROWTH.clone()),
+            (CUCUMBER_JOY.grid_pos, CUCUMBER_JOY.clone()),
         ];
 
         Self {
+            sparcks: sparcks_item.into_iter().collect(),
             global: global_item.into_iter().collect(),
             sunlit_nursery: sunlit_nursery_item.into_iter().collect(),
         }
@@ -267,10 +293,22 @@ impl Default for UpgradeStorege {
 }
 
 impl CurrentWorld {
-    pub fn get_prestige_cost(&self) -> Option<&[f64]> {
+    pub fn get_prestige_cost(&self) -> Option<&[(ResourceType, f64)]> {
         match self {
             CurrentWorld::SunlitNursery => Some(SN_FIRST_PRESTIGE_COST.cost),
             CurrentWorld::WarmPawsPorch => None
+        }
+    }
+
+    pub fn get_cost(&self, res: ResourceType, pr_room: usize) -> Option<f64> {
+        let Some(res_cost) = self.get_prestige_cost() else { return None; };
+
+        let Some((_, cost)) = res_cost.iter().find(|(r, _)| *r == res) else { return None; };
+
+        if matches!(res, ResourceType::CatHappiness) {
+            Some(*cost * (pr_room as f64 + 1.0).powf(1.8))
+        } else {
+            Some(*cost * (pr_room as f64 + 1.0).powf(1.2))
         }
     }
 }
@@ -307,15 +345,43 @@ impl Default for UpgradeState {
 
 impl UpgradeStorege {
     fn all_upgrages(&self) -> impl Iterator<Item = &Upgrade> {
-        self.global.values().chain(self.sunlit_nursery.values())
+        self.global.values().chain(self.sunlit_nursery.values()).chain(self.sparcks.values())
     }
 
     pub fn get_global_modifier(&self, upgrade_id: UpgradeUID) -> (Option<f64>, bool) {
-
          self.all_upgrages()
          .find(|u| u.id == upgrade_id && u.current_level > 0 )
-         .map(|u| (u.levels[u.current_level - 1].value, true))
-         .unwrap_or((Some(1.0), false))
+         .map(|u| (u.levels[u.current_level.saturating_sub(1)].value, true))
+         .unwrap_or((None, false))
+    }
+
+    pub fn get_plant_global_modifier(&self, type_plant: &TypePlant, mode: PlantGGM) -> (Option<f64>, bool) {
+        match mode {
+            PlantGGM::Bounty => {
+                match type_plant {
+                    TypePlant::Tomato => self.get_global_modifier(UpgradeUID::TomatoBounty),
+                    TypePlant::Cucumber => self.get_global_modifier(UpgradeUID::CucumberBounty),
+                    TypePlant::Corn => self.get_global_modifier(UpgradeUID::CornBounty),
+                    TypePlant::Pumpkin => self.get_global_modifier(UpgradeUID::PumpkinBounty),
+                }
+            }
+            PlantGGM::Growth => {
+                match type_plant {
+                    TypePlant::Tomato => self.get_global_modifier(UpgradeUID::TomatoGrowth),
+                    TypePlant::Cucumber => self.get_global_modifier(UpgradeUID::CucumberGrowth),
+                    TypePlant::Corn => self.get_global_modifier(UpgradeUID::CucumberJoy),
+                    TypePlant::Pumpkin => self.get_global_modifier(UpgradeUID::PumpkinGrowth),
+                }
+            }
+            PlantGGM::Joy => {
+                match type_plant {
+                    TypePlant::Tomato => self.get_global_modifier(UpgradeUID::TomatoJoy),
+                    TypePlant::Cucumber => self.get_global_modifier(UpgradeUID::CucumberJoy),
+                    TypePlant::Corn => self.get_global_modifier(UpgradeUID::CornJoy),
+                    TypePlant::Pumpkin => self.get_global_modifier(UpgradeUID::PumpkinJoy),
+                }
+            }
+        }
     }
 
     pub fn get_storege_category(
@@ -323,6 +389,7 @@ impl UpgradeStorege {
         category: EGUISelectedCategories,
     ) -> &HashMap<(usize, usize), Upgrade> {
         match category {
+            EGUISelectedCategories::Sparcks => &self.sparcks,
             EGUISelectedCategories::Global => &self.global,
             EGUISelectedCategories::SunlitNursery => &self.sunlit_nursery,
         }
@@ -330,25 +397,51 @@ impl UpgradeStorege {
 }
 
 impl CountItemType {
-    pub fn get_inv<'a>(&self, current_world: &State<CurrentWorld>) -> Option<&[usize; 4]> {
-        match current_world.get() {
-            CurrentWorld::SunlitNursery => Some(&self.sunlit_nursery_inv),
-            CurrentWorld::WarmPawsPorch => None,
+    pub fn get_inv<'a>(
+        &self,
+        current_world: &State<CurrentWorld>,
+        click_inv: bool,
+    ) -> Option<&[usize; 4]> {
+        if !click_inv {
+            match current_world.get() {
+                CurrentWorld::SunlitNursery => Some(&self.sunlit_nursery_inv),
+                CurrentWorld::WarmPawsPorch => None,
+            }
+        } else {
+            match current_world.get() {
+                CurrentWorld::SunlitNursery => Some(&self.sunlit_nursery_click),
+                CurrentWorld::WarmPawsPorch => None,
+            }
         }
     }
 
     pub fn get_inv_mut<'a>(
         &mut self,
         current_world: &State<CurrentWorld>,
+        click_inv: bool,
     ) -> Option<&mut [usize; 4]> {
-        match current_world.get() {
-            CurrentWorld::SunlitNursery => Some(&mut self.sunlit_nursery_inv),
-            CurrentWorld::WarmPawsPorch => None,
+        if !click_inv {
+            match current_world.get() {
+                CurrentWorld::SunlitNursery => Some(&mut self.sunlit_nursery_inv),
+                CurrentWorld::WarmPawsPorch => None,
+            }
+        } else {
+            match current_world.get() {
+                CurrentWorld::SunlitNursery => Some(&mut self.sunlit_nursery_click),
+                CurrentWorld::WarmPawsPorch => None,
+            }
         }
     }
 
     pub fn add(&mut self, res: usize, current_world: &State<CurrentWorld>) {
-        let Some(count_inv) = self.get_inv_mut(current_world) else {
+        let Some(count_inv) = self.get_inv_mut(current_world, false) else {
+            return;
+        };
+        count_inv[res] += 1;
+    }
+
+    pub fn add_click(&mut self, res: usize, current_world: &State<CurrentWorld>) {
+        let Some(count_inv) = self.get_inv_mut(current_world, true) else {
             return;
         };
         count_inv[res] += 1;
@@ -400,7 +493,7 @@ impl Upgrade {
             storege
                 .values()
                 .find(|u| u.id == *def_ip)
-                .is_some_and(|u| u.current_level > 0)
+                .is_some_and(|u| u.current_level > 0 || u.levels.len() == 0)
         })
     }
 
@@ -411,6 +504,16 @@ impl Upgrade {
             UpgradeUID::UnlockPumpkin => Some("pumpkin".to_string()),
             _ => None
         }
+    }
+
+    pub fn get_location_prestige_req(&self, prestige_inv: &PrestigeRoom) -> bool {
+        let Some(world) = self.location_prestige_req.0 else { return true; };
+
+        let Some(req_level) = self.location_prestige_req.1 else { return true; };
+
+        let Some(prestige) = prestige_inv.get_room(&world) else { return true; };
+
+        prestige >= req_level
     }
 }
 
@@ -428,14 +531,18 @@ impl UpgradeStage {
 }
 
 impl PrestigeRoom {
-    pub fn get_room<'a>(&self, current_world: &State<CurrentWorld>) -> Option<&usize> {
-        match current_world.get() {
-            CurrentWorld::SunlitNursery => Some(&self.sunlit_nursery),
+    pub fn get_room<W>(&self, current_world: W) -> Option<usize> 
+        where 
+            W: Borrow<CurrentWorld>
+        {
+
+        match current_world.borrow() {
+            CurrentWorld::SunlitNursery => Some(self.sunlit_nursery),
             CurrentWorld::WarmPawsPorch => None,
         }
     }
 
-    pub fn get_mut_room<'a>(&mut self, current_world: &State<CurrentWorld>) -> Option<&mut usize> {
+    pub fn get_mut_room(&mut self, current_world: &State<CurrentWorld>) -> Option<&mut usize> {
         match current_world.get() {
             CurrentWorld::SunlitNursery => Some(&mut self.sunlit_nursery),
             CurrentWorld::WarmPawsPorch => None,
@@ -446,6 +553,41 @@ impl PrestigeRoom {
         match current_world.get() {
             CurrentWorld::SunlitNursery => Some(ResourceType::SunSparks),
             CurrentWorld::WarmPawsPorch => None,
+        }
+    }
+
+    pub fn first_prestige(&self) -> bool {
+        let rooms = [self.sunlit_nursery];
+
+        for room in rooms {
+            if room > 0 { return true };
+        };
+
+        false
+    }
+
+    pub fn get_all_prestige(&self) -> usize {
+        let rooms = [self.sunlit_nursery];
+
+        let mut prestige_count = 0;
+
+        for room in rooms {
+            prestige_count += room;
+        };
+
+        prestige_count
+    }
+}
+
+impl EGUIResourceType {
+    pub fn into_plant(&self) -> Vec<TypePlant> {
+        match self {
+            EGUIResourceType::All => vec![TypePlant::Tomato, TypePlant::Cucumber, TypePlant::Corn, TypePlant::Pumpkin],
+            EGUIResourceType::Tomatoes => vec![TypePlant::Tomato],
+            EGUIResourceType::Cucumbers => vec![TypePlant::Cucumber],
+            EGUIResourceType::Corn =>vec![TypePlant::Corn],
+            EGUIResourceType::Pumpkin => vec![TypePlant::Pumpkin],
+            EGUIResourceType::None => Vec::new(),
         }
     }
 }

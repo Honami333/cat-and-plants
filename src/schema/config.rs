@@ -75,7 +75,7 @@ pub struct ShaderMaterial { // Конфиг шейдеров
     pub mesh_scale: f32,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Upgrade {
     #[serde(skip, default = "default_static_str")]
     pub name: &'static str,
@@ -86,7 +86,7 @@ pub struct Upgrade {
     pub levels: &'static [UpgradeLevel],
     #[serde(skip, default = "default_static_slice")]
     pub dependencies: &'static [UpgradeUID],
-
+    pub location_prestige_req: (Option<CurrentWorld>, Option<usize>),
 
     pub id: UpgradeUID,
     pub texture_stage: UpgradeStage,
@@ -95,7 +95,7 @@ pub struct Upgrade {
     pub grid_pos: (usize, usize),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct UpgradeLevel {
     pub resource_types: &'static [ResourceType],
     pub costs: &'static [f64],
@@ -114,5 +114,5 @@ pub struct SaveSlot {
 }
 
 pub struct PrestigeCost {
-    pub cost: &'static [f64],
+    pub cost: &'static [(ResourceType, f64)],
 }

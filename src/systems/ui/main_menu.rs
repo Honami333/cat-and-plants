@@ -167,7 +167,7 @@ fn continue_enabled() -> (usize, bool) {
 
     let mut latest_time: Option<SystemTime> = None;
 
-    for i in 0..2 {
+    for i in 0..3 {
         let Ok(metadata) = metadata(get_save_path(i)) else { continue; };
 
         let Ok(modified_time) = metadata.modified() else { continue; };
@@ -424,12 +424,12 @@ pub fn scan_save_slots(save_slot_inv: &mut SaveSlotInv) {
 }
 
 fn add_start(economy: &mut Economy) {
-    // economy.add(ResourceType::CatHappiness as usize, 100000.0);
-    // economy.add(ResourceType::Tomatoes as usize, 100000.0);
-    // economy.add(ResourceType::Cucumbers as usize, 100000.0);
-    // economy.add(ResourceType::Corn as usize, 100000.0);
-    // economy.add(ResourceType::Pumpkin as usize, 100000.0);
-    economy.add(ResourceType::Tomatoes as usize, 10.0);
+    // economy.add(ResourceType::CatHappiness as usize, 100000000.0, false);
+    // economy.add(ResourceType::Tomatoes as usize, 1000000000.0, false);
+    // economy.add(ResourceType::Cucumbers as usize, 1000000000.0, false);
+    // economy.add(ResourceType::Corn as usize, 1000000000.0, false);
+    // economy.add(ResourceType::Pumpkin as usize, 100000000.0, false);
+    economy.add(ResourceType::Tomatoes as usize, 10.0, false);
 }
 
 fn fetch_file_date_string(i: usize) -> &'static str {
