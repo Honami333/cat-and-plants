@@ -1,13 +1,15 @@
 use bevy::{asset::LoadState, prelude::*};
 use bevy_egui::{EguiContexts, egui};
+use crate::schema::save_file::GlobalSettings;
 use crate::schema::{types_and_states::*, resources::*};
 use crate::content::loading_text::*;
 use std::time;
 use rand::seq::SliceRandom;
 use crate::GAME_VERSION;
+use crate::systems::locales::*;
 
 const ERROR_TIME: f64 = 20.0;
-const LOAD_TIME: f64 = 1.0;
+const LOAD_TIME: f64 = 0.0;
 const DOT_TIME: f64 = 0.1;
 
 pub fn assets_load_screen(
@@ -22,6 +24,7 @@ pub fn assets_load_screen(
     mut current_dots: Local<usize>,
 
     asset_server: Res<AssetServer>,
+    settings: Res<GlobalSettings>,
     world: Res<WorldScale>,
     time: Res<Time>,
 
@@ -42,7 +45,7 @@ pub fn assets_load_screen(
         *current_state = 1;
 
         if let Some(random_phrase) = STAGE_1_TEXTS.choose(&mut rand::thread_rng()) {
-            *current_text = random_phrase.to_string();
+            *current_text = translate(random_phrase, &settings.language);
         };
 
         return;
@@ -58,14 +61,15 @@ pub fn assets_load_screen(
 
     let s = world.scale;
 
-    render_ui_loading(&mut contexts, *current_state, current_text.clone(), *current_dots, s);
+    render_ui_loading(&mut contexts, *current_state, current_text.clone(), *current_dots, s, &settings);
 
     if error_timer.is_finished() {
-        let text = "Error initializing resources".to_string();
+        let text = translate("err-init-resources", &settings.language);
         *current_text = text.clone();
         error!(text);
         return;
     };
+
 
     if *current_state == 1 {
         let Some(assets) = game_assets else { return; };
@@ -106,7 +110,7 @@ pub fn assets_load_screen(
         error_timer.reset();
 
         if let Some(random_phrase) = STAGE_3_TEXTS.choose(&mut rand::thread_rng()) {
-            *current_text = random_phrase.to_string();
+            *current_text = translate(random_phrase, &settings.language);
         };
 
         *current_state = 3;
@@ -206,7 +210,8 @@ fn render_ui_loading(
     current_state: usize,
     current_text: String,
     current_dots: usize,
-    s: f32
+    s: f32,
+    settings: &GlobalSettings,
 ) {
     let Ok(ctx) = contexts.ctx_mut() else { return; };
 
@@ -218,7 +223,15 @@ fn render_ui_loading(
             ui.vertical_centered(|ui| {
                 ui.add_space(ui.available_height() * 0.45);
 
-                let loading_text = if current_state != 6 { format!("{}{} ", current_text, dot) } else { "Let's Go!".to_string() };
+                let loading_text = if current_state != 6 { 
+                    if current_text.is_empty() {
+                        dot.to_string()
+                    } else {
+                        format!("{}{} ", translate(&current_text, &settings.language), dot) 
+                    }
+                } else { 
+                    translate("ui-load-lets-go", &settings.language) 
+                };
 
                 ui.label(egui::RichText::new(loading_text)
                     .size(24.0)
@@ -234,9 +247,9 @@ fn render_ui_loading(
                     ui.add_space(10.0 * s);
 
                     let load_stage_text = match current_state {
-                        5 => format!("Cat and plant v{}\nFinal loading{}", GAME_VERSION, dot),
-                        6 => format!("Cat and plant v{}\nComplite!", GAME_VERSION),
-                        _ => format!("Cat and plant v{}\nLoad stage: {}/4{}", GAME_VERSION, current_state, dot),
+                        5 => format!("Cat and plant v{}\n{}{}", GAME_VERSION, translate("ui-load-final", &settings.language), dot),
+                        6 => format!("Cat and plant v{}\n{}", GAME_VERSION, translate("ui-load-complete", &settings.language)),
+                        _ => format!("Cat and plant v{}\n{} {}/4{}", GAME_VERSION, translate("ui-load-stage", &settings.language), current_state, dot),
                     };
 
                     ui.label(egui::RichText::new(load_stage_text)

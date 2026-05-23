@@ -1,5 +1,5 @@
-use crate::schema::{config::ShaderMaterial, save_file::*, types_and_states::*};
-use bevy::{platform::thread, prelude::*, window::{PrimaryWindow, WindowFocused}};
+use crate::schema::{config::ShaderMaterial, save_file::*, types_and_states::*, world_components::SlotItem};
+use bevy::{asset::uuid::Uuid, camera::NormalizedRenderTarget, picking::pointer::{Location, PointerId}, platform::thread, prelude::*, window::{PrimaryWindow, WindowFocused}};
 use std::time::{Duration, Instant};
 
 // Механика роста
@@ -139,4 +139,47 @@ pub fn update_shader_settings(
        material.dust_particles = settings.shader.dust_particles.into();
        material.dust_amount = settings.shader.dust_amount;
     }
+}
+
+pub fn corn_boon_ability(
+    mut commands: Commands,
+    mut iti_invetory: ResMut<ItemTypeInfo>,
+    upgrade_storege: Res<UpgradeStorege>,
+    current_world: Res<State<CurrentWorld>>,
+    global_inventory: Res<GlobalInventory>,
+    query_slot_item: Query<(Entity, &SlotItem)>,
+    query_window: Query<Entity, With<PrimaryWindow>>
+) {
+    let Some(gl_inv) = global_inventory.get_inv(&current_world) else { return; };
+
+    let Ok(window_entity) = query_window.single() else { return; };
+
+    let Some(normalized_window) = bevy::window::WindowRef::Primary.normalize(Some(window_entity)) else { return; };
+
+    for slot_state in gl_inv {
+        if let SlotState::Occupied(plant) = slot_state {
+            let Some((entity, _)) = query_slot_item.iter().find(|(_, si)| si.slot_id == plant.slot_uid) else { continue; };
+
+            let event = Pointer::<Click>::new(
+                PointerId::Custom(Uuid::new_v4()),
+                Location {
+                    target: NormalizedRenderTarget::Window(normalized_window),
+                    position: Vec2::ZERO,
+                },
+                Click { 
+                    button: PointerButton::Primary,
+                    hit: bevy::picking::backend::HitData {
+                        camera: window_entity,
+                        depth: 0.0,
+                        position: None,
+                        normal: None
+                    },
+                    duration: std::time::Duration::ZERO,
+                },
+                entity,
+            );
+
+            commands.trigger(event);
+        };
+    };
 }

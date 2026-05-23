@@ -1,13 +1,13 @@
 
 use crate::schema::types_and_states::*;
 use bevy::{prelude::*, time::common_conditions::on_timer};
-use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+use bevy_egui::EguiPlugin;
 use std::time::Duration;
 use ui::UiPlugin;
 
 mod interaction;
 mod lifecycle;
-mod prestige;
+pub mod locales;
 mod save;
 mod simulation;
 mod ui;
@@ -66,6 +66,7 @@ impl Plugin for SystemPlugin {
                 interaction::state_dragg_item,
                 simulation::plant_growth.run_if(on_timer(Duration::from_secs(1))),
                 simulation::update_shader_settings,
+                // simulation::corn_boon_ability
             )
                 .run_if(in_state(GameState::Playing)),
         );
@@ -75,8 +76,6 @@ impl Plugin for SystemPlugin {
 
         app.add_systems(Update, simulation::max_fps_sync);
         app.add_systems(PostUpdate, simulation::fps_limiter_system);
-
-        app.add_systems(EguiPrimaryContextPass, prestige::prestige_flag);
 
         app.add_observer(interaction::end_drag_item);
         app.add_observer(interaction::start_drag_item);

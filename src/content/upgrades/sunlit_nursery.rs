@@ -3,22 +3,28 @@ use crate::schema::types_and_states::*;
 
 
 pub const UNLOCK_TOMATO: Upgrade = Upgrade {
-    name: "Juicy Red Ball",
-    description: "Your starting crop! Cats adore these bright red treats for their rich flavor and how fun they are to roll around.",
+    name: "unlock-tomato-name",
+    description: "unlock-tomato-desc",
 
     id: UpgradeUID::UnlockTomato,
     texture_stage: UpgradeStage::Max,
-    current_level: 0,
-    levels: &[],
+    current_level: 1,
+    levels: &[UT_LVL_1],
     dependencies: &[],
     location_prestige_req: (None, None),
     category: EGUISelectedCategories::SunlitNursery,
     grid_pos: (0, 0),
 };
 
+const UT_LVL_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[],
+    costs: &[], 
+    value: None,
+};
+
 pub const UNLOCK_CUCUMBER: Upgrade = Upgrade {
-    name: "Crunchy Snack",
-    description: "Allows you to grow fresh cucumbers. Many cats love them for their juiciness and fun crunch!",
+    name: "unlock-cucumber-name",
+    description: "unlock-cucumber-desc",
 
     id: UpgradeUID::UnlockCucumber,
     texture_stage: UpgradeStage::Locked,
@@ -37,8 +43,8 @@ const UC_LVL_1: UpgradeLevel = UpgradeLevel {
 };
 
 pub const UNLOCK_CORN: Upgrade = Upgrade {
-    name: "Sweet Kernels",
-    description: "Unlocks corn. These yellow kernels are a real treat that will make the cats purr with delight.",
+    name: "unlock-corn-name",
+    description: "unlock-corn-desc",
 
     id: UpgradeUID::UnlockCorn,
     texture_stage: UpgradeStage::Locked,
@@ -57,8 +63,8 @@ const UCORN_LVL_1: UpgradeLevel = UpgradeLevel {
 };
 
 pub const UNLOCK_PUMPKIN: Upgrade = Upgrade {
-    name: "Festive Feast",
-    description: "Allows you to feed the cats hearty pumpkins. It's the healthiest and grandest dish on your menu!",
+    name: "unlock-pumpkin-name",
+    description: "unlock-pumpkin-desc",
 
     id: UpgradeUID::UnlockPumpkin,
     texture_stage: UpgradeStage::Locked,
@@ -76,8 +82,8 @@ const UPUMP_LVL_1: UpgradeLevel = UpgradeLevel {
 };
 
 pub const CONCENTRATED_NECTAR: Upgrade = Upgrade {
-    name: "Concentrated Nectar",
-    description: "Unlocks the Tomato's special trait. Constant care squeezes out the best! Each harvest click builds up a permanent cumulative yield bonus for all crops, and applies a x2 stronger effect specifically for Tomatoes.",
+    name: "concentrated-nectar-name",
+    description: "concentrated-nectar-desc",
 
     id: UpgradeUID::ConcentratedNectar,
     texture_stage: UpgradeStage::Locked,
@@ -108,8 +114,8 @@ const CN_LVL_3: UpgradeLevel = UpgradeLevel {
 };
 
 pub const TOMATO_BOUNTY: Upgrade = Upgrade {
-    name: "Heavy Vines",
-    description: "Strengthens the tomato vines so they can hold way more fruit. Every harvest yields a much larger amount of juicy red balls.",
+    name: "tomato-bounty-name",
+    description: "tomato-bounty-desc",
 
     id: UpgradeUID::TomatoBounty,
     texture_stage: UpgradeStage::Locked,
@@ -149,8 +155,8 @@ const TB_LVL_3: UpgradeLevel = UpgradeLevel {
 
 
 pub const TOMATO_GROWTH: Upgrade = Upgrade {
-    name: "Greenhouse Warmth",
-    description: "Creates the perfect cozy climate for your tomatoes. The sprouts absorb heat better and mature much faster.",
+    name: "tomato-growth-name",
+    description: "tomato-growth-desc",
 
     id: UpgradeUID::TomatoGrowth,
     texture_stage: UpgradeStage::Locked,
@@ -189,8 +195,8 @@ const TG_LVL_3: UpgradeLevel = UpgradeLevel {
 };
 
 pub const TOMATO_JOY: Upgrade = Upgrade {
-    name: "Gourmet Puree",
-    description: "Teaches you how to mash tomatoes into a smooth, delicious treat. Feeding this to your kittens fills them with ultimate happiness.",
+    name: "tomato-joy-name",
+    description: "tomato-joy-desc",
 
     id: UpgradeUID::TomatoJoy,
     texture_stage: UpgradeStage::Locked,
@@ -236,8 +242,8 @@ const TJ_LVL_3: UpgradeLevel = UpgradeLevel {
 
 
 pub const CUCUMBER_BOUNTY: Upgrade = Upgrade {
-    name: "Crisp Rows",
-    description: "Improves cucumber trellises for optimal layout. Every harvest yields a much larger amount of crunchy snacks.",
+    name: "cucumber-bounty-name",
+    description: "cucumber-bounty-desc",
 
     id: UpgradeUID::CucumberBounty,
     texture_stage: UpgradeStage::Locked,
@@ -277,8 +283,8 @@ const CUB_LVL_3: UpgradeLevel = UpgradeLevel {
 
 
 pub const CUCUMBER_GROWTH: Upgrade = Upgrade {
-    name: "Moisture Control",
-    description: "Sets up automatic misting system for hydration. The cucumber sprouts absorb water better and mature much faster.",
+    name: "cucumber-growth-name",
+    description: "cucumber-growth-desc",
 
     id: UpgradeUID::CucumberGrowth,
     texture_stage: UpgradeStage::Locked,
@@ -319,8 +325,8 @@ const CUG_LVL_3: UpgradeLevel = UpgradeLevel {
 };
 
 pub const CUCUMBER_JOY: Upgrade = Upgrade {
-    name: "Chilled Slices",
-    description: "Teaches you how to serve refreshing cold cucumber snacks. Feeding this to your kittens fills them with ultimate happiness.",
+    name: "cucumber-joy-name",
+    description: "cucumber-joy-desc",
 
     id: UpgradeUID::CucumberJoy,
     texture_stage: UpgradeStage::Locked,
@@ -364,3 +370,132 @@ const CUJ_LVL_3: UpgradeLevel = UpgradeLevel {
     value: Some(1.5),
 };
 
+
+
+pub const CORN_BOUNTY: Upgrade = Upgrade {
+    name: "corn-bounty-name",
+    description: "corn-bounty-desc",
+
+    id: UpgradeUID::CornBounty,
+    texture_stage: UpgradeStage::Locked,
+    current_level: 0,
+    levels: &[COB_LVL_1, COB_LVL_2, COB_LVL_3],
+    dependencies: &[UpgradeUID::UnlockCorn],
+    location_prestige_req: (None, None),
+    category: EGUISelectedCategories::SunlitNursery,
+    grid_pos: (2, 1),
+};
+
+const COB_LVL_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+    ],
+    costs: &[450.0, 50.0],
+    value: Some(1.15),
+};
+
+const COB_LVL_2: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[2000.0, 200.0, 20.0],
+    value: Some(1.30),
+};
+
+const COB_LVL_3: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::SunSparks,
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin
+    ],
+    costs: &[1.0, 10000.0, 400.0, 80.0],
+    value: Some(1.5),
+};
+
+
+pub const CORN_GROWTH: Upgrade = Upgrade {
+    name: "corn-growth-name",
+    description: "corn-growth-desc",
+
+    id: UpgradeUID::CornGrowth,
+    texture_stage: UpgradeStage::Locked,
+    current_level: 0,
+    levels: &[COG_LVL_1, COG_LVL_2, COG_LVL_3],
+    dependencies: &[UpgradeUID::CornBounty],
+    location_prestige_req: (None, None),
+    category: EGUISelectedCategories::SunlitNursery,
+    grid_pos: (2, 2),
+};
+
+const COG_LVL_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[ResourceType::CatHappiness, ResourceType:: Corn],
+    costs: &[800.0, 80.0],
+    value: Some(1.15),
+};
+
+const COG_LVL_2: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[2400.0, 300.0, 30.0],
+    value: Some(1.30),
+};
+
+const COG_LVL_3: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::SunSparks,
+        ResourceType::CatHappiness,
+        ResourceType::Cucumbers,
+        ResourceType::Corn,
+    ],
+    costs: &[1.0, 12000.0, 550.0, 120.0],
+    value: Some(1.5),
+};
+
+
+pub const CORN_JOY: Upgrade = Upgrade {
+    name: "corn-joy-name",
+    description: "corn-joy-desc",
+
+    id: UpgradeUID::CornJoy,
+    texture_stage: UpgradeStage::Locked,
+    current_level: 0,
+    levels: &[COJ_LVL_1, COJ_LVL_2, COJ_LVL_3],
+    dependencies: &[UpgradeUID::CornGrowth],
+    location_prestige_req: (None, None),
+    category: EGUISelectedCategories::SunlitNursery,
+    grid_pos: (2, 3),
+};
+
+const COJ_LVL_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[ResourceType::CatHappiness, ResourceType::Corn],
+    costs: &[1000.0, 150.0],
+    value: Some(1.15),
+};
+
+const COJ_LVL_2: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[3500.0, 450.0, 60.0],
+    value: Some(1.30),
+};
+
+const COJ_LVL_3: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::SunSparks,
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[1.0, 15000.0, 700.0, 150.0],
+    value: Some(1.5),
+};

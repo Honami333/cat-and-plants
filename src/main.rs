@@ -3,12 +3,13 @@
 use bevy::{prelude::*, window::WindowMode};
 use schema::SchemaPlugin;
 use systems::SystemPlugin;
+
 mod assets;
 mod content;
 mod schema;
 mod systems;
 
-pub const GAME_VERSION: &'static str = "0.6.3 pre-release";
+pub const GAME_VERSION: &'static str = "0.6.4 pre-release";
 
 
 fn main() {
@@ -20,7 +21,7 @@ fn main() {
                         mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
                         position: WindowPosition::Centered(MonitorSelection::Primary),
                         resizable: false,
-                        title: "cat and plants".into(),
+                        title: "Cat and Plants".into(),
                         ..default()
                     }),
                     ..default()

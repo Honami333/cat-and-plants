@@ -2,8 +2,8 @@ use crate::schema::config::{Upgrade, UpgradeLevel};
 use crate::schema::types_and_states::*;
 
 pub const FERTILE_SOIL: Upgrade = Upgrade {
-    name: "Fertile Soil",
-    description: "Enriches the garden beds with minerals. Increases crop yield with each level.",
+    name: "fertile-soil-name",
+    description: "fertile-soil-desc",
 
     id: UpgradeUID::FertileSoil,
     texture_stage: UpgradeStage::Locked,
@@ -43,8 +43,8 @@ const SOIL_3: UpgradeLevel = UpgradeLevel {
 };
 
 pub const GROWTH_SPEED: Upgrade = Upgrade {
-    name: "Growth Catalysts",
-    description: "A special watering formula that forces plants to develop faster. Reduces time to harvest",
+    name: "growth-catalysts-name",
+    description: "growth-catalysts-desc",
 
     id: UpgradeUID::SelectiveBreeding,
     texture_stage: UpgradeStage::Locked,
@@ -84,8 +84,8 @@ const SPD_3: UpgradeLevel = UpgradeLevel {
 };
 
 pub const JOY_BOOST: Upgrade = Upgrade {
-    name: "Catnip Infusion",
-    description: "A secret ingredient in the soil makes cats much happier when they visit your garden.",
+    name: "catnip-infusion-name",
+    description: "catnip-infusion-desc",
 
     id: UpgradeUID::WholesaleSupply,
     texture_stage: UpgradeStage::Locked,
@@ -125,8 +125,8 @@ const JOY_3: UpgradeLevel = UpgradeLevel {
 };
 
 pub const CARDBOARD_BOX: Upgrade = Upgrade {
-    name: "Wholesale Supplies",
-    description: "We've arranged for shipments in big boxes! Reduces the cost of all future upgrades.",
+    name: "wholesale-supplies-name",
+    description: "wholesale-supplies-desc",
 
     id: UpgradeUID::CardboardBox,
     texture_stage: UpgradeStage::Locked,

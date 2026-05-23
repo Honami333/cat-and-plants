@@ -2,6 +2,7 @@ use crate::content::world::sunlit_nursery::*;
 use crate::content::world::warm_paws_porch::*;
 use crate::schema::{config::*, resources::*, types_and_states::*, world_components::*, save_file::*};
 use crate::systems::lifecycle::item_spawn;
+use crate::systems::locales::*;
 use bevy::prelude::*;
 use bevy::ui::UiScale;
 use bevy::ecs::relationship::Relationship;
@@ -176,6 +177,7 @@ pub fn update_resourse_text(
     mut text_query: Query<(&mut VisualCounter, &mut Text2d, &EconomyText)>,
     current_world: Res<State<CurrentWorld>>,
     economy: Res<Economy>,
+    settings: Res<GlobalSettings>,
 ) {
     let plant_res = match current_world.get() {
         CurrentWorld::SunlitNursery => SN_PLANT_RES,
@@ -187,11 +189,11 @@ pub fn update_resourse_text(
         let i = marker.0;
 
         let (icon, resource_type) = match i {
-            0 => ("😸", ResourceType::CatHappiness),
-            1 => (plant_res.plant_icon0, plant_res.plant0),
-            2 => (plant_res.plant_icon1, plant_res.plant1),
-            3 => (plant_res.plant_icon2, plant_res.plant2),
-            4 => (plant_res.plant_icon3, plant_res.plant3),
+            0 => (translate("res-cat-happiness", &settings.language), ResourceType::CatHappiness),
+            1 => (plant_res.plant_icon0.to_string(), plant_res.plant0),
+            2 => (plant_res.plant_icon1.to_string(), plant_res.plant1),
+            3 => (plant_res.plant_icon2.to_string(), plant_res.plant2),
+            4 => (plant_res.plant_icon3.to_string(), plant_res.plant3),
             _ => continue,
         };
 
@@ -206,6 +208,7 @@ pub fn update_resourse_text(
         };
     }
 }
+
 
 pub fn animate_counters(
     time: Res<Time>,
@@ -238,8 +241,9 @@ pub fn price_button_text(
     query_button: Query<&MyButton>,
     current_world: Res<State<CurrentWorld>>,
     inventory: Res<GlobalInventory>,
-    count_item_type: Res<CountItemType>,
+    count_item_type: Res<ItemTypeInfo>,
     prestige_inv: Res<PrestigeRoom>,
+    settings: Res<GlobalSettings>,
 ) {
     for (parent, mut text, info) in query_button_text.iter_mut() {
         let ButtonText(b_type) = info;
@@ -248,23 +252,23 @@ pub fn price_button_text(
 
         if let Ok(parent_data) = query_button.get(parent.get()) { my_parent = parent_data.text } else { my_parent = ""; };
 
-        let Some(count_item) = count_item_type.get_inv(&current_world, false) else { continue; };
+        let Some(count_item) = count_item_type.get_inv(&current_world) else { continue; };
 
         let new_text = match b_type {
-            TypeButton::SlotsUnLocking => button_slots_unlocking(&inventory, &current_world,  &my_parent, &prestige_inv),
-            _ => button_buy_text(count_item, &current_world, &b_type, &my_parent, &prestige_inv),
+            TypeButton::SlotsUnLocking => button_slots_unlocking(&inventory, &current_world,  &my_parent, &prestige_inv, &settings),
+            _ => button_buy_text(count_item, &current_world, &b_type, &my_parent, &prestige_inv, &settings),
         };
 
         text.0 = new_text;
     }
 }
-
 fn button_buy_text(
     count_item: &[usize],
     current_world: &State<CurrentWorld>,
     b_type: &TypeButton,
     b_text: &str,
     prestige_inv: &PrestigeRoom,
+    settings: &GlobalSettings,
 ) -> String {
     let Some(plant) = b_type.get_plant_cfg() else {
         return "".into();
@@ -278,15 +282,15 @@ fn button_buy_text(
         let final_price = plant.price[final_count] * (1.0 + (prestige_room as f64).powf(1.6) * 3.0);
         
         format!(
-            "{}\n😸 {}\ncount:\n{} / {}",
-            b_text,
-            format_number(
-            final_price),
+            "{}\n😸 {}\n{}\n{} / {}",
+            translate(b_text, &settings.language),
+            format_number(final_price),
+            translate("ui-count", &settings.language),
             final_count,
             plant.max_count
         )
     } else {
-        "   MAX".to_string()
+        translate("ui-max", &settings.language)
     }
 }
 
@@ -295,6 +299,7 @@ fn button_slots_unlocking(
     current_world: &State<CurrentWorld>,
     b_text: &str,
     prestige_inv: &PrestigeRoom,
+    settings: &GlobalSettings,
 ) -> String {
     let price = match current_world.get() {
         CurrentWorld::SunlitNursery => SLOT_PRICES,
@@ -311,12 +316,13 @@ fn button_slots_unlocking(
 
     if let Some(index_slot) = inventory.get_slots_unlocking(&current_world) {
         format!(
-            "{}\n😸 {}\ncount:\n{} / 16",
-            b_text,
+            "{}\n😸 {}\n{}\n{} / 16",
+            translate(b_text, &settings.language),
             format_number(new_price[index_slot]),
+            translate("ui-count", &settings.language),
             index_slot + 4
         )
     } else {
-        "   MAX".to_string()
+        translate("ui-max", &settings.language)
     }
 }

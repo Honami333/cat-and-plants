@@ -1,6 +1,7 @@
 use crate::schema::{config::{SaveSlot, Upgrade}, types_and_states::*};
 use bevy::{math::f64, platform::collections::HashMap, prelude::*};
 use serde::{Serialize, Deserialize};
+use crate::systems::locales::Language;
 
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -9,38 +10,22 @@ pub struct SaveDataContainer {
     pub up_storege: UpgradeStorege,
     pub global_storege: GlobalInventory,
     pub eco_storege: Economy,
-    pub cit_storege: CountItemType,
+    pub cit_storege: ItemTypeInfo,
     pub world: CurrentWorld,
     pub prestige: PrestigeRoom,
 }
 
 // Список инвенторей
-#[derive(Resource, Clone, Serialize, Deserialize, Debug)]
-#[serde(default)]
-pub struct UpgradeStorege {
-    pub sparcks: HashMap<(usize, usize), Upgrade>,
-    pub global: HashMap<(usize, usize), Upgrade>,
-    pub sunlit_nursery: HashMap<(usize, usize), Upgrade>,
-}
 
-#[derive(Resource, Clone, Copy, Serialize, Deserialize, Debug)]
-#[serde(default)]
-pub struct GlobalInventory {
-    pub sunlit_nursery_inv: [SlotState; 16],
-}
 
-#[derive(Resource, Clone, Copy, Default, Serialize, Deserialize, Debug)]
-#[serde(default)]
-pub struct Economy {
-    pub storage: [f64; 6],
-    pub prestige_sparks: [f64; 1],
-}
 
-#[derive(Resource, Clone, Copy, Default, Serialize, Deserialize, Debug)]
+
+
+#[derive(Resource, Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(default)]
-pub struct CountItemType {
+pub struct ItemTypeInfo {
     pub sunlit_nursery_inv: [usize; 4],
-    pub sunlit_nursery_click: [usize; 4],
+    pub sn_plant_ability: HashMap<TypePlant, HashMap<PlantAbility, [usize; 2]>>,
 }
 
 #[derive(Resource, Clone, Copy, Default)]
@@ -57,6 +42,7 @@ pub struct GlobalSettings {
     pub display: DisplaySettings,
     pub shader: ShaderSettings,
     pub autosave_interval: f64,
+    pub language: Language,
 }
 
 #[derive(Resource, Clone, Copy, Serialize, Deserialize)]

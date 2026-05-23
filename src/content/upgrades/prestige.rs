@@ -3,8 +3,8 @@ use crate::schema::types_and_states::*;
 
 
 pub const PURR_PROFIT : Upgrade = Upgrade {
-    name: "Purr Profit",
-    description: "Boosts your overall cat happiness income. Happy cats bring more wealth!",
+    name: "purr-profit-name",
+    description: "purr-profit-desc",
 
     id: UpgradeUID::PurrProfit,
     texture_stage: UpgradeStage::Locked,
@@ -30,8 +30,8 @@ const PROFIT_2: UpgradeLevel = UpgradeLevel {
 
 
 pub const OVER_BLOOMING : Upgrade = Upgrade {
-    name: "Over Blooming",
-    description: "Permanently multiplies crop yield from prestige rooms. Watch the garden explode!",
+    name: "over-blooming-name",
+    description: "over-blooming-desc",
 
     id: UpgradeUID::OverBlooming,
     texture_stage: UpgradeStage::Locked,

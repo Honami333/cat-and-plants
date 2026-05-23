@@ -3,12 +3,14 @@ use bevy_egui::{EguiContexts, egui};
 use crate::schema::{save_file::*, types_and_states::*, resources::*};
 use crate::systems::ui::func_fonts_loaded;
 use crate::systems::visuals::format_number;
+use crate::systems::locales::*;
+
 
 pub fn prestige_flag(
     mut contexts: EguiContexts,
     mut economy: ResMut<Economy>,
     mut global_inventory: ResMut<GlobalInventory>,
-    mut count_item_type: ResMut<CountItemType>,
+    mut count_item_type: ResMut<ItemTypeInfo>,
     mut prestige_inv: ResMut<PrestigeRoom>,
     mut fonts_loaded: Local<bool>,
     mut is_prestige: Local<bool>,
@@ -18,8 +20,9 @@ pub fn prestige_flag(
     font: Res<FontAssets>,
     current_world: Res<State<CurrentWorld>>,
     world: Res<WorldScale>,
+    settings: Res<GlobalSettings>,
 ) {
-    let Some(cit_inv) = count_item_type.get_inv_mut(&current_world, false) else { return; };
+    let Some(cit_inv) = count_item_type.get_inv_mut(&current_world) else { return; };
 
     let Some(gl_inv) = global_inventory.get_inv_mut(&current_world) else { return; };
 
@@ -35,7 +38,7 @@ pub fn prestige_flag(
 
     let s = world.scale;
 
-    egui::Window::new("Prestige Flag")
+    egui::Window::new(translate("ui-prestige-flag", &settings.language))
         .collapsible(false)
         .fixed_size([120.0* s, 50.0 * s])
         .title_bar(false)
@@ -45,7 +48,7 @@ pub fn prestige_flag(
                 if !*confirmation {
                     ui.add_enabled_ui(*is_prestige, |ui| {
                         let response = ui.add_sized([120.0 * s, 25.0 * s], egui::Button::new(
-                            egui::RichText::new(format!("PRESTIGE TO {}!", *pr_room + 1)).heading().color(egui::Color32::GOLD))
+                            egui::RichText::new(format!("{} {}!", translate("ui-prestige-to", &settings.language), *pr_room + 1)).heading().color(egui::Color32::GOLD))
                         );
                         
                         if response.clicked() {
@@ -57,15 +60,15 @@ pub fn prestige_flag(
                         let sparcks = (1.0 + *pr_room as f64).powf(1.2).floor();
 
                         let response = ui.add_sized([60.0 * s, 25.0 * s], egui::Button::new(
-                            egui::RichText::new("LET'S GO!").heading().color(egui::Color32::GOLD)
+                            egui::RichText::new(translate("ui-lets-go", &settings.language)).heading().color(egui::Color32::GOLD)
                         ));
 
                         if response.clicked() {
                             let default_gl_inv = GlobalInventory::default();
-                            let default_cut_inv = CountItemType::default();
+                            let default_cut_inv = ItemTypeInfo::default();
 
                             let Some(new_inv_gl) = default_gl_inv.get_inv(&current_world) else { return; };
-                            let Some(new_inv_cit) = default_cut_inv.get_inv(&current_world, false) else { return; };
+                            let Some(new_inv_cit) = default_cut_inv.get_inv(&current_world) else { return; };
 
                             *gl_inv = *new_inv_gl;
                             *cit_inv = *new_inv_cit;
@@ -78,23 +81,23 @@ pub fn prestige_flag(
 
                         response.on_hover_ui(|ui| {
                             ui.allocate_ui(egui::vec2(120.0 * s, 40.0 * s), |ui| {
-                                ui.label(egui::RichText::new("WARNING!").color(egui::Color32::RED).heading());
+                                ui.label(egui::RichText::new(translate("ui-warning", &settings.language)).color(egui::Color32::RED).heading());
 
                                 ui.separator();
 
-                                ui.label(egui::RichText::new(format!("This action will completely erase your progress in the {} room.", current_world.get()))
+                                ui.label(egui::RichText::new(format!("{} {} {}", translate("ui-warn-erase", &settings.language), translate(current_world.get().to_string().as_str(), &settings.language), translate("ui-warn-room", &settings.language)))
                                     .color(egui::Color32::GREEN));
 
-                                ui.label(egui::RichText::new(format!("Once confirmed, your plants will be sent to the kitty shelter"))
+                                ui.label(egui::RichText::new(format!("{}", translate("ui-warn-shelter", &settings.language)))
                                     .color(egui::Color32::GOLD));
 
-                                ui.label(egui::RichText::new(format!("You will receive {} in the amount of: {}", sparks.to_string(), sparcks))
+                                ui.label(egui::RichText::new(format!("{} {} {} {}", translate("ui-warn-receive", &settings.language), translate(sparks.to_string().as_str(), &settings.language), translate("ui-warn-amount", &settings.language), sparcks))
                                     .color(egui::Color32::GREEN));
                             }); 
                         });
 
                         let response = ui.add_sized([60.0 * s, 25.0 * s], egui::Button::new(
-                            egui::RichText::new("Cancel").heading().color(egui::Color32::GRAY)
+                            egui::RichText::new(translate("ui-cancel", &settings.language)).heading().color(egui::Color32::GRAY)
                         ));
 
                         if response.clicked() {
@@ -131,7 +134,7 @@ pub fn prestige_flag(
                                 egui::Label::new(egui::RichText::new(
                                     format!(
                                         "{} {}/{}",
-                                        res.to_string(),
+                                        translate(res.to_string().as_str(), &settings.language),
                                         format_number(*amount),
                                         format_number(required_amount)
                                     )

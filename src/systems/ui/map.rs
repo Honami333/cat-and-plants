@@ -1,16 +1,16 @@
-use crate::schema::types_and_states::*;
+use crate::schema::{types_and_states::*, save_file::*};
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui};
+use crate::systems::locales::*;
 
 pub fn map_ui_system(
     mut contexts: EguiContexts,
     mut new_current_world: ResMut<NextState<CurrentWorld>>,
     current_world: Res<State<CurrentWorld>>,
     world_scale: Res<WorldScale>,
+    settings: Res<GlobalSettings>,
 ) {
-    let Ok(ctx) = contexts.ctx_mut() else {
-        return;
-    };
+    let Ok(ctx) = contexts.ctx_mut() else { return; };
 
     let s = world_scale.scale / 2.0;
 
@@ -21,7 +21,7 @@ pub fn map_ui_system(
         ..default()
     };
 
-    egui::Window::new("Map")
+    egui::Window::new(translate("ui-map", &settings.language))
         .anchor(egui::Align2::RIGHT_TOP, [-10.0 * s, 10.0 * s])
         .fixed_size([320.0 * s, 240.0 * s])
         .collapsible(false)
@@ -71,6 +71,7 @@ pub fn map_ui_system(
                     critical_point_sn,
                     CurrentWorld::SunlitNursery,
                     s,
+                    &settings
                 );
                 room_map_spawn(
                     ui,
@@ -82,6 +83,7 @@ pub fn map_ui_system(
                     critical_point_wpp,
                     CurrentWorld::WarmPawsPorch,
                     s,
+                    &settings
                 );
             });
         });
@@ -97,6 +99,7 @@ fn room_map_spawn(
     critical_point: [f32; 4],
     location: CurrentWorld,
     s: f32,
+    settings: &GlobalSettings
 ) {
     let mouse_pos = ui.input(|i| i.pointer.hover_pos());
     let is_click = ui.input(|i| i.pointer.any_click());
@@ -136,7 +139,7 @@ fn room_map_spawn(
     painter.text(
         egui::pos2(center_x, center_y),
         egui::Align2::CENTER_CENTER,
-        location.to_string(),
+        translate(location.to_string().as_str(), &settings.language),
         egui::FontId::proportional(12.0 * s),
         egui::Color32::WHITE,
     );

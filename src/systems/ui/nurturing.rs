@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use crate::systems::ui::*;
 use bevy_egui::{EguiContexts, egui};
 use strum::IntoEnumIterator;
+use crate::systems::locales::*;
 
 pub fn trading_ui_system(
     mut contexts: EguiContexts,
@@ -16,6 +17,7 @@ pub fn trading_ui_system(
     all_fonts: Res<Assets<Font>>,
     font: Res<FontAssets>,
     upgrade_storege: Res<UpgradeStorege>,
+    settings: Res<GlobalSettings>,
 ) {
     if *current_world.get() != CurrentWorld::WarmPawsPorch { return; };
 
@@ -27,7 +29,7 @@ pub fn trading_ui_system(
 
     *fonts_loaded = func_fonts_loaded(ctx, *fonts_loaded, &all_fonts, &font);
 
-    egui::Window::new("Cat feed")
+    egui::Window::new(translate("ui-cat-feed", &settings.language))
         .default_open(true)
         .fixed_size([600.0, 300.0])
         .resizable(false)
@@ -36,7 +38,7 @@ pub fn trading_ui_system(
             ui.columns(3, |columns| {
                 let prestige_buff = 1.0 + ((prestige_inv.get_all_prestige() as f64).powf(1.25) * up_value);
 
-                columns[0].label("Choice");
+                columns[0].label(translate("ui-choice", &settings.language));
                 columns[0].separator();
                 columns[0].horizontal(|ui| {
                     let count_percent: [u8; 5] = [1, 10, 25, 50, 100];
@@ -74,7 +76,7 @@ pub fn trading_ui_system(
                             ui.vertical_centered(|ui| {
                                 ui.add_sized(
                                     [40.0, 40.0],
-                                    egui::Label::new(trade_state.selected_item.to_string()),
+                                    egui::Label::new(translate(trade_state.selected_item.to_string().as_str(), &settings.language)),
                                 );
                                 ui.add(egui::Label::new(format_number(current_economy)));
                             });
@@ -94,7 +96,7 @@ pub fn trading_ui_system(
                             ui.set_width(50.0);
 
                             ui.vertical_centered(|ui| {
-                                ui.add_sized([40.0, 40.0], egui::Label::new("😸"));
+                                ui.add_sized([40.0, 40.0], egui::Label::new(translate("res-cat-happiness", &settings.language)));
                                 ui.add(egui::Label::new(format_number((trade * prestige_buff).floor())));
                             });
                         });
@@ -107,7 +109,7 @@ pub fn trading_ui_system(
                 if trade > 0.0 {
                     columns[0].group(|ui| {
                         if ui
-                            .add_sized([100.0, 40.0], egui::Button::new("Feed"))
+                            .add_sized([100.0, 40.0], egui::Button::new(translate("ui-feed", &settings.language)))
                             .clicked()
                         {
                             economy.add(ResourceType::CatHappiness as usize, (trade * prestige_buff).floor(), false);
@@ -124,8 +126,8 @@ pub fn trading_ui_system(
                         };
                     });
                 }
-
-                columns[1].label("Inventory");
+                
+                columns[1].label(translate("ui-inventory", &settings.language));
                 columns[1].separator();
                 columns[1].vertical(|ui| {
                     egui::Grid::new("trade_inventory_grid")
@@ -157,7 +159,7 @@ pub fn trading_ui_system(
                                     if ui
                                         .add_sized(
                                             [40.0, 40.0],
-                                            egui::Button::new(item.to_string()).selected(is_select),
+                                            egui::Button::new(translate(item.to_string().as_str(), &settings.language)).selected(is_select),
                                         )
                                         .clicked()
                                     {
@@ -172,13 +174,13 @@ pub fn trading_ui_system(
                         });
                 });
 
-                columns[2].label("Location");
+                columns[2].label(translate("ui-location", &settings.language));
                 columns[2].separator();
                 columns[2].vertical(|ui| {
                     for world in EGUICurrntWorld::iter() {
                         let is_select = trade_state.selected_world == world;
 
-                        if ui.selectable_label(is_select, world.to_string()).clicked() {
+                        if ui.selectable_label(is_select, translate(world.to_string().as_str(), &settings.language)).clicked() {
                             trade_state.selected_world = world;
 
                             if world == EGUICurrntWorld::All {
@@ -192,6 +194,7 @@ pub fn trading_ui_system(
             ui.allocate_space(ui.available_size());
         });
 }
+
 
 fn trade_well(
     trade_state: &TradeState,

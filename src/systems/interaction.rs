@@ -8,7 +8,7 @@ pub fn button_check(
     trigger: On<Pointer<Click>>,
     mut inventory: ResMut<GlobalInventory>,
     mut economy: ResMut<Economy>,
-    mut count_item_type: ResMut<CountItemType>,
+    mut count_item_type: ResMut<ItemTypeInfo>,
     upgrade_storege: Res<UpgradeStorege>,
     button_type_query: Query<&TypeButton>,
     current_world: Res<State<CurrentWorld>>,
@@ -59,7 +59,7 @@ fn try_slots_unlocking(
 fn add_plant_and_lock(
     inventory: &mut GlobalInventory,
     economy: &mut Economy,
-    count_item_type: &mut CountItemType,
+    count_item_type: &mut ItemTypeInfo,
     upgrade_storege: &UpgradeStorege,
     current_world: &State<CurrentWorld>,
     button_data: &TypeButton,
@@ -76,7 +76,7 @@ fn add_plant_and_lock(
 
     if !availability { return; };
 
-    let Some(count_inv) = count_item_type.get_inv_mut(&current_world, false) else { return; };
+    let Some(count_inv) = count_item_type.get_inv_mut(&current_world) else { return; };
 
     let Some(plant) = button_data.get_plant_cfg() else { return; };
 
@@ -202,7 +202,7 @@ pub fn harvest(
     query_item: Query<(Entity, &SlotItem)>,
     mut global_inventory: ResMut<GlobalInventory>,
     mut resources_inv: ResMut<Economy>,
-    mut cit_inventory: ResMut<CountItemType>,
+    mut cit_inventory: ResMut<ItemTypeInfo>,
     current_world: Res<State<CurrentWorld>>,
     upgrade_storege: Res<UpgradeStorege>,
     prestige_inv: Res<PrestigeRoom>,
@@ -213,11 +213,16 @@ pub fn harvest(
 
     let mut up_value_3 =  0.0;
 
+    let mut modifier_unlocked_1 = false;
+
     if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::OverBlooming) {up_value_1 = value};
     
     if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::FertileSoil) {up_value_2 = value};
 
-    if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::ConcentratedNectar) {up_value_3 = value};
+    if let (Some(value), is_unlocked) = upgrade_storege.get_global_modifier(UpgradeUID::ConcentratedNectar) {
+        up_value_3 = value;
+        modifier_unlocked_1 = is_unlocked;
+    };
 
     let Some(global_inv) = global_inventory.get_inv_mut(&current_world) else {return; };
 
@@ -232,14 +237,14 @@ pub fn harvest(
 
         let mut plant_bounty =  0.0;
 
-        let mut modifier_unlocked = false;
+        let mut modifier_unlocked_2 = false;
 
         if let (Some(value), is_unlocked ) = upgrade_storege.get_plant_global_modifier(&plant.species_id, PlantGGM::Bounty) {
             plant_bounty = value;
-            modifier_unlocked = is_unlocked;
+            modifier_unlocked_2 = is_unlocked;
         };
 
-        let mut amount = if modifier_unlocked {
+        let mut amount = if modifier_unlocked_2 {
             match plant.species_id {
                 TypePlant::Pumpkin => ((plant.gather_amount + plant_bounty) * up_value_2 * prestige_buff).floor(),
                 _ => (plant.gather_amount * up_value_2 * prestige_buff * plant_bounty).floor()
@@ -252,12 +257,13 @@ pub fn harvest(
         let mut tomato_bonus = 1.0;
 
         if plant.species_id == TypePlant::Tomato { 
-            cit_inventory.add_click(plant.species_id as usize, &current_world);
+            cit_inventory.add_to_plant_ability(&plant.species_id, PlantAbility::TomatoClickCombo, 1, ModifierOperation::Add);
             tomato_bonus = 2.0;
         };
 
-        if let Some(cit_inv) = cit_inventory.get_inv(&current_world, true) {
-            amount += (up_value_3 * tomato_bonus * amount * cit_inv[0] as f64).floor();
+        if modifier_unlocked_1 {
+            let cit_inv = cit_inventory.get_value_plant_ability(&TypePlant::Tomato, PlantAbility::TomatoClickCombo);
+            amount += (up_value_3 * tomato_bonus * amount * cit_inv as f64).floor();
         };
 
         resources_inv.add(plant.species_id as usize + 1, amount, false);

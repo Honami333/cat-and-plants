@@ -20,7 +20,7 @@ pub fn event_save_system(
     up_storege: Res<UpgradeStorege>,
     global_storege: Res<GlobalInventory>,
     eco_storege: Res<Economy>,
-    cit_storege: Res<CountItemType>,
+    cit_storege: Res<ItemTypeInfo>,
     save_slot_inv: Res<SaveSlotInv>,
     pristige_room: Res<PrestigeRoom>,
     world: Res<State<CurrentWorld>>,
@@ -66,7 +66,7 @@ pub fn auto_save_system(
     up_storege: &UpgradeStorege,
     global_storege: &GlobalInventory,
     eco_storege: &Economy,
-    cit_storege: &CountItemType,
+    cit_storege: &ItemTypeInfo,
     save_slot_inv: &SaveSlotInv,
     world: &State<CurrentWorld>,
     pristige_room: &PrestigeRoom
@@ -79,6 +79,7 @@ pub fn auto_save_system(
         prestige: pristige_room.clone(),
         world: **world,
     };
+
 
     if let Err(e) = save_game_to_disk(&contener, save_slot_inv.active_slot) {
         error!("Critical autosave error: {}", e);
@@ -176,14 +177,6 @@ fn load_game_from_disk(i: usize) -> Result<SaveDataContainer, Box<dyn std::error
                 };
             };
         };
-
-        if let Some(ron::Value::Seq(seq)) = get_field(&cit, "sunlit_nursery_click") {
-            for (idx, val) in seq.iter().enumerate().take(contener.cit_storege.sunlit_nursery_click.len()) {
-                if let ron::Value::Number(ron::value::Number::Integer(int_val)) = val {
-                    contener.cit_storege.sunlit_nursery_click[idx] = *int_val as usize;
-                };
-            };
-        };
     };
 
     if let Some(prestige) = get_field(&parsed, "prestige") {
@@ -194,15 +187,19 @@ fn load_game_from_disk(i: usize) -> Result<SaveDataContainer, Box<dyn std::error
 
     if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
         contener.up_storege = full_container.up_storege;
-    }
+    };
+
+    if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
+        contener.cit_storege.sn_plant_ability = full_container.cit_storege.sn_plant_ability;
+    };
 
     if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
         contener.global_storege = full_container.global_storege;
-    }
+    };
 
     if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
         contener.world = full_container.world;
-    }
+    };
 
     Ok(contener)
 }
@@ -259,12 +256,30 @@ fn fix_inventory_references(inv: &mut GlobalInventory) {
     };
 }
 
+fn fix_iti_plant_ability(
+    cit_storege: &mut ItemTypeInfo
+) {
+    let mut clean_reference = ItemTypeInfo::default();
+
+    for (type_plant_loaded, plant_ability_map_loaded) in cit_storege.sn_plant_ability.iter() {
+        let Some(plant_ability_map) = clean_reference.sn_plant_ability.get_mut(type_plant_loaded) else { error!("ошибк аполучения данных 1"); continue; };
+
+        for (plant_ability_id_loaded, plant_ability_value_loaded) in plant_ability_map_loaded.iter() {
+            let Some(plant_ability_value) = plant_ability_map.get_mut(plant_ability_id_loaded) else {  error!("ошибк аполучения данных 2"); continue; };
+
+            *plant_ability_value = *plant_ability_value_loaded;
+        };
+    };
+
+    *cit_storege = clean_reference;
+}
+
 pub fn final_load_game(
     mut next_state: ResMut<NextState<GameState>>,
     mut up_storege: ResMut<UpgradeStorege>,
     mut global_storege: ResMut<GlobalInventory>,
     mut eco_storege: ResMut<Economy>,
-    mut cit_storege: ResMut<CountItemType>,
+    mut cit_storege: ResMut<ItemTypeInfo>,
     mut prestige: ResMut<PrestigeRoom>,
     mut world: ResMut<NextState<CurrentWorld>>,
     save_slot_inv: Res<SaveSlotInv>,
@@ -276,6 +291,8 @@ pub fn final_load_game(
     fix_upgrade_references(&mut contener.up_storege);
 
     fix_inventory_references(&mut contener.global_storege);
+
+    fix_iti_plant_ability(&mut contener.cit_storege);
 
     *up_storege = contener.up_storege;
     *global_storege = contener.global_storege;

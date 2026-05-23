@@ -7,6 +7,7 @@ mod loading;
 mod main_menu;
 mod map;
 mod nurturing;
+mod prestige;
 mod upgrades;
 
 pub struct UiPlugin;
@@ -14,14 +15,14 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(EguiPrimaryContextPass, loading::assets_load_screen.run_if(in_state(GameState::Loading)));
-
         app.add_systems(
             EguiPrimaryContextPass,
             (
-                game_menu::game_menu,
                 nurturing::trading_ui_system,
                 map::map_ui_system,
                 upgrades::show_upgrade_grid,
+                prestige::prestige_flag,
+                game_menu::game_menu,
             )
                 .chain()
                 .run_if(in_state(GameState::Playing))

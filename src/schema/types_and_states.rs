@@ -1,7 +1,32 @@
-use crate::schema::config::Plant;
 use bevy::{math::f64, prelude::*};
 use strum_macros::{AsRefStr, Display, EnumIter};
 use serde::{Serialize, Deserialize};
+use super::economy_inventory::ResourceType;
+
+
+
+impl From<EGUIResourceType> for ResourceType {
+    fn from(value: EGUIResourceType) -> Self {
+        match value {
+            EGUIResourceType::Tomatoes => ResourceType::Tomatoes,
+            EGUIResourceType::Cucumbers => ResourceType::Cucumbers,
+            EGUIResourceType::Corn => ResourceType::Corn,
+            EGUIResourceType::Pumpkin => ResourceType::Pumpkin,
+            _ => ResourceType::None,
+        }
+    }
+}
+
+impl From<TypePlant> for ResourceType {
+    fn from(value: TypePlant) -> Self {
+        match value {
+            TypePlant::Tomato => ResourceType::Tomatoes,
+            TypePlant::Cucumber => ResourceType::Cucumbers,
+            TypePlant::Corn => ResourceType::Corn,
+            TypePlant::Pumpkin => ResourceType::Pumpkin,
+        }
+    }
+}
 
 // Типы и Состояния
 #[derive(States, Debug, Clone, Eq, PartialEq, Hash, Default)]
@@ -31,38 +56,35 @@ pub enum SlotTextureState {
 
 #[derive(States, Hash, Clone, Copy, PartialEq, Eq, Debug, Display)]
 pub enum SvSlBT {
-    Start,
-    Continue,
-    Delete
+    #[strum(serialize = "menu-start")] Start,
+    #[strum(serialize = "menu-continue")] Continue,
+    #[strum(serialize = "menu-delete")] Delete,
 }
 
+
 #[derive(States, Hash, Resource, Default, Clone, Copy, PartialEq, Eq, Debug, Display, Serialize, Deserialize)]
-pub enum CurrentWorld { // Выбраный мир
+pub enum CurrentWorld {
     #[default]
-    WarmPawsPorch,
-    SunlitNursery,
+    #[strum(serialize = "world-warm-paws")] WarmPawsPorch,
+    #[strum(serialize = "world-sunlit-nursery")] SunlitNursery,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display)]
 pub enum EGUICurrntWorld {
-    All,
-    SunlitNursery,
+    #[strum(serialize = "world-all")] All,
+    #[strum(serialize = "world-sunlit-nursery")] SunlitNursery,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display)]
 pub enum EGUIResourceType {
-    All,
-    #[strum(serialize = "🍅")]
-    Tomatoes,
-    #[strum(serialize = "🥒")]
-    Cucumbers,
-    #[strum(serialize = "🌽")]
-    Corn,
-    #[strum(serialize = "🎃")]
-    Pumpkin,
-    #[strum(serialize = "")]
-    None,
+    #[strum(serialize = "res-type-all")] All,
+    #[strum(serialize = "res-type-tomato")] Tomatoes,
+    #[strum(serialize = "res-type-cucumber")] Cucumbers,
+    #[strum(serialize = "res-type-corn")] Corn,
+    #[strum(serialize = "res-type-pumpkin")] Pumpkin,
+    #[strum(serialize = "res-type-none")] None,
 }
+
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TradeWell {
@@ -78,21 +100,26 @@ pub enum TypeButton {
     SlotsUnLocking,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum SlotState {
-    // Состояние слота
-    Locked,
-    Empty,
-    Occupied(Plant),
-}
 
-#[derive(Component, Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+
+#[derive(Component, Clone, PartialEq, Debug, Serialize, Deserialize, Eq, Hash, Copy)]
 pub enum TypePlant {
     // Тип растения
     Tomato,
     Cucumber,
     Corn,
     Pumpkin,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Eq, Hash, Copy)]
+pub enum PlantAbility {
+    TomatoClickCombo,
+    CornBoomHarvet,
+}
+
+pub enum ModifierOperation {
+    Set,
+    Add,
 }
 
 #[derive(Component, Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
@@ -103,19 +130,7 @@ pub enum PlantStateGrowth {
     Mature,
 }
 
-#[derive(Debug, Clone, Copy, EnumIter, AsRefStr, PartialEq, Display)]
-pub enum ResourceType {
-    #[strum(serialize = "😸")] CatHappiness,
-    
-    #[strum(serialize = "🍅")] Tomatoes,
-    #[strum(serialize = "🥒")] Cucumbers,
-    #[strum(serialize = "🌽")] Corn,
-    #[strum(serialize = "🎃")] Pumpkin,
 
-    None,
-
-    #[strum(serialize = "SUN ✨")] SunSparks,
-}
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(u32)]
@@ -126,26 +141,26 @@ pub enum ShaderType {
 
 #[derive(Clone, Copy, PartialEq, Display, EnumIter, Serialize, Deserialize, Debug)]
 pub enum UpgradeUID {
-    #[strum(serialize = "Purr Profit")] PurrProfit,
-    #[strum(serialize = "Over Blooming")] OverBlooming,
-    #[strum(serialize = "Fertile Soil")] FertileSoil,
-    #[strum(serialize = "Growth Catalysts")] WholesaleSupply,
-    #[strum(serialize = "Catnip Infusion")] SelectiveBreeding,
-    #[strum(serialize = "Wholesale Supplies")] CardboardBox,
-    #[strum(serialize = "Juicy Red Ball")] UnlockTomato,
-    #[strum(serialize = "Crunchy Snack")] UnlockCucumber,
-    #[strum(serialize = "Sweet Kernels")] UnlockCorn,
-    #[strum(serialize = "Festive Feast")] UnlockPumpkin,
-    #[strum(serialize = "Hyperfocus Pomodoro")] ConcentratedNectar,
-    #[strum(serialize = "Heavy Vines")] TomatoBounty,
-    #[strum(serialize = "Greenhouse Warmth")] TomatoGrowth,
-    #[strum(serialize = "Gourmet Puree")] TomatoJoy,
-    #[strum(serialize = "Crisp Rows")] CucumberBounty,
-    #[strum(serialize = "Moisture Control")] CucumberGrowth,
-    #[strum(serialize = "Chilled Slices")] CucumberJoy,
-    CornBounty,
-    CornGrowth,
-    CornJoy,
+    #[strum(serialize = "purr-profit-name")] PurrProfit,
+    #[strum(serialize = "over-blooming-name")] OverBlooming,
+    #[strum(serialize = "fertile-soil-name")] FertileSoil,
+    #[strum(serialize = "growth-catalysts-name")] WholesaleSupply,
+    #[strum(serialize = "catnip-infusion-name")] SelectiveBreeding,
+    #[strum(serialize = "wholesale-supplies-name")] CardboardBox,
+    #[strum(serialize = "unlock-tomato-name")] UnlockTomato,
+    #[strum(serialize = "unlock-cucumber-name")] UnlockCucumber,
+    #[strum(serialize = "unlock-corn-name")] UnlockCorn,
+    #[strum(serialize = "unlock-pumpkin-name")] UnlockPumpkin,
+    #[strum(serialize = "concentrated-nectar-name")] ConcentratedNectar,
+    #[strum(serialize = "tomato-bounty-name")] TomatoBounty,
+    #[strum(serialize = "tomato-growth-name")] TomatoGrowth,
+    #[strum(serialize = "tomato-joy-name")] TomatoJoy,
+    #[strum(serialize = "cucumber-bounty-name")] CucumberBounty,
+    #[strum(serialize = "cucumber-growth-name")] CucumberGrowth,
+    #[strum(serialize = "cucumber-joy-name")] CucumberJoy,
+    #[strum(serialize = "corn-bounty-name")] CornBounty,
+    #[strum(serialize = "corn-growth-name")] CornGrowth,
+    #[strum(serialize = "corn-joy-name")] CornJoy,
     PumpkinBounty,
     PumpkinGrowth,
     PumpkinJoy,
@@ -167,16 +182,17 @@ pub enum PlantGGM {
 
 #[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display, Serialize, Deserialize)]
 pub enum EGUISelectedCategories {
-    Sparcks,
-    Global,
-    SunlitNursery,
+    #[strum(serialize = "cat-sparks")] Sparcks,
+    #[strum(serialize = "cat-global")] Global,
+    #[strum(serialize = "cat-nursery")] SunlitNursery,
 }
 
 #[derive(Resource, Clone, Copy, Serialize, Deserialize, Display, PartialEq, Eq)]
 pub enum ScreenMode  {
-    Windowed,
-    Fullscreen,
+    #[strum(serialize = "screen-windowed")] Windowed,
+    #[strum(serialize = "screen-fullscreen")] Fullscreen,
 }
+
 
 // Глобальные действия
 #[derive(Resource, Default)]

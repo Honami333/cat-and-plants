@@ -5,11 +5,11 @@ use bevy::render::render_resource::*;
 use serde::{Serialize, Deserialize};
 
 
-fn default_static_slice<T>() -> &'static [T] {
+pub fn default_static_slice<T>() -> &'static [T] {
     &[]
 }
 
-fn default_static_str() -> &'static str {
+pub fn default_static_str() -> &'static str {
     ""
 }
 
@@ -35,20 +35,7 @@ pub struct WorldSettingsSlot { // Слот инвенторя
     pub slot_grid_scale: u8,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct Plant { // Растение
-    pub growth_score: f64,
-    pub growth_thereshold: f64,
-    pub growth_rate: f64,
-    pub gather_amount: f64,
-    pub species_id: TypePlant,
-    pub slot_uid: usize,
-    pub state: PlantStateGrowth,
-    pub max_count: usize,
 
-    #[serde(skip, default = "default_static_slice")]
-    pub price: &'static [f64],
-}
 
 pub struct PlantResource {
     pub plant0: ResourceType,
@@ -75,32 +62,7 @@ pub struct ShaderMaterial { // Конфиг шейдеров
     pub mesh_scale: f32,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
-pub struct Upgrade {
-    #[serde(skip, default = "default_static_str")]
-    pub name: &'static str,
-    #[serde(skip, default = "default_static_str")]
-    pub description: &'static str,
 
-    #[serde(skip, default = "default_static_slice")]
-    pub levels: &'static [UpgradeLevel],
-    #[serde(skip, default = "default_static_slice")]
-    pub dependencies: &'static [UpgradeUID],
-    pub location_prestige_req: (Option<CurrentWorld>, Option<usize>),
-
-    pub id: UpgradeUID,
-    pub texture_stage: UpgradeStage,
-    pub current_level: usize,
-    pub category: EGUISelectedCategories,
-    pub grid_pos: (usize, usize),
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct UpgradeLevel {
-    pub resource_types: &'static [ResourceType],
-    pub costs: &'static [f64],
-    pub value: Option<f64>,
-}
 
 pub struct SlotPrices {
     pub prices: &'static [f64],

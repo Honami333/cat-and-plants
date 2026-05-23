@@ -5,6 +5,7 @@ use bevy_egui::{EguiContexts, egui, egui::Response};
 use crate::schema::{types_and_states::*, resources::*, save_file::*};
 use crate::systems::{ui::*, save::*};
 use chrono::{DateTime};
+use crate::systems::locales::*;
 
 const RESOLUTIONS: [([f32; 2], &str); 13] = [
     ([1024.0, 768.0], "1024 x 768"),
@@ -89,7 +90,8 @@ pub fn main_menu(
                     &mut game_state,
                     &mut economy,
                     &mut exit_event,
-                    s
+                    s,
+                    &settings
                 ),
                 MenuPage::SaveSlot => create_save_menu(
                     ui,
@@ -98,7 +100,8 @@ pub fn main_menu(
                     &mut economy,
                     atlas_layout,
                     &handle_texture_id,
-                    s
+                    s,
+                    &settings
                 ),
                 MenuPage::Settings => setting_menu(
                     ui,
@@ -108,7 +111,6 @@ pub fn main_menu(
             };
         });
 }
-
 fn create_main_menu(
     ui: &mut egui::Ui,
     menu_page: &mut MenuPage,
@@ -116,14 +118,15 @@ fn create_main_menu(
     game_state: &mut NextState<GameState>,
     economy: &mut Economy,
     exit_event: &mut MessageWriter<AppExit>,
-    s: f32
+    s: f32,
+    settings: &GlobalSettings,
 ) {
     ui.allocate_ui(egui::vec2(160.0 * s, 185.0 * s), |ui| {
         ui.vertical_centered_justified(|ui| {
             let (i, is_continue) = continue_enabled();
 
             ui.add_enabled_ui(is_continue, |ui| {
-                let button = egui::Button::new("Continue");
+                let button = egui::Button::new(translate("menu-continue", &settings.language));
             
                 let response = ui.add_sized([150.0 * s, 35.0 * s], button);
 
@@ -133,23 +136,23 @@ fn create_main_menu(
             let (i, is_continue) = new_game_enabled();
 
             ui.add_enabled_ui(is_continue, |ui| {
-                let button = egui::Button::new("New Game");
+                let button = egui::Button::new(translate("menu-new-game", &settings.language));
             
                 let response = ui.add_sized([150.0 * s, 35.0 * s], button);
 
                 new_game_clicked(&response, save_slot_inv, game_state, economy, i);
             });
 
-            let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Save"));
+            let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-save", &settings.language)));
 
             clicked_page(&response, menu_page, MenuPage::SaveSlot);
             clicked_sss(&response, save_slot_inv);
 
-            let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Setting"));
+            let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-setting", &settings.language)));
 
             clicked_page(&response, menu_page, MenuPage::Settings);
 
-            let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Exit"));
+            let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-exit", &settings.language)));
 
             exit_clicked(&response, exit_event);
         });
@@ -181,6 +184,7 @@ fn continue_enabled() -> (usize, bool) {
 
     if let Some(i) = newest_slot { return (i, true); } else { return (0, false);}
 }
+
 
 fn new_game_enabled() -> (usize, bool) {
     for i in 0..3 {
@@ -240,6 +244,7 @@ fn create_save_menu(
     atlas_layout: &TextureAtlasLayout,
     handle_texture_id: &egui::TextureId,
     s: f32,
+    settings: &GlobalSettings
 ) {
     ui.horizontal_centered(|ui| {
         for i in 0..3 {
@@ -251,16 +256,16 @@ fn create_save_menu(
 
             ui.allocate_ui(egui::vec2(100.0 * s, 300.0 * s), |ui| {
                 ui.vertical_centered_justified(|ui| {
-                    double_slot_click(ui, game_state, save_slot_inv, economy, image, i, s);
+                    double_slot_click(ui, game_state, save_slot_inv, economy, image, i, s, &settings);
 
                     match stage {
-                        SlotTextureState::Empty => slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Start),
+                        SlotTextureState::Empty => slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Start, &settings),
                         SlotTextureState::Occupied => {
-                            slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Continue);
+                            slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Continue, &settings);
                             if let Some(del) = save_slot_inv.deleting_slot && del == i {
-                                slot_save_delete(ui, save_slot_inv, i, s);
+                                slot_save_delete(ui, save_slot_inv, i, s, &settings);
                             } else {
-                                slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Delete);
+                                slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Delete, &settings);
                             };
                         },
                     };
@@ -273,7 +278,6 @@ fn create_save_menu(
         };
     });
 }
-
 fn back_button(
     ctx: &egui::Context,
     s: f32,
@@ -288,7 +292,7 @@ fn back_button(
             .anchor(egui::Align2::RIGHT_TOP, [-10.0 * s, 10.0 * s])
             .order(egui::Order::Foreground)
             .show(ctx, |ui| {
-                let text = if save_slot_inv.active_slot.is_some() { "Back to Game" } else { "Back to Menu"};
+                let text = if save_slot_inv.active_slot.is_some() { translate("ui-back-game", &settings.language) } else { translate("ui-back-menu", &settings.language) };
 
                 let response = ui.add_sized([100.0 * s, 40.0 * s], egui::Button::new(text));
 
@@ -316,14 +320,21 @@ fn double_slot_click(
     image: egui::Image<'_>,
     i: usize,
     s: f32,
+    settings: &GlobalSettings,
 ) {
     let Some(save_slot) = save_slot_inv.slot.get_mut(i) else { return; };
     
     ui.allocate_ui(egui::vec2(100.0 * s, 2.5 * s), |ui| {
         ui.group(|ui| {
-            let color = if save_slot.last_data_text == "A game needs to be created\n" { egui::Color32::GRAY } else {egui::Color32::GREEN};
+            let color = if save_slot.last_data_text == "A game needs to be created" { egui::Color32::GRAY } else {egui::Color32::GREEN};
             
-            ui.colored_label(color, save_slot.last_data_text);
+            let display_text = if save_slot.last_data_text == "A game needs to be created" { 
+                format!("{}\n", translate("ui-need-create", &settings.language)) 
+            } else { 
+                save_slot.last_data_text.to_string().clone() 
+            };
+            
+            ui.colored_label(color, display_text);
         });
     });
 
@@ -348,16 +359,17 @@ fn double_slot_click(
             },
         };
     };
-}           
-
+}
+           
 fn slot_save_delete(
     ui: &mut egui::Ui,
     save_slot_inv: &mut SaveSlotInv,
     i: usize,
     s: f32,
+    settings: &GlobalSettings,
 ) {
     ui.horizontal_centered(|ui| {
-        let response = ui.add_sized([50.0 * s, 20.0 * s], egui::Button::new("Yes, delete"));
+        let response = ui.add_sized([50.0 * s, 20.0 * s], egui::Button::new(translate("ui-save-delete-yes", &settings.language)));
 
         if response.clicked() {
             let _ = remove_file(get_save_path(i));
@@ -367,7 +379,7 @@ fn slot_save_delete(
             scan_save_slots(save_slot_inv);
         };
 
-        let response = ui.add_sized([50.0 * s, 20.0 * s], egui::Button::new("No"));
+        let response = ui.add_sized([50.0 * s, 20.0 * s], egui::Button::new(translate("ui-save-delete-no", &settings.language)));
             
         if response.clicked() {
             save_slot_inv.deleting_slot = None;
@@ -383,9 +395,9 @@ fn slot_save_button(
     s: f32,
     i: usize,
     b_type: SvSlBT,
-
+    settings: &GlobalSettings,
 ) {
-    let response = ui.add_sized([100.0 * s, 20.0 * s], egui::Button::new(b_type.to_string()));
+    let response = ui.add_sized([100.0 * s, 20.0 * s], egui::Button::new(translate(b_type.to_string().as_str(), &settings.language)));
 
     if response.clicked() { 
         match b_type {
@@ -418,10 +430,11 @@ pub fn scan_save_slots(save_slot_inv: &mut SaveSlotInv) {
         if slot.stage == SlotTextureState::Occupied {
             slot.last_data_text = fetch_file_date_string(i);
         } else {
-            slot.last_data_text = "A game needs to be created\n";
+            slot.last_data_text = "A game needs to be created";
         };
     };
 }
+
 
 fn add_start(economy: &mut Economy) {
     // economy.add(ResourceType::CatHappiness as usize, 100000000.0, false);
@@ -447,7 +460,6 @@ fn fetch_file_date_string(i: usize) -> &'static str {
 
     Box::leak(formatted.into_boxed_str())
 }
-
 pub fn setting_menu(
     ui: &mut egui::Ui,
     settings: &mut GlobalSettings,
@@ -457,17 +469,26 @@ pub fn setting_menu(
         .show(ui, |ui| {
             ui.allocate_ui(egui::vec2(600.0 * s, 360.0 * s), |ui| {
                     
-                ui.heading("Settings");
+                ui.heading(translate("ui-settings-title", &settings.language));
 
                 ui.group(|ui| {
                     let color_heading = egui::Color32::GREEN;
 
-                    ui.add_sized([100.0* s, 10.0 * s], 
-                        egui::Label::new(egui::RichText::new("Global").color(color_heading).heading()));
+                    ui.add_sized([100.0* s, 10.0 * s],
+                        egui::Label::new(egui::RichText::new(translate("ui-settings-language", &settings.language)).color(color_heading).heading()));
 
                     separate(ui, s);
 
-                    select_setting_text(ui, &mut settings.fps.limit, s, "FPS limit");
+                    language_combo_box(ui, settings, s);
+
+                    separate(ui, s);
+
+                    ui.add_sized([100.0* s, 10.0 * s], 
+                        egui::Label::new(egui::RichText::new(translate("ui-settings-global", &settings.language)).color(color_heading).heading()));
+
+                    separate(ui, s);
+
+                    select_setting_text(ui, &mut settings.fps.limit, s, &translate("ui-settings-fps-limit", &settings.language));
 
                     ui.add_enabled_ui(settings.fps.limit, |ui| {
                         fps_combo_box(ui, settings, s);
@@ -476,7 +497,7 @@ pub fn setting_menu(
                     ui.add_space(5.0 * s);
 
                     ui.group(|ui| {
-                        ui.add_sized([110.0* s, 3.0 * s], egui::Label::new("Screen Mode"));
+                        ui.add_sized([110.0* s, 3.0 * s], egui::Label::new(translate("ui-settings-screen-mode", &settings.language)));
                     });
                     
                     ui.add_enabled_ui(!cfg!(target_os = "android"), |ui| {
@@ -486,7 +507,7 @@ pub fn setting_menu(
                     ui.add_space(5.0 * s);
                     
                     ui.group(|ui| {
-                        ui.add_sized([110.0* s, 3.0 * s], egui::Label::new("Select Resolution"));
+                        ui.add_sized([110.0* s, 3.0 * s], egui::Label::new(translate("ui-settings-select-res", &settings.language)));
                     });
 
                     ui.add_enabled_ui(settings.display.screen_mode != ScreenMode::Fullscreen, |ui| {
@@ -496,21 +517,21 @@ pub fn setting_menu(
                     separate(ui, s);
 
                     ui.add_sized([100.0* s, 10.0 * s], 
-                        egui::Label::new(egui::RichText::new("Shaders").color(color_heading).heading()));
+                        egui::Label::new(egui::RichText::new(translate("ui-settings-shaders", &settings.language)).color(color_heading).heading()));
 
                     separate(ui, s);
 
-                    select_setting_text(ui, &mut settings.shader.light_shaders, s, "Light Shader");
+                    select_setting_text(ui, &mut settings.shader.light_shaders, s, &translate("ui-settings-light-shader", &settings.language));
 
                     ui.add_enabled_ui(settings.shader.light_shaders, |ui| {
-                        select_setting_text(ui, &mut settings.shader.dust_particles, s, "Dust Particles");
+                        select_setting_text(ui, &mut settings.shader.dust_particles, s, &translate("ui-settings-dust-particles", &settings.language));
                     });
 
                     ui.add_enabled_ui(settings.shader.dust_particles && settings.shader.light_shaders, |ui| {
                         ui.add_sized([120.0* s, 20.0 * s],               
                             egui::Slider::new(&mut settings.shader.dust_amount, 0.2..=1.0)
                             .step_by(0.05)
-                            .text("count")
+                            .text(translate("ui-settings-count", &settings.language))
                             .trailing_fill(true)
                             .custom_formatter(|val, _| format!("{val:.2}"))
                         );
@@ -519,12 +540,12 @@ pub fn setting_menu(
                     separate(ui, s);
 
                     ui.add_sized([100.0* s, 10.0 * s], 
-                        egui::Label::new(egui::RichText::new("Save").color(color_heading).heading()));
+                        egui::Label::new(egui::RichText::new(translate("ui-settings-save", &settings.language)).color(color_heading).heading()));
                     
                     separate(ui, s);
 
                     ui.group(|ui| {
-                        ui.add_sized([110.0* s, 3.0 * s], egui::Label::new("Auto-save period"));
+                        ui.add_sized([110.0* s, 3.0 * s], egui::Label::new(translate("ui-settings-autosave-period", &settings.language)));
                     });
 
                     save_combo_box(ui, settings, s);
@@ -533,25 +554,53 @@ pub fn setting_menu(
         });
 }
 
+fn language_combo_box(
+    ui: &mut egui::Ui,
+    settings: &mut GlobalSettings,
+    s: f32,
+) {
+    let current_key = settings.language.to_string();
+
+    let current_lang = settings.language.clone();
+    let combo = egui::ComboBox::from_id_salt("language_select")
+        .selected_text(translate(&current_key, &settings.language))
+        .width(120.0 * s);
+
+    combo.show_ui(ui, |ui| {
+        ui.selectable_value(
+            &mut settings.language,
+            Language::En,
+            translate(&Language::En.to_string(), &current_lang)
+        );
+        ui.selectable_value(
+            &mut settings.language,
+            Language::Ru,
+            translate(&Language::Ru.to_string(), &current_lang)
+        );
+    });
+}
+
 fn screen_mode_combo_box(
     ui: &mut egui::Ui,
     settings: &mut GlobalSettings,
     s: f32,
 ) {
+    let current_key = settings.display.screen_mode.to_string();
+
     let combo = egui::ComboBox::from_id_salt("screen_mode_select")
-        .selected_text(settings.display.screen_mode.to_string())
+        .selected_text(translate(&current_key, &settings.language))
         .width(120.0 * s);
 
     combo.show_ui(ui, |ui| {
         ui.selectable_value(
             &mut settings.display.screen_mode,
             ScreenMode::Windowed,
-            ScreenMode::Windowed.to_string()
+            translate(&ScreenMode::Windowed.to_string(), &settings.language)
         );
         ui.selectable_value(
             &mut settings.display.screen_mode,
             ScreenMode::Fullscreen,
-            ScreenMode::Fullscreen.to_string()
+            translate(&ScreenMode::Fullscreen.to_string(), &settings.language)
         );
     });
 
@@ -566,13 +615,13 @@ fn fps_combo_box(
     s: f32,
 ) {
     let combo = egui::ComboBox::from_id_salt("fps_select")
-        .selected_text(format!("select: {} fps", settings.fps.foces_fps))
+        .selected_text(format!("{} {:.0} fps", translate("ui-settings-select-fps", &settings.language), settings.fps.foces_fps))
         .width(120.0 * s);
 
     combo.show_ui(ui, |ui| {
         ui.selectable_value(&mut settings.fps.foces_fps, 30.0, "30 FPS");
         ui.selectable_value(&mut settings.fps.foces_fps, 60.0, "60 FPS");
-        ui.selectable_value(&mut settings.fps.foces_fps, 120.0, "120FPS");
+        ui.selectable_value(&mut settings.fps.foces_fps, 120.0, "120 FPS");
         ui.selectable_value(&mut settings.fps.foces_fps, 144.0, "144 FPS");
     });
 }
@@ -583,7 +632,7 @@ fn resolution_combo_box(
     s: f32,
 ) {
     let combo = egui::ComboBox::from_id_salt("resolution_select")
-        .selected_text(format!("Resolution: {:.0}x{:.0}", settings.display.resolution[0], settings.display.resolution[1]))
+        .selected_text(format!("{} {:.0}x{:.0}", translate("ui-settings-resolution-label", &settings.language), settings.display.resolution[0], settings.display.resolution[1]))
         .width(120.0 * s);
 
     combo.show_ui(ui, |ui| {
@@ -595,22 +644,25 @@ fn resolution_combo_box(
     });
 }
 
+
 fn save_combo_box(    
     ui: &mut egui::Ui,
     settings: &mut GlobalSettings,
     s: f32,
 ) {
-    let combo = egui::ComboBox::from_id_salt("save-time_select")
-        .selected_text(format!("time: {} min", settings.autosave_interval / 60.0))
-        .width(120.0 * s);
+    let ui_minut = translate("ui-settings-minute", &settings.language);
 
+    let combo = egui::ComboBox::from_id_salt("save-time_select")
+        .selected_text(format!("{} {} {}", translate("ui-settings-time-label", &settings.language), settings.autosave_interval / 60.0, ui_minut))
+        .width(120.0 * s);
+    
     combo.show_ui(ui, |ui| {
-        ui.selectable_value(&mut settings.autosave_interval, 60.0, "1 minute");
-        ui.selectable_value(&mut settings.autosave_interval, 120.0, "2 minute");
-        ui.selectable_value(&mut settings.autosave_interval, 180.0, "3 minute");
-        ui.selectable_value(&mut settings.autosave_interval, 240.0, "4 minute");
-        ui.selectable_value(&mut settings.autosave_interval, 300.0, "5 minute");
-        ui.selectable_value(&mut settings.autosave_interval, 600.0, "10 minute");
+        ui.selectable_value(&mut settings.autosave_interval, 60.0, format!("1 {}", ui_minut));
+        ui.selectable_value(&mut settings.autosave_interval, 120.0, format!("2 {}", ui_minut));
+        ui.selectable_value(&mut settings.autosave_interval, 180.0, format!("3 {}", ui_minut));
+        ui.selectable_value(&mut settings.autosave_interval, 240.0, format!("4 {}", ui_minut));
+        ui.selectable_value(&mut settings.autosave_interval, 300.0, format!("5 {}", ui_minut));
+        ui.selectable_value(&mut settings.autosave_interval, 600.0, format!("10 {}", ui_minut));
     });
 }
 
@@ -640,4 +692,3 @@ fn separate(ui: &mut egui::Ui, s: f32) {
     ui.separator();
     ui.add_space(2.5 * s);
 }
-

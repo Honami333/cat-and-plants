@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui, egui::Response};
 use crate::schema::{types_and_states::*, save_file::*};
 use crate::systems::{ui::main_menu::exit_clicked, save::*};
+use crate::systems::locales::*;
 
 
 pub fn game_menu(
@@ -13,12 +14,13 @@ pub fn game_menu(
     mut up_storege: ResMut<UpgradeStorege>,
     mut global_storege: ResMut<GlobalInventory>,
     mut eco_storege: ResMut<Economy>,
-    mut cit_storege: ResMut<CountItemType>,
+    mut cit_storege: ResMut<ItemTypeInfo>,
     mut current_world: ResMut<NextState<CurrentWorld>>,
     mut pristige_room: ResMut<PrestigeRoom>,
     world: Res<State<CurrentWorld>>,
     game_state: Res<State<GameState>>,
     world_scale: Res<WorldScale>,
+    settings: Res<GlobalSettings>,
 ) {
     if *game_state != GameState::Playing { return; };
 
@@ -44,11 +46,11 @@ pub fn game_menu(
 
             if menu_page.game_menu {
                 ui.allocate_ui(egui::vec2(150.0 * s, 175.0 * s), |ui| {
-                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Continue"));
+                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-continue", &settings.language)));
 
                     continue_clicked(&response, &mut menu_page);
 
-                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Setting"));
+                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-setting", &settings.language)));
 
                     exit_to_menu(
                         &response,
@@ -67,7 +69,7 @@ pub fn game_menu(
 
                     setting_clicked(&response, &mut menu_page);
 
-                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Exit to the Memu"));
+                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-exit-menu", &settings.language)));
 
                     exit_to_menu(
                         &response,
@@ -84,13 +86,14 @@ pub fn game_menu(
                         true,
                     );
 
-                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new("Exit to the Desktop"));
+                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-exit-desktop", &settings.language)));
 
                     exit_clicked(&response, &mut exit_event);
                 });
             };
         });
 }
+
 
 fn game_menu_button(
     ctx: & egui::Context,
@@ -124,7 +127,7 @@ fn exit_to_menu(
     up_storege: &mut UpgradeStorege,
     global_storege: &mut GlobalInventory,
     eco_storege: &mut Economy,
-    cit_storege: &mut CountItemType,
+    cit_storege: &mut ItemTypeInfo,
     pristige_room: &mut PrestigeRoom,
     world: &State<CurrentWorld>,
     slot_reset: bool,
@@ -135,7 +138,7 @@ fn exit_to_menu(
         *up_storege = UpgradeStorege::default();
         *global_storege = GlobalInventory::default();
         *eco_storege = Economy::default();
-        *cit_storege = CountItemType::default();
+        *cit_storege = ItemTypeInfo::default();
         *pristige_room = PrestigeRoom::default();
         current_world.set(CurrentWorld::WarmPawsPorch);
 

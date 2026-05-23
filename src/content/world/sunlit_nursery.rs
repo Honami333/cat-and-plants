@@ -21,35 +21,35 @@ pub const SN_SLOT_CFG: WorldSettingsSlot = WorldSettingsSlot {
 
 pub const BUT_TOMATO_CFG: ButtonCFG = ButtonCFG {
     pos: Vec2::new(224.0, -156.0),
-    text: "Unlock 🍅",
+    text: "button-unlock-tomato",
     b_type: TypeButton::TomatoButton,
     text_pos: Vec2::new(56.0, 0.0),
 };
 
 pub const BUT_CUCUMBER_CFG: ButtonCFG = ButtonCFG {
     pos: Vec2::new(224.0, -108.0),
-    text: "Unlock 🥒",
+    text: "button-unlock-cucumber",
     b_type: TypeButton::CucumberButton,
     text_pos: Vec2::new(56.0, 0.0),
 };
 
 pub const BUT_CORN_CFG: ButtonCFG = ButtonCFG {
     pos: Vec2::new(-224.0, -156.0),
-    text: "Unlock 🌽",
+    text: "button-unlock-corn",
     b_type: TypeButton::CornButton,
     text_pos: Vec2::new(56.0, 0.0),
 };
 
 pub const BUT_PUMPKIN_CFG: ButtonCFG = ButtonCFG {
     pos: Vec2::new(-224.0, -108.0),
-    text: "Unlock 🎃",
+    text: "button-unlock-pumpkin",
     b_type: TypeButton::PumpkinButton,
     text_pos: Vec2::new(56.0, 0.0),
 };
 
 pub const BUT_SLOTSLOCK_CFG: ButtonCFG = ButtonCFG {
     pos: Vec2::new(272.0, -60.0),
-    text: "Unlock 🌱",
+    text: "button-unlock-slots",
     b_type: TypeButton::SlotsUnLocking,
     text_pos: Vec2::new(8.0, 0.0),
 };
