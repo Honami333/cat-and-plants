@@ -1,4 +1,4 @@
-use crate::schema::{config::Upgrade, resources::*, types_and_states::*, save_file::*};
+use crate::schema::{hud::*, resources::*, global_settings::*, common::*, global_inventory::*, item_type_info::*, economy_inventory::*, prestige::*, upgrade_storege::*};
 use bevy::prelude::*;
 use crate::systems::{ui::*, visuals::*, locales::*};
 use bevy_egui::{EguiContexts, egui};
@@ -17,11 +17,11 @@ pub fn show_upgrade_grid(
     count_item_type: Res<ItemTypeInfo>,
     layouts: Res<Assets<TextureAtlasLayout>>,
     assets: Res<AtlasAssets>,
-    world_scale: Res<WorldScale>,
+    scale: Res<WorldScale>,
     all_fonts: Res<Assets<Font>>,
     font: Res<FontAssets>,
 ) {
-    if count_item_type.sunlit_nursery_inv.iter().sum::<usize>() < 2 && prestige_inv.sunlit_nursery == 0 { return; }
+    if count_item_type.item_count_inv.values().sum::<usize>() < 2 && prestige_inv.sunlit_nursery == 0 { return; }
 
     let (new_bool, Some(atlas_layout), text_id) = 
         func_assets_loaded(
@@ -41,7 +41,7 @@ pub fn show_upgrade_grid(
 
     *fonts_loaded = func_fonts_loaded(ctx, *fonts_loaded, &all_fonts, &font);
 
-    let s = world_scale.scale / 2.0;
+    let s = scale.0;
 
     let my_frame = egui::Frame {
         fill: egui::Color32::from_rgba_unmultiplied(20, 20, 20, 150),
@@ -50,21 +50,21 @@ pub fn show_upgrade_grid(
         ..default()
     };
     egui::Window::new(translate("ui-garden-upgrades", &settings.language))
-        .anchor(egui::Align2::CENTER_BOTTOM, [0.0, -10.0 * s])
-        .fixed_size([920.0 * s, 400.0 * s])
+        .default_open(false) 
+        .anchor(egui::Align2::RIGHT_BOTTOM, [-5.0 * s.x, -5.0 * s.y])
+        .fixed_size([460.0 * s.x, 200.0 * s.y])
         .resizable(false)
         .constrain(true)
-        // .collapsible(false)
         .frame(my_frame)
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.allocate_ui(egui::vec2(750.0 * s, 390.0 * s), |ui| {
+                ui.allocate_ui(egui::vec2(375.0 * s.x, 195.0 * s.y), |ui| {
                     ui.vertical_centered(|ui| {
                         ui.label(translate("ui-upgrades", &settings.language));
                         ui.separator();
 
                         egui::Grid::new("upgrades_grid")
-                            .spacing([10.0 * s, 10.0 * s])
+                            .spacing([5.0 * s.x, 5.0 * s.y])
                             .show(ui, |ui| {
                                 let upgrade_storege_clone = upgrade_storege.clone();
 
@@ -79,11 +79,16 @@ pub fn show_upgrade_grid(
                                         if let Some(upgrade) = cur_storage.get_mut(&(row, col)) && upgrade.get_location_prestige_req(&prestige_inv) {
                                             let i = upgrade.texture_stage as usize;
                                             
-                                            let image = create_image(*handle_texture_id, &atlas_layout, i,  (80.0, 80.0), s);
+                                            let Some(image) = create_image(*handle_texture_id,
+                                                &atlas_layout,
+                                                i,
+                                                (40.0, 40.0),
+                                                s
+                                            ) else { continue; };
 
-                                            add_upgrade(ui, upgrade, &mut economy, &upgrade_storege_clone, &settings, &count_item_type, s.clone(), image);
+                                            add_upgrade(ui, upgrade, &mut economy, &upgrade_storege_clone, &settings, &count_item_type, s, image);
                                         } else {
-                                            add_space(ui, s.clone())
+                                            add_space(ui, s)
                                         };
                                     };
 
@@ -133,23 +138,19 @@ fn upgrade_lvl_up(upgrade_storege: &UpgradeStorege, upgrade: &mut Upgrade, econo
 
 
     for (i, res) in level.resource_types.iter().enumerate() {
-        let is_sparck = if matches!(res, ResourceType::SunSparks) { true } else { false };
-
-        if economy.get_item(*res as usize, is_sparck) < (level.costs[i] * up_value).ceil() { return; };
+        if economy.get_res(*res) < (level.costs[i] * up_value).ceil() { return; };
     };
 
     for (i, res) in level.resource_types.iter().enumerate() {
-        let is_sparck = if matches!(res, ResourceType::SunSparks) { true } else { false };
-
-        economy.add(*res as usize, -(level.costs[i] * up_value).ceil(), is_sparck);
+        economy.add_res(*res, -(level.costs[i] * up_value).ceil());
     };
 
     upgrade.current_level += 1;
     upgrade.texture_stage.next_stage(upgrade.current_level as f32 / upgrade.levels.len() as f32);
 }
 
-fn add_space(ui: &mut egui::Ui, s: f32) {
-    let size = egui::vec2(80.0 * s, 80.0 * s);
+fn add_space(ui: &mut egui::Ui, s: Vec2) {
+    let size = egui::vec2(40.0 * s.x, 40.0 * s.y);
 
     ui.allocate_ui_with_layout(size, egui::Layout::left_to_right(egui::Align::Center), |ui| {
         ui.set_min_size(size);
@@ -164,15 +165,15 @@ fn add_upgrade(
     upgrade_storege: &UpgradeStorege,
     settings: &GlobalSettings,
     cit: &ItemTypeInfo,
-    s: f32, image:
-    egui::Image
+    s: Vec2,
+    image: egui::Image
 ) {
     let mut up_value =  1.0;
     
     if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::CardboardBox) &&
         upgrade.id != UpgradeUID::CardboardBox {up_value = value};
 
-    let size = egui::vec2(80.0 * s, 80.0 * s);
+    let size = egui::vec2(40.0 * s.x, 40.0 * s.y);
 
     let response = ui.add_sized(size, egui::Button::image(image).fill(egui::Color32::TRANSPARENT));
 
@@ -183,14 +184,14 @@ fn add_upgrade(
     if response.clicked() && dependencies { upgrade_lvl_up(upgrade_storege, upgrade, economy); };
 
     response.on_hover_ui(|ui| {
-        ui.set_max_width(400.0 * s);
+        ui.set_max_width(200.0 * s.x);
 
         ui.heading(translate(upgrade.name, &settings.language));
 
         ui.label(translate(upgrade.description, &settings.language));
 
         if !dependencies {
-            ui.add_space(5.0 * s);
+            ui.add_space(2.5 * (s.x).min(s.y));
 
             ui.colored_label(block_color, format!("{} {}", translate("ui-req-dependencies", &settings.language), upgrade.dependencies.len()));
 
@@ -203,7 +204,7 @@ fn add_upgrade(
             return;
         }
 
-        ui.add_space(5.0);
+        ui.add_space(2.5 * (s.x).min(s.y));
 
         ui.columns(2, |columns| {
             let next_lvl_color = egui::Color32::GREEN;
@@ -218,7 +219,12 @@ fn add_upgrade(
 
             if let Some(level) = upgrade.levels.get(upgrade.current_level.saturating_sub(1)) {
                 if let Some(val) = level.value {
-                    let display_val = if upgrade.current_level == 0 { 100.0 } else { ((val) * 1000000.0).round() / 10000.0 };
+                    let display_val = if upgrade.current_level == 0 {
+                        match upgrade.id {
+                            UpgradeUID::ConcentratedNectar => 0.0,
+                            _ => 100.0
+                        }
+                    } else { ((val) * 1000000.0).round() / 10000.0 };
 
                     columns[0].separator();
 
@@ -230,8 +236,8 @@ fn add_upgrade(
                         UpgradeUID::ConcentratedNectar => {
                             format!("{} {}%",
                                 translate("ui-current-tomato-bonus", &settings.language),
-                                (display_val * cit.get_value_plant_ability(&TypePlant::Tomato, PlantAbility::TomatoClickCombo) * 10000.0).floor() / 10000.0)
-                            }
+                                (display_val * cit.get_value_plant_ability(&TypePlant::Tomato, PlantAbility::TomatoClickCombo, 0) * 10000.0).floor() / 10000.0)
+                            },
                         _ => "".to_string(),
                     };
                     
@@ -241,7 +247,7 @@ fn add_upgrade(
                 };
                     
                 if let Some(unlock_text) = upgrade.get_unlocking() && is_max {
-                    columns[0].add_space(5.0);
+                    columns[0].add_space(2.5 * (s.x).min(s.y));
                         
                     columns[0].colored_label(current_lvl_color, format!("{} {}", translate("ui-unlocking", &settings.language), translate(unlock_text, &settings.language)));
                 };
@@ -254,7 +260,7 @@ fn add_upgrade(
 
                     if let Some(val) = level.value {
                         let display_val = ((val) * 1000000.0).round() / 10000.0;
-                        columns[1].add_space(5.0);
+                        columns[1].add_space(2.5 * (s.x).min(s.y));
 
                         columns[1].colored_label(next_lvl_color, format!("{} {}%", translate("ui-next-level-value", &settings.language), display_val));
                         
@@ -262,39 +268,37 @@ fn add_upgrade(
                             UpgradeUID::ConcentratedNectar => {
                                 format!("{} {}%",
                                     translate("ui-current-tomato-bonus", &settings.language),
-                                    (display_val * cit.get_value_plant_ability(&TypePlant::Tomato, PlantAbility::TomatoClickCombo) * 10000.0).floor() / 10000.0)
+                                    (display_val * cit.get_value_plant_ability(&TypePlant::Tomato, PlantAbility::TomatoClickCombo, 0) * 10000.0).floor() / 10000.0)
                                 }
                             _ => "".to_string(),
                         };
                     
                         if !text.is_empty() {
-                            columns[1].colored_label(current_lvl_color, text);
+                            columns[1].colored_label(next_lvl_color, text);
                         };
                     };
 
 
 
                     if let Some(unlock_text) = upgrade.get_unlocking() {
-                        columns[1].add_space(5.0);
+                        columns[1].add_space(2.5 * (s.x).min(s.y));
                         
                         columns[1].colored_label(next_lvl_color, format!("{} {}", translate("ui-unlocking", &settings.language), translate(unlock_text, &settings.language)));
                     };
 
                     if level.resource_types.len() > 0 {
-                        columns[1].add_space(20.0);
+                        columns[1].add_space(10.0 * (s.x).min(s.y));
 
                         columns[1].colored_label(next_lvl_color, translate("ui-req-resources", &settings.language));
 
                         columns[1].separator();
 
                         for (res, cost) in (level.resource_types).iter().zip(level.costs) {
-                            let is_sparck = if matches!(res, ResourceType::SunSparks) { true } else { false };
-
-                            let cur_eco_res = economy.get_item(*res as usize, is_sparck);
+                            let cur_eco_res = economy.get_res(*res);
 
                             let is_economy_color = if cur_eco_res >= *cost * up_value { next_lvl_color } else { block_color };
 
-                            columns[1].add_space(5.0);
+                            columns[1].add_space(2.5 * (s.x).min(s.y));
 
                             columns[1].colored_label(is_economy_color, format!("{}: {} / {}", translate(res.to_string().as_str(), &settings.language), format_number(cur_eco_res), format_number(*cost * up_value)));
                         }

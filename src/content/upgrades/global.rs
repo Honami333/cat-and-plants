@@ -1,5 +1,4 @@
-use crate::schema::config::{Upgrade, UpgradeLevel};
-use crate::schema::types_and_states::*;
+use crate::schema::{upgrade_storege::*, economy_inventory::ResourceType, hud::EGUISelectedCategories};
 
 pub const FERTILE_SOIL: Upgrade = Upgrade {
     name: "fertile-soil-name",

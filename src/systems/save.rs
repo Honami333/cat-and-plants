@@ -1,8 +1,8 @@
 use std::{fs::{File, create_dir_all}, io::{Read, Write}, path::PathBuf, time::Duration};
 use aes_gcm::{aead::{Aead, KeyInit}, Aes256Gcm, Nonce, Key};
-use crate::{schema::{save_file::*, types_and_states::*}};
+use crate::schema::{save_file::*, global_settings::*, common::*, global_inventory::*, item_type_info::*, economy_inventory::*, prestige::*, upgrade_storege::*};
 use crate::content::world::sunlit_nursery::*;
-use crate::systems::simulation::monitor_window_settings;
+use super::simulation::monitor_window_settings;
 use bevy::{app::AppExit, prelude::*, window::{PrimaryWindow, WindowFocused}};
 use directories::ProjectDirs;
 
@@ -20,7 +20,7 @@ pub fn event_save_system(
     up_storege: Res<UpgradeStorege>,
     global_storege: Res<GlobalInventory>,
     eco_storege: Res<Economy>,
-    cit_storege: Res<ItemTypeInfo>,
+    iti_storege: Res<ItemTypeInfo>,
     save_slot_inv: Res<SaveSlotInv>,
     pristige_room: Res<PrestigeRoom>,
     world: Res<State<CurrentWorld>>,
@@ -48,7 +48,7 @@ pub fn event_save_system(
 
     if !need_save { return; };
 
-    auto_save_system(&up_storege, &global_storege, &eco_storege, &cit_storege, &save_slot_inv, &world, &pristige_room);
+    auto_save_system(&up_storege, &global_storege, &eco_storege, &iti_storege, &save_slot_inv, &world, &pristige_room);
 
     let setting_save_path = get_setting_path();
 
@@ -66,7 +66,7 @@ pub fn auto_save_system(
     up_storege: &UpgradeStorege,
     global_storege: &GlobalInventory,
     eco_storege: &Economy,
-    cit_storege: &ItemTypeInfo,
+    iti_storege: &ItemTypeInfo,
     save_slot_inv: &SaveSlotInv,
     world: &State<CurrentWorld>,
     pristige_room: &PrestigeRoom
@@ -75,7 +75,7 @@ pub fn auto_save_system(
         up_storege: up_storege.clone(),
         global_storege: global_storege.clone(),
         eco_storege: eco_storege.clone(),
-        cit_storege: cit_storege.clone(),
+        iti_storege: iti_storege.clone(),
         prestige: pristige_room.clone(),
         world: **world,
     };
@@ -151,34 +151,6 @@ fn load_game_from_disk(i: usize) -> Result<SaveDataContainer, Box<dyn std::error
             .map(|(_, v)| v.clone())
     };
 
-    if let Some(eco) = get_field(&parsed, "eco_storege") {
-        if let Some(ron::Value::Seq(seq)) = get_field(&eco, "storage") {
-            for (idx, val) in seq.iter().enumerate().take(contener.eco_storege.storage.len()) {
-                if let ron::Value::Number(num) = val {
-                    contener.eco_storege.storage[idx] = num.into_f64();
-                };
-            };
-        };
-
-        if let Some(ron::Value::Seq(seq)) = get_field(&eco, "prestige_sparks") {
-            for (idx, val) in seq.iter().enumerate().take(contener.eco_storege.prestige_sparks.len()) {
-                if let ron::Value::Number(num) = val {
-                    contener.eco_storege.prestige_sparks[idx] = num.into_f64();
-                };
-            };
-        };
-    };
-
-    if let Some(cit) = get_field(&parsed, "cit_storege") {
-        if let Some(ron::Value::Seq(seq)) = get_field(&cit, "sunlit_nursery_inv") {
-            for (idx, val) in seq.iter().enumerate().take(contener.cit_storege.sunlit_nursery_inv.len()) {
-                if let ron::Value::Number(ron::value::Number::Integer(int_val)) = val {
-                    contener.cit_storege.sunlit_nursery_inv[idx] = *int_val as usize;
-                };
-            };
-        };
-    };
-
     if let Some(prestige) = get_field(&parsed, "prestige") {
         if let Some(ron::Value::Number(ron::value::Number::Integer(int_val))) = get_field(&prestige, "sunlit_nursery") {
             contener.prestige.sunlit_nursery = int_val as usize;
@@ -186,11 +158,15 @@ fn load_game_from_disk(i: usize) -> Result<SaveDataContainer, Box<dyn std::error
     };
 
     if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
+        contener.eco_storege = full_container.eco_storege;
+    };
+
+    if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
         contener.up_storege = full_container.up_storege;
     };
 
     if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
-        contener.cit_storege.sn_plant_ability = full_container.cit_storege.sn_plant_ability;
+        contener.iti_storege = full_container.iti_storege;
     };
 
     if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
@@ -248,38 +224,60 @@ fn get_plant_static_price(plant: TypePlant) -> &'static [f64] {
     }
 }
 
+fn fix_economy_references(eco: &mut Economy) {
+    let mut clean_reference = Economy::default();
+
+    for (res_type_loaded, count_loaded) in eco.vault.iter() {
+        clean_reference.vault.insert(*res_type_loaded, *count_loaded);
+    };
+
+    *eco = clean_reference;
+}
+
 fn fix_inventory_references(inv: &mut GlobalInventory) {
-    for slot_state in inv.sunlit_nursery_inv.iter_mut() {
+    for i in 0..16 {
+        let Some(slot_state) = inv.sunlit_nursery_inv.get_mut(&i) else { continue; };
+
         if let SlotState::Occupied(plant) = slot_state {
             plant.price = get_plant_static_price(plant.species_id);
         };
     };
 }
 
-fn fix_iti_plant_ability(
-    cit_storege: &mut ItemTypeInfo
+fn fix_iti_inventory(
+    iti_storege: &mut ItemTypeInfo
 ) {
     let mut clean_reference = ItemTypeInfo::default();
 
-    for (type_plant_loaded, plant_ability_map_loaded) in cit_storege.sn_plant_ability.iter() {
-        let Some(plant_ability_map) = clean_reference.sn_plant_ability.get_mut(type_plant_loaded) else { error!("ошибк аполучения данных 1"); continue; };
+    for (type_plant_loaded, plant_ability_map_loaded) in iti_storege.sn_plant_ability.iter() {
+        let Some(plant_ability_map) = clean_reference.sn_plant_ability.get_mut(type_plant_loaded) else { continue; };
 
-        for (plant_ability_id_loaded, plant_ability_value_loaded) in plant_ability_map_loaded.iter() {
-            let Some(plant_ability_value) = plant_ability_map.get_mut(plant_ability_id_loaded) else {  error!("ошибк аполучения данных 2"); continue; };
+        for (plant_ability_id_loaded, plant_ability_case_loaded) in plant_ability_map_loaded.iter() {
+            let Some(plant_ability_case) = plant_ability_map.get_mut(plant_ability_id_loaded) else { continue; };
 
-            *plant_ability_value = *plant_ability_value_loaded;
+            for (i, plant_ability_value_loaded) in plant_ability_case_loaded.iter().enumerate() {
+                let Some(plant_ability_value) = plant_ability_case.get_mut(i) else { continue; };
+
+                *plant_ability_value = *plant_ability_value_loaded;
+            };
         };
     };
+    for (type_loaded, count_loaded) in iti_storege.item_count_inv.iter() {
+        let Some(count) = clean_reference.item_count_inv.get_mut(type_loaded) else { continue; };
 
-    *cit_storege = clean_reference;
+        *count = *count_loaded;
+    };
+
+    *iti_storege = clean_reference;
 }
+
 
 pub fn final_load_game(
     mut next_state: ResMut<NextState<GameState>>,
     mut up_storege: ResMut<UpgradeStorege>,
     mut global_storege: ResMut<GlobalInventory>,
     mut eco_storege: ResMut<Economy>,
-    mut cit_storege: ResMut<ItemTypeInfo>,
+    mut iti_storege: ResMut<ItemTypeInfo>,
     mut prestige: ResMut<PrestigeRoom>,
     mut world: ResMut<NextState<CurrentWorld>>,
     save_slot_inv: Res<SaveSlotInv>,
@@ -292,12 +290,14 @@ pub fn final_load_game(
 
     fix_inventory_references(&mut contener.global_storege);
 
-    fix_iti_plant_ability(&mut contener.cit_storege);
+    fix_iti_inventory(&mut contener.iti_storege);
+
+    fix_economy_references(&mut contener.eco_storege);
 
     *up_storege = contener.up_storege;
     *global_storege = contener.global_storege;
     *eco_storege = contener.eco_storege;
-    *cit_storege = contener.cit_storege;
+    *iti_storege = contener.iti_storege;
     *prestige = contener.prestige;
     world.set(contener.world);
 

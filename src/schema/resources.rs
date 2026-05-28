@@ -17,6 +17,13 @@ pub struct GameAssets {
     pub button_slots_unlocking: Handle<Image>,
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+#[repr(u32)]
+pub enum ShaderType {
+    SNWindowLight = 0,
+    WPPWindowLight = 1,
+}
+
 #[derive(Resource)]
 pub struct ShaderAssets {
     // Общий список шейдеров

@@ -145,7 +145,6 @@ res-cucumbers = 🥒
 res-corn = 🌽
 res-pumpkin = 🎃
 res-sun-sparks = SUN ✨
-res-none = None
 
 menu-start = Start Game
 menu-delete = Delete Save
@@ -153,13 +152,6 @@ menu-delete = Delete Save
 world-warm-paws = Warm Paws Porch
 world-sunlit-nursery = Sunlit Nursery
 world-all = All Worlds
-
-res-type-all = All
-res-type-tomato = 🍅
-res-type-cucumber = 🥒
-res-type-corn = 🌽
-res-type-pumpkin = 🎃
-res-type-none = {""}
 
 cat-sparks = Sparks
 cat-global = Global
@@ -207,6 +199,12 @@ ui-choice = Choice
 ui-feed = Feed
 ui-inventory = Inventory
 ui-location = Location
+ui-trade-selected-handful = Handful
+ui-trade-empty = empty
+
+# Market
+
+ui-cat-market = Cat Happiness Market
 
 # Map
 
@@ -259,3 +257,36 @@ ui-settings-minutes = minutes
 
 en-language = English
 ru-language = Russian
+
+# economy inventory
+
+ui-cat-paws-inventory = Cat's Hoard
+
+# market Ui
+
+fast_buy_one = FAST BUY ONE
+
+# Tomato Tab
+tomato_buy = TOMATO BUY
+tomato-tab-desc = Buy a tomato pot for location
+tomato-tab-drag = Pull and drag onto the table to buy
+
+# Cucumber Tab
+cucumber_buy = CUCUMBER BUY
+cucumber-tab-desc = Buy a cucumber pot for location
+cucumber-tab-drag = Pull and drag onto the table to buy
+
+# Corn Tab
+corn_buy = CORN BUY
+corn-tab-desc = Buy a corn pot for location
+corn-tab-drag = Pull and drag onto the table to buy
+
+# Pumpkin Tab
+pumpkin_buy = PUMPKIN BUY
+pumpkin-tab-desc = Buy a pumpkin pot for location
+pumpkin-tab-drag = Pull and drag onto the table to buy
+
+# Slots Unlocking Tab
+slots_unlocking = SLOT UNLOCK
+slots-unlock-desc = Unlock a storage slot for location
+slots-unlock-drag = Be careful when holding down; to buy a single slot, it is better to click the button

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui, egui::Response};
-use crate::schema::{types_and_states::*, save_file::*};
+use crate::schema::{common::*, global_inventory::*, item_type_info::*, economy_inventory::*, prestige::*, upgrade_storege::*, hud::*, global_settings::*, save_file::*};
 use crate::systems::{ui::main_menu::exit_clicked, save::*};
 use crate::systems::locales::*;
 
@@ -19,14 +19,14 @@ pub fn game_menu(
     mut pristige_room: ResMut<PrestigeRoom>,
     world: Res<State<CurrentWorld>>,
     game_state: Res<State<GameState>>,
-    world_scale: Res<WorldScale>,
+    scale: Res<WorldScale>,
     settings: Res<GlobalSettings>,
 ) {
     if *game_state != GameState::Playing { return; };
 
     let Ok(ctx) = contexts.ctx_mut() else { return; };
 
-    let s = world_scale.scale;
+    let s = scale.0;
 
     let my_frame = egui::Frame {
         fill: egui::Color32::from_rgba_unmultiplied(0, 0, 0, 0),
@@ -36,7 +36,7 @@ pub fn game_menu(
 
     egui::Window::new("Game Menu")
         .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-        .fixed_size([160.0 * s, 185.0 * s])
+        .fixed_size([160.0 * s.x, 185.0 * s.y])
         .collapsible(false)
         .resizable(false)
         .title_bar(false)
@@ -45,12 +45,12 @@ pub fn game_menu(
             game_menu_button(ctx, &mut menu_page, s);
 
             if menu_page.game_menu {
-                ui.allocate_ui(egui::vec2(150.0 * s, 175.0 * s), |ui| {
-                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-continue", &settings.language)));
+                ui.allocate_ui(egui::vec2(150.0 * s.x, 175.0 * s.y), |ui| {
+                    let response = ui.add_sized([150.0 * s.x, 35.0 * s.y], egui::Button::new(translate("menu-continue", &settings.language)));
 
                     continue_clicked(&response, &mut menu_page);
 
-                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-setting", &settings.language)));
+                    let response = ui.add_sized([150.0 * s.x, 35.0 * s.y], egui::Button::new(translate("menu-setting", &settings.language)));
 
                     exit_to_menu(
                         &response,
@@ -69,7 +69,7 @@ pub fn game_menu(
 
                     setting_clicked(&response, &mut menu_page);
 
-                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-exit-menu", &settings.language)));
+                    let response = ui.add_sized([150.0 * s.x, 35.0 * s.y], egui::Button::new(translate("menu-exit-menu", &settings.language)));
 
                     exit_to_menu(
                         &response,
@@ -86,7 +86,7 @@ pub fn game_menu(
                         true,
                     );
 
-                    let response = ui.add_sized([150.0 * s, 35.0 * s], egui::Button::new(translate("menu-exit-desktop", &settings.language)));
+                    let response = ui.add_sized([150.0 * s.x, 35.0 * s.y], egui::Button::new(translate("menu-exit-desktop", &settings.language)));
 
                     exit_clicked(&response, &mut exit_event);
                 });
@@ -98,13 +98,13 @@ pub fn game_menu(
 fn game_menu_button(
     ctx: & egui::Context,
     menu_page: &mut MenuCurPage,
-    s: f32,
+    s: Vec2,
 ) {
     egui::Area::new(egui::Id::new("game_menu_area"))
-    .fixed_pos([10.0 * s, 10.0 * s])
+    .fixed_pos([10.0 * s.x, 10.0 * s.y])
     .order(egui::Order::Foreground)
         .show(ctx, |ui| {
-            let response = ui.add_sized([40.0 * s, 40.0 * s], egui::Button::new("||"));
+            let response = ui.add_sized([40.0 * s.x, 40.0 * s.y], egui::Button::new("||"));
 
             if response.clicked() {
                 menu_page.game_menu = !menu_page.game_menu

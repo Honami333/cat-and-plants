@@ -1,11 +1,13 @@
-use bevy::prelude::*;
+use bevy::{prelude::*};
 use bevy_egui::{EguiPrimaryContextPass, egui::{self, Context}, EguiContexts, EguiTextureHandle};
-use crate::schema::{resources::FontAssets, types_and_states::GameState};
+use crate::schema::{resources::FontAssets, common::GameState};
 
+mod eco_inventory;
 mod game_menu;
 mod loading;
 mod main_menu;
 mod map;
+mod market;
 mod nurturing;
 mod prestige;
 mod upgrades;
@@ -15,11 +17,14 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(EguiPrimaryContextPass, loading::assets_load_screen.run_if(in_state(GameState::Loading)));
+        
         app.add_systems(
             EguiPrimaryContextPass,
             (
+                eco_inventory::economy_inventory,
                 nurturing::trading_ui_system,
                 map::map_ui_system,
+                market::cat_happiness_market,
                 upgrades::show_upgrade_grid,
                 prestige::prestige_flag,
                 game_menu::game_menu,
@@ -32,6 +37,14 @@ impl Plugin for UiPlugin {
                 main_menu::main_menu
             ).run_if(in_state(GameState::Menu))
         );
+
+        app.add_systems(Update, (
+            eco_inventory::animate_counters.run_if(in_state(GameState::Playing)),
+            market::page_item_dragg
+        ));
+
+        app.add_observer(market::page_item_dragg_start);
+        app.add_observer(market::page_item_dragg_end);
     }
 }
 
@@ -65,9 +78,9 @@ pub fn create_image<'a> (
     atlas_layout: &'a TextureAtlasLayout,
     i: usize,
     size: (f32, f32),
-    s: f32
-) -> egui::Image<'a> {
-    let rect = atlas_layout.textures[i];
+    s: Vec2
+) -> Option<egui::Image<'a>> {
+    let Some(rect) = atlas_layout.textures.get(i) else { return None;};
 
     let atlas_size = atlas_layout.size.as_vec2();
 
@@ -78,11 +91,11 @@ pub fn create_image<'a> (
 
     let image = egui::Image::new(egui::load::SizedTexture::new(
         handle_texture_id,
-        [size.0 * s, size.1 * s],
+        [size.0 * s.x, size.1 * s.y],
     )).uv(uv)
     .bg_fill(egui::Color32::TRANSPARENT);
 
-    image
+    Some(image)
 }
 
 pub fn func_assets_loaded<'a> (

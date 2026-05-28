@@ -1,6 +1,6 @@
-use crate::content::world::sunlit_nursery::*;
-use crate::schema::{resources::*, types_and_states::*, save_file::*};
+use crate::schema::{common::*, economy_inventory::*, prestige::*, upgrade_storege::*, global_settings::*, hud::*};
 use crate::systems::visuals::format_number;
+use crate::content::world::sunlit_nursery::*;
 use bevy::prelude::*;
 use crate::systems::ui::*;
 use bevy_egui::{EguiContexts, egui};
@@ -9,11 +9,12 @@ use crate::systems::locales::*;
 
 pub fn trading_ui_system(
     mut contexts: EguiContexts,
-    mut trade_state: ResMut<TradeState>,
+    mut trade_state: ResMut<FeedState>,
     mut economy: ResMut<Economy>,
     mut fonts_loaded: Local<bool>,
     prestige_inv: Res<PrestigeRoom>,
     current_world: Res<State<CurrentWorld>>,
+    scale: Res<WorldScale>,
     all_fonts: Res<Assets<Font>>,
     font: Res<FontAssets>,
     upgrade_storege: Res<UpgradeStorege>,
@@ -29,9 +30,14 @@ pub fn trading_ui_system(
 
     *fonts_loaded = func_fonts_loaded(ctx, *fonts_loaded, &all_fonts, &font);
 
+    let s = scale.0;
+
+    let trade = trade_well(&trade_state, &economy, &upgrade_storege);
+
     egui::Window::new(translate("ui-cat-feed", &settings.language))
+        .default_open(false) 
         .default_open(true)
-        .fixed_size([600.0, 300.0])
+        .fixed_size([300.0 * s.x, 150.0 * s.y])
         .resizable(false)
         .constrain(true)
         .show(ctx, |ui| {
@@ -54,49 +60,51 @@ pub fn trading_ui_system(
                         };
                     }
                 });
-                columns[0].add_space(10.0);
+                columns[0].add_space(5.0 * (s.x).min(s.y));
                 columns[0]
                     .add(egui::Slider::new(&mut trade_state.selected_percent, 1..=100).text("%"));
-                columns[0].add_space(10.0);
+                columns[0].add_space(5.0 * (s.x).min(s.y));
                 columns[0].horizontal(|ui| {
-                    let current_economy = (economy.egui_get_item(trade_state.selected_item)
-                        * trade_state.selected_percent as f64
-                        / 100.0)
-                        .floor();
+                    let current_economy = economy.egui_get_res_list(TRADEWELL, trade_state.selected_percent as f64, &upgrade_storege, &trade_state.selected_item);
+                    
                     trade_state.selected_economy = current_economy;
 
                     ui.horizontal_centered(|ui| {
-                        ui.set_height(40.0);
-                        ui.set_width(130.0);
+                        ui.set_height(20.0 * s.y);
+                        ui.set_width(65.0 * s.x);
 
                         ui.group(|ui| {
-                            ui.set_height(50.0);
-                            ui.set_width(50.0);
+                            ui.set_height(25.0 * s.y);
+                            ui.set_width(25.0 * s.x);
 
                             ui.vertical_centered(|ui| {
+                                let text = match trade_state.selected_item.len() {
+                                    0 => "ui-trade-empty".to_string(),
+                                    1 => trade_state.selected_item[0].to_string(),
+                                    _ => "ui-trade-selected-handful".to_string()
+                                };
+                                    
                                 ui.add_sized(
-                                    [40.0, 40.0],
-                                    egui::Label::new(translate(trade_state.selected_item.to_string().as_str(), &settings.language)),
+                                    [20.0 * s.x, 20.0 * s.y],
+                                    egui::Label::new(translate(&text, &settings.language)),
                                 );
                                 ui.add(egui::Label::new(format_number(current_economy)));
                             });
                         });
 
                         ui.centered_and_justified(|ui| {
-                            ui.set_height(10.0);
-                            ui.set_width(50.0);
+                            ui.set_height(5.0 * s.y);
+                            ui.set_width(25.0 * s.x);
 
                             ui.add(egui::Label::new("===>"));
                         });
 
                         ui.group(|ui| {
-                            let trade = trade_well(&trade_state, &economy, &upgrade_storege);
-
-                            ui.set_height(50.0);
-                            ui.set_width(50.0);
+                            ui.set_height(25.0 * s.y);
+                            ui.set_width(25.0 * s.x);
 
                             ui.vertical_centered(|ui| {
-                                ui.add_sized([40.0, 40.0], egui::Label::new(translate("res-cat-happiness", &settings.language)));
+                                ui.add_sized([20.0 * s.x, 20.0 * s.y], egui::Label::new(translate("res-cat-happiness", &settings.language)));
                                 ui.add(egui::Label::new(format_number((trade * prestige_buff).floor())));
                             });
                         });
@@ -105,24 +113,19 @@ pub fn trading_ui_system(
 
                 let trade = trade_well(&trade_state, &economy, &upgrade_storege);
 
-                columns[0].add_space(10.0);
+                columns[0].add_space(5.0 * (s.x).min(s.y));
                 if trade > 0.0 {
                     columns[0].group(|ui| {
                         if ui
-                            .add_sized([100.0, 40.0], egui::Button::new(translate("ui-feed", &settings.language)))
+                            .add_sized([50.0 * s.x, 20.0 * s.y], egui::Button::new(translate("ui-feed", &settings.language)))
                             .clicked()
                         {
-                            economy.add(ResourceType::CatHappiness as usize, (trade * prestige_buff).floor(), false);
+                            economy.add_res(ResourceType::CatHappiness, (trade * prestige_buff).floor());
 
-                            if trade_state.selected_item != EGUIResourceType::All {
-                                economy.add(
-                                    trade_state.selected_item as usize,
-                                    -trade_state.selected_economy, 
-                                    false
-                                );
-                            } else {
-                                economy.add_all(trade_state.selected_percent as f64);
-                            };
+                            economy.feed_res_list(
+                                trade_state.selected_percent as f64,
+                                &trade_state.selected_item,
+                            );
                         };
                     });
                 }
@@ -131,12 +134,11 @@ pub fn trading_ui_system(
                 columns[1].separator();
                 columns[1].vertical(|ui| {
                     egui::Grid::new("trade_inventory_grid")
-                        .spacing([8.0, 8.0])
+                        .spacing([4.0 * s.x, 4.0 * s.y])
                         .show(ui, |ui| {
-                            let all_items: Vec<_> = EGUIResourceType::iter()
+                            let all_items: Vec<_> = ResourceType::iter()
                                 .filter(|t| {
-                                    *t != EGUIResourceType::All && *t != EGUIResourceType::None
-                                })
+                                    !matches!(*t, ResourceType::CatHappiness | ResourceType::SunSparks)})
                                 .collect();
 
                             let range = if trade_state.selected_world == EGUICurrntWorld::All {
@@ -153,17 +155,23 @@ pub fn trading_ui_system(
 
                             for (i, item_idx) in range.enumerate() {
                                 if let Some(item) = all_items.get(item_idx) {
-                                    let is_select = trade_state.selected_item == *item
-                                        || trade_state.selected_item == EGUIResourceType::All;
+                                    let is_select = if let Some(_) = trade_state.selected_item.iter().find(|r| item == *r) {
+                                        true
+                                    } else { false };
 
                                     if ui
                                         .add_sized(
-                                            [40.0, 40.0],
-                                            egui::Button::new(translate(item.to_string().as_str(), &settings.language)).selected(is_select),
+                                            [20.0 * s.x, 20.0 * s.y],
+                                            egui::Button::new(translate(&item.to_string(), &settings.language)).selected(is_select),
                                         )
                                         .clicked()
                                     {
-                                        trade_state.selected_item = *item;
+                                        if is_select {
+                                            trade_state.selected_item.retain(|r| *r != *item);
+                                        } else {
+                                            trade_state.selected_item.push(*item);
+                                        }
+                                        
                                     };
 
                                     if (i + 1) % 4 == 0 {
@@ -182,12 +190,8 @@ pub fn trading_ui_system(
 
                         if ui.selectable_label(is_select, translate(world.to_string().as_str(), &settings.language)).clicked() {
                             trade_state.selected_world = world;
-
-                            if world == EGUICurrntWorld::All {
-                                trade_state.selected_item = EGUIResourceType::All;
-                            };
-                        }
-                    }
+                        };
+                    };
                 });
             });
 
@@ -197,7 +201,7 @@ pub fn trading_ui_system(
 
 
 fn trade_well(
-    trade_state: &TradeState,
+    trade_state: &FeedState,
     economy: &Economy,
     upgrade_storege: &UpgradeStorege,
 ) -> f64 {
@@ -205,30 +209,8 @@ fn trade_well(
     
     if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::WholesaleSupply) {up_value_1 = value};
 
-    let mut cur_well = 0.0;
+    let trade = economy.egui_get_res_list(TRADEWELL, trade_state.selected_percent as f64, &upgrade_storege, &trade_state.selected_item);
 
-    let item_idx = trade_state.selected_item as usize;
-    if item_idx > 0 {
-        if let Some(well) = TRADEWELL.well.get(item_idx - 1) {
-            cur_well = *well
-        };
-    };
-
-    let trade = match trade_state.selected_item {
-        EGUIResourceType::All => {
-            economy.egui_get_item_all(TRADEWELL, trade_state.selected_percent as f64,&upgrade_storege)
-        }
-        EGUIResourceType::None => 0.0,
-        _ => {
-            let mut up_value_2 =  1.0;
-
-            if let Some(plant) = trade_state.selected_item.into_plant().get(0) {
-                if let (Some(value), _) = upgrade_storege.get_plant_global_modifier(&plant, PlantGGM::Joy) {up_value_2 = value};
-            };
-
-            cur_well * trade_state.selected_economy * up_value_2
-        },
-    };
 
     (trade * up_value_1).floor()
 }

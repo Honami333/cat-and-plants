@@ -1,6 +1,5 @@
-
-use crate::schema::types_and_states::*;
 use bevy::{prelude::*, time::common_conditions::on_timer};
+use crate::schema::common::*;
 use bevy_egui::EguiPlugin;
 use std::time::Duration;
 use ui::UiPlugin;
@@ -58,11 +57,8 @@ impl Plugin for SystemPlugin {
                 visuals::update_plant_appearance,
                 visuals::update_scene_scale,
                 visuals::sync_inventory_visuals,
-                visuals::animate_counters,
-                visuals::update_resourse_text,
                 visuals::grad_item_anim_and_zsort,
                 visuals::shader_animation,
-                visuals::price_button_text,
                 interaction::state_dragg_item,
                 simulation::plant_growth.run_if(on_timer(Duration::from_secs(1))),
                 simulation::update_shader_settings,
@@ -79,7 +75,7 @@ impl Plugin for SystemPlugin {
 
         app.add_observer(interaction::end_drag_item);
         app.add_observer(interaction::start_drag_item);
-        app.add_observer(interaction::button_check);
+        // app.add_observer(interaction::button_check);
         app.add_observer(interaction::harvest);
     }
 }

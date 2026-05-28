@@ -1,13 +1,21 @@
-use crate::schema::{types_and_states::*};
 use strum_macros::{AsRefStr, Display, EnumIter};
 use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Serialize, Deserialize};
+use crate::schema::hud::TypePage;
+use crate::schema::upgrade_storege::{UpgradeStorege, PlantGGM};
+use super::common::*;
+use super::global_inventory::TypePlant;
 
 
 #[derive(Resource, Clone, Default, Serialize, Deserialize, Debug)]
 #[serde(default)]
 pub struct Economy {
     pub vault : HashMap<ResourceType, f64>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TradeWell {
+    pub well: &'static [(ResourceType, f64)],
 }
 
 #[derive(Debug, Clone, Copy, EnumIter, AsRefStr, PartialEq, Display, Serialize, Deserialize, Eq, Hash)]
@@ -19,11 +27,49 @@ pub enum ResourceType {
     #[strum(serialize = "res-corn")] Corn,
     #[strum(serialize = "res-pumpkin")] Pumpkin,
 
-    #[strum(serialize = "res-none")] None,
+
 
     #[strum(serialize = "res-sun-sparks")] SunSparks,
 }
 
+impl From<TypePlant> for ResourceType {
+    fn from(value: TypePlant) -> Self {
+        match value {
+            TypePlant::Tomato => ResourceType::Tomatoes,
+            TypePlant::Cucumber => ResourceType::Cucumbers,
+            TypePlant::Corn => ResourceType::Corn,
+            TypePlant::Pumpkin => ResourceType::Pumpkin,
+        }
+    }
+}
+
+impl TryFrom<ResourceType> for TypePlant {
+    type Error = ();
+
+    fn try_from(value: ResourceType) -> Result<Self, Self::Error> {
+        match value {
+            ResourceType::Tomatoes => Ok(TypePlant::Tomato),
+            ResourceType::Cucumbers => Ok(TypePlant::Cucumber),
+            ResourceType::Corn => Ok(TypePlant::Corn),
+            ResourceType::Pumpkin => Ok(TypePlant::Pumpkin),
+            _ => Err(())
+        }
+    }
+}
+
+impl TryFrom<TypePage> for TypePlant {
+    type Error = ();
+
+    fn try_from(value: TypePage) -> Result<Self, Self::Error> {
+        match value {
+            TypePage::TomatoBuy => Ok(TypePlant::Tomato),
+            TypePage::CucumberBuy => Ok(TypePlant::Cucumber),
+            TypePage::CornBuy => Ok(TypePlant::Corn),
+            TypePage::PumpkinBuy => Ok(TypePlant::Pumpkin),
+            _ => Err(())
+        }
+    }
+}
 
 impl Economy {
     pub fn get_res(&self, res: ResourceType) -> f64 {
@@ -34,39 +80,45 @@ impl Economy {
         *self.vault.entry(res).or_insert(0.0) += amount;
     }
 
-    pub fn sell_all(&mut self, percent: f64) {
+    pub fn feed_res_list(&mut self, percent: f64, select_item_list: &Vec<ResourceType>,) {
         let factor = 1.0 - (percent / 100.0).clamp(0.0, 1.0);
 
-        for (res, val) in self.vault.iter_mut() {
-            if !matches!(res, ResourceType::CatHappiness | ResourceType::None) {
+        for res in select_item_list.iter() {
+            let Some(val) = self.vault.get_mut(res) else { continue; };
+
+            if !(*res == ResourceType::CatHappiness) {
                 *val = (*val * factor).floor();
             }
         }
     }
 
-    pub fn egui_get_res(&self, res: EGUIResourceType) -> f64 {
-        match res {
-            EGUIResourceType::All => self.vault.iter()
-                    .filter(|(k, _)| !matches!(k, ResourceType::CatHappiness | ResourceType::None))
-                    .map(|(_, v)| v).sum(),
-            _ => self.get_res(res.into()),
-        }
-    }
-
-    pub fn egui_get_res_all(&self, well: TradeWell, percent: f64) -> f64 {
+    pub fn egui_get_res_list(
+        &self,
+        well: TradeWell,
+        percent: f64,
+        upgrade_storege: &UpgradeStorege,
+        select_item_list: &Vec<ResourceType>,
+    ) -> f64 {
         let mut all_trade = 0.0;
+
         let factor = percent / 100.0;
 
-        for (res, item_count) in self.vault.iter() {
-            if matches!(res, ResourceType::CatHappiness | ResourceType::None) { continue; };
+        for res in select_item_list.iter() {
+            let item_count = self.get_res(*res);
 
-            if *item_count < 0.0 { continue; };
+            if *res == ResourceType::CatHappiness { continue; };
 
-            let well_idx = (*res as usize).saturating_sub(1);
+            if item_count <= 0.0 { continue; };
 
-            let Some(&price) = well.well.get(well_idx) else { continue; };
+            let Some(&price) = well.well.iter().find(|(r, _)| *r == *res) else { continue; };
 
-            all_trade += (item_count * factor).floor() * price;
+            let mut up_value_2 =  1.0;
+
+            if let Ok(type_plant) = (*res).try_into() {
+                if let (Some(value), _) = upgrade_storege.get_plant_global_modifier(&type_plant, PlantGGM::Joy) {up_value_2 = value};
+            };
+
+            all_trade += (item_count * factor * price.1 * up_value_2).floor() ;
         }
 
         all_trade

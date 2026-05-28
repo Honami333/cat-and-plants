@@ -1,15 +1,13 @@
-use crate::schema::types_and_states::TradeWell;
-
-pub const TRADEWELL: TradeWell = TradeWell {
-    well: [1.0, 2.0, 8.0, 30.0, 0.0],
-};
-
-// Константы для мира Sunlit Nursery
-use crate::schema::{config::*, types_and_states::*};
+use crate::schema::{config::*, economy_inventory::*, global_inventory::*};
 use bevy::prelude::*;
 
-pub const SN_DATA: ScaleBackground = ScaleBackground {
-    wh: Vec2::new(640.0, 360.0),
+pub const TRADEWELL: TradeWell = TradeWell {
+    well: &[
+    (ResourceType::Tomatoes, 1.0),
+    (ResourceType::Cucumbers, 2.0),
+    (ResourceType::Corn, 8.0),
+    (ResourceType::Pumpkin, 30.0)
+    ],
 };
 
 pub const SN_SLOT_CFG: WorldSettingsSlot = WorldSettingsSlot {
@@ -17,41 +15,6 @@ pub const SN_SLOT_CFG: WorldSettingsSlot = WorldSettingsSlot {
     step_x: Vec2::new(63.0, 31.5),
     step_y: Vec2::new(63.0, -31.5),
     slot_grid_scale: 4,
-};
-
-pub const BUT_TOMATO_CFG: ButtonCFG = ButtonCFG {
-    pos: Vec2::new(224.0, -156.0),
-    text: "button-unlock-tomato",
-    b_type: TypeButton::TomatoButton,
-    text_pos: Vec2::new(56.0, 0.0),
-};
-
-pub const BUT_CUCUMBER_CFG: ButtonCFG = ButtonCFG {
-    pos: Vec2::new(224.0, -108.0),
-    text: "button-unlock-cucumber",
-    b_type: TypeButton::CucumberButton,
-    text_pos: Vec2::new(56.0, 0.0),
-};
-
-pub const BUT_CORN_CFG: ButtonCFG = ButtonCFG {
-    pos: Vec2::new(-224.0, -156.0),
-    text: "button-unlock-corn",
-    b_type: TypeButton::CornButton,
-    text_pos: Vec2::new(56.0, 0.0),
-};
-
-pub const BUT_PUMPKIN_CFG: ButtonCFG = ButtonCFG {
-    pos: Vec2::new(-224.0, -108.0),
-    text: "button-unlock-pumpkin",
-    b_type: TypeButton::PumpkinButton,
-    text_pos: Vec2::new(56.0, 0.0),
-};
-
-pub const BUT_SLOTSLOCK_CFG: ButtonCFG = ButtonCFG {
-    pos: Vec2::new(272.0, -60.0),
-    text: "button-unlock-slots",
-    b_type: TypeButton::SlotsUnLocking,
-    text_pos: Vec2::new(8.0, 0.0),
 };
 
 pub const PL_TOMATO: Plant = Plant {
@@ -62,7 +25,7 @@ pub const PL_TOMATO: Plant = Plant {
     species_id: TypePlant::Tomato,
     slot_uid: 0,
     state: PlantStateGrowth::Seed,
-    price: &[10.0, 20.0, 70.0, 180.0],
+    price: &[0.0, 20.0, 70.0, 180.0],
     max_count: 4,
 };
 
@@ -102,19 +65,8 @@ pub const PL_PUMPKIN: Plant = Plant {
     max_count: 4,
 };
 
-pub const SN_PLANT_RES: PlantResource = PlantResource {
-    plant0: ResourceType::Tomatoes,
-    plant1: ResourceType::Cucumbers,
-    plant2: ResourceType::Corn,
-    plant3: ResourceType::Pumpkin,
-    plant_icon0: "🍅",
-    plant_icon1: "🥒",
-    plant_icon2: "🌽",
-    plant_icon3: "🎃",
-};
-
 pub const SLOT_PRICES: SlotPrices = SlotPrices {
-    prices: &[ 50.0, 100.0, 200.0, 350.0, 500.0, 750.0, 1000.0, 1350.0, 1800.0, 2400.0, 3200.0, 4500.0],
+    prices: &[0.0, 0.0, 0.0, 0.0, 50.0, 100.0, 200.0, 350.0, 500.0, 750.0, 1000.0, 1350.0, 1800.0, 2400.0, 3200.0, 4500.0],
 };
 
 pub const SN_FIRST_PRESTIGE_COST: PrestigeCost = PrestigeCost {

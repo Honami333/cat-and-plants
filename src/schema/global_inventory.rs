@@ -1,8 +1,11 @@
 
-use crate::schema::{types_and_states::*};
-use super::logic::MapStore;
-use super::config::default_static_slice;
-use super::economy_inventory::*;
+use crate::schema::economy_inventory::Economy;
+
+use super::common::MapStore;
+use super::save_file::default_static_slice;
+use super::resources::*;
+use super::common::CurrentWorld;
+use super::economy_inventory::ResourceType;
 use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Serialize, Deserialize};
 
@@ -13,6 +16,31 @@ pub enum SlotState {
     Locked,
     Empty,
     Occupied(Plant),
+}
+
+#[derive(Component, Clone, PartialEq, Debug, Serialize, Deserialize, Eq, Hash, Copy)]
+pub enum TypePlant {
+    // Тип растения
+    Tomato,
+    Cucumber,
+    Corn,
+    Pumpkin,
+}
+
+impl TypePlant {
+    pub fn get_plant_image(
+        &self,
+        assets: &AtlasAssets,
+    ) -> (Handle<Image>, Handle<TextureAtlasLayout>) {
+        let image_layout = match self {
+            TypePlant::Tomato => assets.tomato_pot_atlas.clone(),
+            TypePlant::Cucumber => assets.cucumber_pot_atlas.clone(),
+            TypePlant::Corn => assets.corn_pot_atlas.clone(),
+            TypePlant::Pumpkin => assets.pumpkin_pot_atlas.clone(),
+        };
+
+        (image_layout, assets.common_layout_x128.clone())
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -28,6 +56,31 @@ pub struct Plant { // Растение
 
     #[serde(skip, default = "default_static_slice")]
     pub price: &'static [f64],
+}
+
+#[derive(Component, Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+pub enum PlantStateGrowth {
+    Seed,
+    Sprout,
+    Sapling,
+    Mature,
+}
+
+impl PlantStateGrowth {
+    pub fn atlas_texture_id(&self) -> u32 {
+        match self {
+            Self::Seed => 0,
+            Self::Sprout => 1,
+            Self::Sapling => 2,
+            Self::Mature => 3,
+        }
+    }
+}
+
+#[derive(Resource, Default)]
+pub struct DragItem {
+    // Обьект курсора
+    pub entity: Option<Entity>,
 }
 
 #[derive(Resource, Clone, Serialize, Deserialize, Debug)]
@@ -76,8 +129,18 @@ impl GlobalInventory {
         &mut self,
         current_world: &State<CurrentWorld>,
         new_plant: Plant,
+        idx: Option<usize>,
     ) {
         let Some(inventory) = self.get_for_world_mut(current_world) else { return; };
+
+        if let Some(i) = idx {
+            if let Some(slot_state) = inventory.get_mut(&i) {
+                if *slot_state == SlotState::Empty {
+                    *slot_state = SlotState::Occupied(new_plant);
+                    return;
+                };
+            };
+        };
 
         for i in 0..16 {
             let Some(slot_state) = inventory.get_mut(&i) else { continue; };
@@ -109,27 +172,25 @@ impl GlobalInventory {
         inventory.insert(old_id, new_val);
         inventory.insert(new_id, old_val);
     }
-    
+
     pub fn try_unlock_slot(
         &mut self,
         world: &State<CurrentWorld>,
         cat_happiness: f64,
-        prices: &'static [f64],
-    ) -> (bool, Option<usize>) {
-        let Some(inv) = self.get_for_world_mut(world) else { return (false, None);};
+        price: f64,
+        economy: &mut Economy,
+    ) {
+        let Some(inv) = self.get_for_world_mut(world) else { return;};
 
         let Some(&id) = inv.iter()
             .filter(|(_, s)| matches!(s, SlotState::Locked))
-            .map(|(k, _)| k).min() else { return (false, None); };
+            .map(|(k, _)| k).min() else { return; };
 
-        let Some(price) = prices.get(id) else { return (false, None); };
+        if cat_happiness < price { return; };
 
-        if cat_happiness >= *price {
-            inv.insert(id, SlotState::Empty);
-            return (true, Some(id));
-        };
+        inv.insert(id, SlotState::Empty);
 
-        (false, None)
+        economy.add_res(ResourceType::CatHappiness, -price);
     }
 
     pub fn has_empty_slot(&self, world: &State<CurrentWorld>) -> bool {

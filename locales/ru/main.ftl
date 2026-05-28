@@ -144,8 +144,7 @@ res-tomatoes = 🍅
 res-cucumbers = 🥒
 res-corn = 🌽
 res-pumpkin = 🎃
-res-sun-sparks = ИСКРЫ ✨
-res-none = Нет
+res-sun-sparks = СОЛНЕЧНЫЕ ✨
 
 menu-start = Начать игру
 menu-delete = Удалить сохранение
@@ -154,19 +153,12 @@ world-warm-paws = Веранда тёплых лапок
 world-sunlit-nursery = Солнечная команта
 world-all = Все миры
 
-res-type-all = Все
-res-type-tomato = 🍅
-res-type-cucumber = 🥒
-res-type-corn = 🌽
-res-type-pumpkin = 🎃
-res-type-none = {""}
-
 cat-sparks = Искры
 cat-global = Общие
 cat-nursery = Солнечная комната
 
 screen-windowed = В окне
-screen-fullscreen = Во весь экран
+screen-fullscreen = На весь экран
 
 # Визуал
 
@@ -176,11 +168,10 @@ ui-max =  MAX
 # Престиж
 
 ui-prestige-flag = Флаг престижа
-ui-prestige-to = ПРЕСТИЖ ДО LEVEL
+ui-prestige-to = ПРЕСТИЖ ДО УРОВЕНЬ
 ui-lets-go = ПОЕХАЛИ!
 ui-warning = ВНИМАНИЕ!
-ui-warn-erase = Это действие полностью сотрёт ваш прогресс в комнате
-ui-warn-room = Комната
+ui-warn-erase = Это действие полностью сотрёт ваш прогресс в
 ui-warn-shelter = После подтверждения ваши растения отправятся в кошачий приют
 ui-warn-receive = Вы получите ресурсы
 ui-warn-amount = в количестве:
@@ -207,6 +198,12 @@ ui-choice = Выбор
 ui-feed = Кормить
 ui-inventory = Инвентарь
 ui-location = Локация
+ui-trade-selected-handful = Горсть
+ui-trade-empty = Пусто
+
+# Магазин
+
+ui-cat-market = Магазин Кошачьего счастья
 
 # Карта 
 
@@ -259,3 +256,37 @@ ui-settings-minutes = минут
 
 en-language = Английский
 ru-language = Русский
+
+# Инвентарь экономики
+
+ui-cat-paws-inventory = Кошачьи закрома
+
+# Интерфейст Маркета 
+
+fast_buy_one = БЫСТРАЯ ПОКУПКА (1 ШТ.)
+
+# Вкладка Томата
+
+tomato_buy = ПОКУПКА ТОМАТА
+tomato-tab-desc = Купить горшок с томатом в локации
+tomato-tab-drag = Потяни и перетащи на стол, чтобы купить
+
+# Вкладка Огурца
+cucumber_buy = ПОКУПКА ОГУРЦА
+cucumber-tab-desc = Купить горшок с огурцом в локации
+cucumber-tab-drag = Потяни и перетащи на стол, чтобы купить
+
+# Вкладка Кукурузы
+corn_buy = ПОКУПКА КУКУРУЗЫ
+corn-tab-desc = Купить горшок с кукурузой в локации
+corn-tab-drag = Потяни и перетащи на стол, чтобы купить
+
+# Вкладка Тыквы
+pumpkin_buy = ПОКУПКА ТЫКВЫ
+pumpkin-tab-desc = Купить горшок с тыквой в локации
+pumpkin-tab-drag = Потяни и перетащи на стол, чтобы купить
+
+# Вкладка Разблокировки Слотов
+slots_unlocking = РАЗБЛОКИРОВКА СЛОТОВ
+slots-unlock-desc = Разблокировать слот в локации
+slots-unlock-drag = Будьте аккуратны при зажатии; чтобы купить один слот, лучше нажать на кнопку

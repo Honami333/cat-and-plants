@@ -1,7 +1,6 @@
 use bevy::{asset::LoadState, prelude::*};
 use bevy_egui::{EguiContexts, egui};
-use crate::schema::save_file::GlobalSettings;
-use crate::schema::{types_and_states::*, resources::*};
+use crate::schema::{common::*, resources::*, global_settings::*};
 use crate::content::loading_text::*;
 use std::time;
 use rand::seq::SliceRandom;
@@ -25,7 +24,7 @@ pub fn assets_load_screen(
 
     asset_server: Res<AssetServer>,
     settings: Res<GlobalSettings>,
-    world: Res<WorldScale>,
+    scale: Res<WorldScale>,
     time: Res<Time>,
 
     game_assets: Option<Res<GameAssets>>,
@@ -59,7 +58,7 @@ pub fn assets_load_screen(
         *current_dots = (*current_dots + 1) % 4;
     };
 
-    let s = world.scale;
+    let s = scale.0;
 
     render_ui_loading(&mut contexts, *current_state, current_text.clone(), *current_dots, s, &settings);
 
@@ -210,7 +209,7 @@ fn render_ui_loading(
     current_state: usize,
     current_text: String,
     current_dots: usize,
-    s: f32,
+    s: Vec2,
     settings: &GlobalSettings,
 ) {
     let Ok(ctx) = contexts.ctx_mut() else { return; };
@@ -241,10 +240,10 @@ fn render_ui_loading(
             });
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.add_space(20.0 * s);
+                ui.add_space(20.0 * (s.x).min(s.y));
 
                 ui.horizontal(|ui| {
-                    ui.add_space(10.0 * s);
+                    ui.add_space(10.0 * (s.x).min(s.y));
 
                     let load_stage_text = match current_state {
                         5 => format!("Cat and plant v{}\n{}{}", GAME_VERSION, translate("ui-load-final", &settings.language), dot),

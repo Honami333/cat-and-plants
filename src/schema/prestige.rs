@@ -1,4 +1,16 @@
 
+use bevy::prelude::*;
+use serde::{Serialize, Deserialize};
+use super::common::CurrentWorld;
+use super::economy_inventory::ResourceType;
+use std::borrow::Borrow;
+
+
+#[derive(Resource, Clone, Copy, Default,  Serialize, Deserialize, Debug)]
+pub struct PrestigeRoom {
+    pub sunlit_nursery: usize,
+}
+
 impl PrestigeRoom {
     pub fn get_room<W>(&self, current_world: W) -> Option<usize> 
         where 

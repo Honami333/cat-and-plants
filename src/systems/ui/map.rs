@@ -1,4 +1,4 @@
-use crate::schema::{types_and_states::*, save_file::*};
+use crate::schema::{common::*, global_settings::*};
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui};
 use crate::systems::locales::*;
@@ -7,12 +7,12 @@ pub fn map_ui_system(
     mut contexts: EguiContexts,
     mut new_current_world: ResMut<NextState<CurrentWorld>>,
     current_world: Res<State<CurrentWorld>>,
-    world_scale: Res<WorldScale>,
+    scale: Res<WorldScale>,
     settings: Res<GlobalSettings>,
 ) {
     let Ok(ctx) = contexts.ctx_mut() else { return; };
 
-    let s = world_scale.scale / 2.0;
+    let s = scale.0;
 
     let my_frame = egui::Frame {
         fill: egui::Color32::from_rgba_unmultiplied(20, 20, 20, 150),
@@ -22,8 +22,8 @@ pub fn map_ui_system(
     };
 
     egui::Window::new(translate("ui-map", &settings.language))
-        .anchor(egui::Align2::RIGHT_TOP, [-10.0 * s, 10.0 * s])
-        .fixed_size([320.0 * s, 240.0 * s])
+        .anchor(egui::Align2::RIGHT_TOP, [-5.0 * s.x, 5.0 * s.y])
+        .fixed_size([160.0 * s.x, 120.0 * s.y])
         .collapsible(false)
         .title_bar(false)
         .resizable(false)
@@ -32,34 +32,34 @@ pub fn map_ui_system(
         .show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 let (response, painter) =
-                    ui.allocate_painter(egui::vec2(310.0 * s, 230.0 * s), egui::Sense::click());
+                    ui.allocate_painter(egui::vec2(155.0 * s.x, 115.0 * s.y), egui::Sense::click());
 
                 let min = response.rect.min;
 
                 let room_point_sn = vec![
-                    min + egui::vec2(20.0, 20.0) * s,
-                    min + egui::vec2(20.0, 120.0) * s,
-                    min + egui::vec2(100.0, 120.0) * s,
-                    min + egui::vec2(100.0, 80.0) * s,
-                    min + egui::vec2(95.0, 80.0) * s,
-                    min + egui::vec2(95.0, 50.0) * s,
-                    min + egui::vec2(100.0, 50.0) * s,
-                    min + egui::vec2(100.0, 20.0) * s,
+                    min + egui::vec2(10.0 * s.x, 10.0 * s.y),
+                    min + egui::vec2(10.0 * s.x, 60.0 * s.y),
+                    min + egui::vec2(50.0 * s.x, 60.0 * s.y),
+                    min + egui::vec2(50.0 * s.x, 40.0 * s.y),
+                    min + egui::vec2(47.5 * s.x, 40.0 * s.y),
+                    min + egui::vec2(47.5 * s.x, 25.0 * s.y),
+                    min + egui::vec2(50.0 * s.x, 25.0 * s.y),
+                    min + egui::vec2(50.0 * s.x, 10.0 * s.y),
                 ];
 
                 let room_point_wpp = vec![
-                    min + egui::vec2(130.0, 20.0) * s,
-                    min + egui::vec2(260.0, 20.0) * s,
-                    min + egui::vec2(260.0, 120.0) * s,
-                    min + egui::vec2(130.0, 120.0) * s,
-                    min + egui::vec2(130.0, 100.0) * s,
-                    min + egui::vec2(135.0, 100.0) * s,
-                    min + egui::vec2(135.0, 70.0) * s,
-                    min + egui::vec2(130.0, 70.0) * s,
+                    min + egui::vec2(65.0 * s.x, 10.0 * s.y),
+                    min + egui::vec2(130.0 * s.x, 10.0 * s.y),
+                    min + egui::vec2(130.0 * s.x, 60.0 * s.y),
+                    min + egui::vec2(65.0 * s.x, 60.0 * s.y),
+                    min + egui::vec2(65.0 * s.x, 50.0 * s.y),
+                    min + egui::vec2(67.5 * s.x, 50.0 * s.y),
+                    min + egui::vec2(67.5 * s.x, 35.0 * s.y),
+                    min + egui::vec2(65.0 * s.x, 35.0 * s.y),
                 ];
 
-                let critical_point_sn = [20.0 * s, 100.0 * s, 20.0 * s, 120.0 * s];
-                let critical_point_wpp = [130.0 * s, 260.0 * s, 20.0 * s, 120.0 * s];
+                let critical_point_sn = [10.0 * s.x, 50.0 * s.x, 10.0 * s.y, 60.0 * s.y];
+                let critical_point_wpp = [65.0 * s.x, 130.0 * s.x, 10.0 * s.y, 60.0 * s.y];
 
                 room_map_spawn(
                     ui,
@@ -98,7 +98,7 @@ fn room_map_spawn(
     painter: &egui::Painter,
     critical_point: [f32; 4],
     location: CurrentWorld,
-    s: f32,
+    s: Vec2,
     settings: &GlobalSettings
 ) {
     let mouse_pos = ui.input(|i| i.pointer.hover_pos());
@@ -140,7 +140,7 @@ fn room_map_spawn(
         egui::pos2(center_x, center_y),
         egui::Align2::CENTER_CENTER,
         translate(location.to_string().as_str(), &settings.language),
-        egui::FontId::proportional(12.0 * s),
+        egui::FontId::proportional(6.0 * (s.x).min(s.y)),
         egui::Color32::WHITE,
     );
 }

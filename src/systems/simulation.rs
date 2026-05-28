@@ -1,4 +1,5 @@
-use crate::schema::{config::ShaderMaterial, save_file::*, types_and_states::*, world_components::SlotItem};
+use crate::schema::{config::ShaderMaterial, world_components::SlotItem};
+use crate::schema::{global_settings::*, common::*, global_inventory::*, item_type_info::*, upgrade_storege::*};
 use bevy::{asset::uuid::Uuid, camera::NormalizedRenderTarget, picking::pointer::{Location, PointerId}, platform::thread, prelude::*, window::{PrimaryWindow, WindowFocused}};
 use std::time::{Duration, Instant};
 
@@ -11,7 +12,9 @@ pub fn plant_growth(mut inv: ResMut<GlobalInventory>, upgrade_storege: Res<Upgra
     if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::SelectiveBreeding) {up_value_1 = value};
 
     for inventory in invetories {
-        for slot in inventory.iter_mut() {
+        for i in 0..16 {
+             let Some(slot) = inventory.get_mut(&i) else { continue; };
+
             if let SlotState::Occupied(plant) = slot {
                 let mut up_value_2 = 1.0;
 
@@ -49,12 +52,12 @@ pub fn plant_growth(mut inv: ResMut<GlobalInventory>, upgrade_storege: Res<Upgra
 
 
 pub fn set_global_scale(
-    mut world_scale: ResMut<WorldScale>,
+    mut scale: ResMut<WorldScale>,
     window: Single<&Window, With<PrimaryWindow>>,
 ) {
-    let s  = (window.width() / 640.0).min(window.height() / 360.0);
+    let s  = Vec2::from([window.width() / 640.0, window.height() / 360.0]);
 
-    world_scale.scale = s;
+    scale.0 = s;
 }
 
 pub fn monitor_window_settings(
@@ -141,7 +144,7 @@ pub fn update_shader_settings(
     }
 }
 
-pub fn corn_boon_ability(
+pub fn corn_boom_ability(
     mut commands: Commands,
     mut iti_invetory: ResMut<ItemTypeInfo>,
     upgrade_storege: Res<UpgradeStorege>,
@@ -150,13 +153,13 @@ pub fn corn_boon_ability(
     query_slot_item: Query<(Entity, &SlotItem)>,
     query_window: Query<Entity, With<PrimaryWindow>>
 ) {
-    let Some(gl_inv) = global_inventory.get_inv(&current_world) else { return; };
+    let Some(gl_inv) = global_inventory.get_for_world(&current_world) else { return; };
 
     let Ok(window_entity) = query_window.single() else { return; };
 
     let Some(normalized_window) = bevy::window::WindowRef::Primary.normalize(Some(window_entity)) else { return; };
 
-    for slot_state in gl_inv {
+    for slot_state in gl_inv.values() {
         if let SlotState::Occupied(plant) = slot_state {
             let Some((entity, _)) = query_slot_item.iter().find(|(_, si)| si.slot_id == plant.slot_uid) else { continue; };
 

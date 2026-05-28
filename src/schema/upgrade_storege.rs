@@ -1,18 +1,80 @@
-use crate::schema::{types_and_states::*};
-use strum_macros::{AsRefStr, Display, EnumIter};
+use crate::content::upgrades::{prestige::*, global::*, sunlit_nursery::*};
+use strum_macros::{Display, EnumIter};
 use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Serialize, Deserialize};
-use super::config::*;
+use super::save_file::*;
+use super::hud::EGUISelectedCategories;
+use super::common::CurrentWorld;
+use super::global_inventory::TypePlant;
 use super::economy_inventory::ResourceType;
+use super::prestige::PrestigeRoom;
 
 
+#[derive(Clone, Copy, PartialEq, Display, EnumIter, Serialize, Deserialize, Debug)]
+pub enum UpgradeUID {
+    #[strum(serialize = "purr-profit-name")] PurrProfit,
+    #[strum(serialize = "over-blooming-name")] OverBlooming,
+    #[strum(serialize = "fertile-soil-name")] FertileSoil,
+    #[strum(serialize = "growth-catalysts-name")] WholesaleSupply,
+    #[strum(serialize = "catnip-infusion-name")] SelectiveBreeding,
+    #[strum(serialize = "wholesale-supplies-name")] CardboardBox,
+    #[strum(serialize = "unlock-tomato-name")] UnlockTomato,
+    #[strum(serialize = "unlock-cucumber-name")] UnlockCucumber,
+    #[strum(serialize = "unlock-corn-name")] UnlockCorn,
+    #[strum(serialize = "unlock-pumpkin-name")] UnlockPumpkin,
+    #[strum(serialize = "concentrated-nectar-name")] ConcentratedNectar,
+    #[strum(serialize = "tomato-bounty-name")] TomatoBounty,
+    #[strum(serialize = "tomato-growth-name")] TomatoGrowth,
+    #[strum(serialize = "tomato-joy-name")] TomatoJoy,
+    #[strum(serialize = "cucumber-bounty-name")] CucumberBounty,
+    #[strum(serialize = "cucumber-growth-name")] CucumberGrowth,
+    #[strum(serialize = "cucumber-joy-name")] CucumberJoy,
+    #[strum(serialize = "corn-bounty-name")] CornBounty,
+    #[strum(serialize = "corn-growth-name")] CornGrowth,
+    #[strum(serialize = "corn-joy-name")] CornJoy,
+    PumpkinBounty,
+    PumpkinGrowth,
+    PumpkinJoy,
+}
 
-#[derive(Resource, Clone, Serialize, Deserialize, Debug)]
-#[serde(default)]
-pub struct UpgradeStorege {
-    pub sparcks: HashMap<(usize, usize), Upgrade>,
-    pub global: HashMap<(usize, usize), Upgrade>,
-    pub sunlit_nursery: HashMap<(usize, usize), Upgrade>,
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
+pub enum UpgradeStage {
+    Locked,
+    Available,
+    Growing,
+    Max,
+}
+
+#[derive(Resource)]
+pub struct UpgradeState {
+    pub selected_categories: EGUISelectedCategories,
+}
+
+impl Default for UpgradeState {
+    fn default() -> Self {
+        Self {
+            selected_categories: EGUISelectedCategories::Global,
+        }
+    }
+}
+
+impl UpgradeStage {
+    pub fn next_stage(&mut self, sp: f32) {
+        let stage = match sp {
+            _  if sp <= 0.0 => UpgradeStage::Locked,
+            _  if sp < 0.50 => UpgradeStage::Available,
+            _  if sp < 1.0 => UpgradeStage::Growing,
+            _  => UpgradeStage::Max,
+        };
+
+        *self = stage;
+    }
+}
+
+pub enum PlantGGM {
+    Bounty,
+    Growth,
+    Joy
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
@@ -40,6 +102,47 @@ pub struct UpgradeLevel {
     pub resource_types: &'static [ResourceType],
     pub costs: &'static [f64],
     pub value: Option<f64>,
+}
+
+impl Upgrade {
+    pub fn get_dependencies(&self, upgrade_storege: &UpgradeStorege) -> bool {
+        self.dependencies.iter().all(|def_ip| {
+            let storege = upgrade_storege.get_storege_category(self.category);
+
+            storege
+                .values()
+                .find(|u| u.id == *def_ip)
+                .is_some_and(|u| u.texture_stage != UpgradeStage::Locked )
+        })
+    }
+
+    pub fn get_unlocking(&self) -> Option<&'static str> {
+        match self.id {
+            UpgradeUID::UnlockTomato => Some("plant-name-tomato"),
+            UpgradeUID::UnlockCucumber => Some("plant-name-cucumber"),
+            UpgradeUID::UnlockCorn => Some("plant-name-corn"),
+            UpgradeUID::UnlockPumpkin => Some("plant-name-pumpkin"),
+            _ => None
+        }
+    }
+
+    pub fn get_location_prestige_req(&self, prestige_inv: &PrestigeRoom) -> bool {
+        let Some(world) = self.location_prestige_req.0 else { return true; };
+
+        let Some(req_level) = self.location_prestige_req.1 else { return true; };
+
+        let Some(prestige) = prestige_inv.get_room(&world) else { return true; };
+
+        prestige >= req_level
+    }
+}
+
+#[derive(Resource, Clone, Serialize, Deserialize, Debug)]
+#[serde(default)]
+pub struct UpgradeStorege {
+    pub sparcks: HashMap<(usize, usize), Upgrade>,
+    pub global: HashMap<(usize, usize), Upgrade>,
+    pub sunlit_nursery: HashMap<(usize, usize), Upgrade>,
 }
 
 impl Default for UpgradeStorege {
@@ -80,40 +183,6 @@ impl Default for UpgradeStorege {
         }
     }
 }
-
-impl Upgrade {
-    pub fn get_dependencies(&self, upgrade_storege: &UpgradeStorege) -> bool {
-        self.dependencies.iter().all(|def_ip| {
-            let storege = upgrade_storege.get_storege_category(self.category);
-
-            storege
-                .values()
-                .find(|u| u.id == *def_ip)
-                .is_some_and(|u| u.texture_stage != UpgradeStage::Locked )
-        })
-    }
-
-    pub fn get_unlocking(&self) -> Option<&'static str> {
-        match self.id {
-            UpgradeUID::UnlockTomato => Some("plant-name-tomato"),
-            UpgradeUID::UnlockCucumber => Some("plant-name-cucumber"),
-            UpgradeUID::UnlockCorn => Some("plant-name-corn"),
-            UpgradeUID::UnlockPumpkin => Some("plant-name-pumpkin"),
-            _ => None
-        }
-    }
-
-    pub fn get_location_prestige_req(&self, prestige_inv: &PrestigeRoom) -> bool {
-        let Some(world) = self.location_prestige_req.0 else { return true; };
-
-        let Some(req_level) = self.location_prestige_req.1 else { return true; };
-
-        let Some(prestige) = prestige_inv.get_room(&world) else { return true; };
-
-        prestige >= req_level
-    }
-}
-
 
 impl UpgradeStorege {
     fn all_upgrages(&self) -> impl Iterator<Item = &Upgrade> {
