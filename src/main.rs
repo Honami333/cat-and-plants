@@ -11,7 +11,7 @@ mod schema;
 mod systems;
 mod cat_ai;
 
-pub const GAME_VERSION: &str = "0.6.5 pre-release";
+pub const GAME_VERSION: &str = "0.7.0 pre-release";
 
 
 fn main() {
