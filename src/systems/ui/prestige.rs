@@ -42,7 +42,7 @@ pub fn prestige_flag(
         .collapsible(false)
         .fixed_size([120.0* s.x, 50.0 * s.y])
         .title_bar(false)
-        .anchor(egui::Align2::RIGHT_CENTER, [-10.0 * s.x, 30.0* s.y])
+        .anchor(egui::Align2::RIGHT_BOTTOM, [-5.0 * s.x, -20.0* s.y])
         .show(ctx, |ui| {
             ui.allocate_ui(egui::vec2(120.0 * s.x, 50.0 * s.y), |ui| {
                 if !*confirmation {
@@ -89,7 +89,7 @@ pub fn prestige_flag(
                                     .size(10.0)
                                     .color(egui::Color32::GREEN));
 
-                                ui.label(egui::RichText::new(format!("{}", translate("ui-warn-shelter", &settings.language)))
+                                ui.label(egui::RichText::new(translate("ui-warn-shelter", &settings.language))
                                     .size(10.0)
                                     .color(egui::Color32::GOLD));
 

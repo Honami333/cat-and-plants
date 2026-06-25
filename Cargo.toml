@@ -1,6 +1,6 @@
 [package]
 name = "cat_and_plants"
-version = "0.6.4"
+version = "0.6.5"
 edition = "2024"
 
 # [lib]
@@ -50,3 +50,6 @@ chrono = "0.4"
 
 fluent = "0.16"
 fluent-templates = "0.9"
+
+purrgress = { version = "0.3.8", features = ["bevy_ecs", "animator"] }
+purrgress-macros = "0.3.3"

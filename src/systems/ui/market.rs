@@ -198,14 +198,12 @@ fn ui_build_from_market(
 
     let mut max_page_plant_count = None;
 
-    if let Ok(tp) = TypePlant::try_from(tab_info.type_page) {
-        if let Some(count) = cit.get(&tp) { page_plant_count = Some(*count)};
-    };
+    if let Ok(tp) = TypePlant::try_from(tab_info.type_page)
+        && let Some(count) = cit.get(&tp) { page_plant_count = Some(*count)};
 
     if let Some(plant) = tab_info.type_page.get_plant_cfg() { max_page_plant_count = Some(plant.max_count); };
 
-    let slot_count = if let Some(inv) = gl_inventory.get_for_world(current_world) {
-        Some(inv.len()) } else { None };
+    let slot_count = gl_inventory.get_for_world(current_world).map(|inv| inv.len());
             
     let slot_count_unlock = if let Some(count) = gl_inventory.get_slots_unlocking(current_world) {
         Some(count) } else { slot_count };
@@ -213,8 +211,14 @@ fn ui_build_from_market(
     let slot_price = slot_price(gl_inventory, current_world, prestige_inv);
 
     let plant_price = plant_price(iti_inventory, current_world, &tab_info.type_page, prestige_inv);
-
-    let price = slot_price.or(plant_price);
+        
+    let price = match tab_info.type_page {
+        TypePage::SlotsUnLocking => slot_price,
+        TypePage::TomatoBuy => plant_price,
+        TypePage::CucumberBuy => plant_price,
+        TypePage::CornBuy => plant_price,
+        TypePage::PumpkinBuy => plant_price,
+    };
 
     let is_enabled_1 = page_plant_count != max_page_plant_count || page_plant_count.is_none();
 
@@ -268,14 +272,13 @@ fn ui_build_from_market(
             };
 
 
-            if tab_info.type_page == TypePage::SlotsUnLocking {
-                if let (Some(count), Some(max_count)) = (slot_count_unlock, slot_count) {
+            if tab_info.type_page == TypePage::SlotsUnLocking
+                && let (Some(count), Some(max_count)) = (slot_count_unlock, slot_count) {
                     color = if count == max_count { egui::Color32::GOLD } else { egui::Color32::GREEN };
 
                     text = egui::RichText::new(format!("{} / {}", count, max_count))
                         .color(color).size(18.0);
                 };
-            };
 
             page_ui.label(text);
 
@@ -353,7 +356,7 @@ fn hover_info(
 
         if is_move_or_click {
             let text = egui::RichText::new(
-                format!("{}", translate(tab_info.dragg_info, lang)))
+                translate(tab_info.dragg_info, lang).to_string())
                 .color(egui::Color32::RED)
                 .size(16.0);
 
@@ -365,7 +368,7 @@ fn hover_info(
         if let Some(price) = price {
             let text = egui::RichText::new(
                 format!("{}: {}",
-                    translate(&ResourceType::CatHappiness.to_string(), lang),
+                    translate(ResourceType::CatHappiness.as_ref(), lang),
                     format_number(price)
                 ))
                 .color(egui::Color32::GOLD)
@@ -392,9 +395,9 @@ fn page_click_maneger(
     tab_info: &TradeTab,
     is_move_or_click: bool,
 ) {
-    if is_move_or_click {
-        match tab_info.type_page {
-            TypePage::TomatoBuy => { 
+    match tab_info.type_page {
+        TypePage::TomatoBuy | TypePage::CucumberBuy | TypePage::CornBuy | TypePage::PumpkinBuy => {
+            if is_move_or_click {
                 buy_plant_button_down_drag(
                     commands,
                     sprite_atlas,
@@ -404,69 +407,26 @@ fn page_click_maneger(
                     normalized_window,
                     tab_info.type_page
                 );
-            },
-            TypePage::CucumberBuy => { 
-                buy_plant_button_down_drag(
-                    commands,
-                    sprite_atlas,
-                    query_page_item,
-                    mouse_input,
-                    window_entity,
-                    normalized_window,
-                    tab_info.type_page
-                );
-            },
-            TypePage::CornBuy => { 
-                buy_plant_button_down_drag(
-                    commands,
-                    sprite_atlas,
-                    query_page_item,
-                    mouse_input,
-                    window_entity,
-                    normalized_window,
-                    tab_info.type_page
-                );
-            },
-            TypePage::PumpkinBuy => { 
-                buy_plant_button_down_drag(
-                    commands,
-                    sprite_atlas,
-                    query_page_item,
-                    mouse_input,
-                    window_entity,
-                    normalized_window,
-                    tab_info.type_page
-                );
-            },
-            TypePage::SlotsUnLocking => try_slots_unlocking(
-                gl_inventory,
-                economy,
-                current_world,
-                prestige_inv
-            ),
-        };
-    } else {
-        match tab_info.type_page {
-            TypePage::SlotsUnLocking => try_slots_unlocking(
-                gl_inventory,
-                economy,
-                current_world,
-                prestige_inv
-            ),
-            _ => {
+             } else {
                 add_plant_and_lock(
                     gl_inventory,
                     economy,
                     iti_inventory,
                     upgrade_storege,
                     current_world,
-                    &tab_info.type_page,
+                   &tab_info.type_page,
                     prestige_inv,
                     None
                 );
-            },
-        };
-    }
+            };
+        },
+        TypePage::SlotsUnLocking => try_slots_unlocking(
+            gl_inventory,
+            economy,
+            current_world,
+            prestige_inv
+        ),
+    };
 }
 
 fn buy_plant_button_down_drag(
@@ -619,7 +579,7 @@ fn add_plant_and_lock(
     prestige_inv: &PrestigeRoom,
     idx: Option<usize>,
 ) {
-    if gl_inventory.has_empty_slot(&current_world) == false { return; };
+    if !gl_inventory.has_empty_slot(current_world) { return; };
 
     let availability = if let Some(upgrade_id) = page_data.get_dependencies_upgrade() {
         let (_, available) = upgrade_storege.get_global_modifier(upgrade_id);
@@ -638,7 +598,7 @@ fn add_plant_and_lock(
 
     economy.add_res(ResourceType::CatHappiness, -cur_price);
 
-    iti_inventory.add(plant.species_id, &current_world);
+    iti_inventory.add(plant.species_id, current_world);
 
     gl_inventory.add_plant(current_world, plant, idx);
 }
@@ -649,7 +609,7 @@ fn plant_price(
     page_data: &TypePage,
     prestige_inv: &PrestigeRoom,
 ) -> Option<f64>{
-    let Some(count_inv) = iti_inventory.get_for_world_mut(&current_world) else { return None; };
+    let Some(count_inv) = iti_inventory.get_for_world_mut(current_world) else { return None; };
 
     let Some(plant) = page_data.get_plant_cfg() else { return None; };
 
@@ -689,15 +649,15 @@ fn slot_price(
 
     let mut new_price = Vec::new();
 
-    let Some(prestige_room) = prestige_inv.get_room(current_world.get()) else { return None; };
+    let prestige_room = prestige_inv.get_room(current_world.get())?;
 
     for cost in price.prices.iter() {
         new_price.push(cost + (prestige_room as f64).powf(1.6) * 5500.0);
     };
      
-    let Some(i) = gl_inventory.get_slots_unlocking(&current_world) else { return None; };
+    let i = gl_inventory.get_slots_unlocking(current_world)?;
 
-    let Some(price) = new_price.get(i) else { return None; };
+    let price = new_price.get(i)?;
 
     Some(*price)
 }

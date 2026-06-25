@@ -1,4 +1,5 @@
-use crate::schema::{config::ShaderMaterial, world_components::SlotItem};
+use crate::schema::config::BreezeShaderMaterial;
+use crate::schema::{config::LightShaderMaterial, world_components::SlotItem};
 use crate::schema::{global_settings::*, common::*, global_inventory::*, item_type_info::*, upgrade_storege::*};
 use bevy::{asset::uuid::Uuid, camera::NormalizedRenderTarget, picking::pointer::{Location, PointerId}, platform::thread, prelude::*, window::{PrimaryWindow, WindowFocused}};
 use std::time::{Duration, Instant};
@@ -70,8 +71,8 @@ pub fn monitor_window_settings(
     };
 
     if settings.display.screen_mode == ScreenMode::Fullscreen { 
-        settings.display.resolution[0] = window.resolution.width() as f32;
-        settings.display.resolution[1] = window.resolution.height() as f32;
+        settings.display.resolution[0] = window.resolution.width();
+        settings.display.resolution[1] = window.resolution.height();
         return; 
     };
 
@@ -131,23 +132,31 @@ pub fn fps_limiter_system(
 }
 
 pub fn update_shader_settings(
-    mut materials: ResMut<Assets<ShaderMaterial>>,
+    mut light_materials: ResMut<Assets<LightShaderMaterial>>,
+    mut breeze_materials: ResMut<Assets<BreezeShaderMaterial>>,
     settings: Res<GlobalSettings>,
-    query_shader_material: Query<&MeshMaterial2d<ShaderMaterial>>,
+    query_light_shader: Query<&MeshMaterial2d<LightShaderMaterial>>,
+    query_breeze_shader: Query<&MeshMaterial2d<BreezeShaderMaterial>>,
 ) {
-    for material_handle in query_shader_material.iter() {
-       let Some(material) =  materials.get_mut(material_handle) else { continue; };
+    for material_handle in query_light_shader.iter() {
+       let Some(material) =  light_materials.get_mut(material_handle) else { continue; };
 
        material.light_shaders = settings.shader.light_shaders.into();
        material.dust_particles = settings.shader.dust_particles.into();
        material.dust_amount = settings.shader.dust_amount;
-    }
+    };
+
+    for material_handle in query_breeze_shader {
+        let Some(material) =  breeze_materials.get_mut(material_handle) else { continue; };
+
+        material.breeze_shaders = settings.shader.breeze_shaders.into();
+    };
 }
 
 pub fn corn_boom_ability(
     mut commands: Commands,
-    mut iti_invetory: ResMut<ItemTypeInfo>,
-    upgrade_storege: Res<UpgradeStorege>,
+    _iti_invetory: ResMut<ItemTypeInfo>,
+    _upgrade_storege: Res<UpgradeStorege>,
     current_world: Res<State<CurrentWorld>>,
     global_inventory: Res<GlobalInventory>,
     query_slot_item: Query<(Entity, &SlotItem)>,

@@ -33,6 +33,7 @@ pub struct ShaderSettings {
     pub light_shaders: bool,
     pub dust_particles: bool,
     pub dust_amount: f32,
+    pub breeze_shaders: bool,
 }
 
 #[derive(Resource, Clone, Copy, Serialize, Deserialize)]
@@ -61,6 +62,7 @@ impl Default for GlobalSettings {
                 light_shaders: true,
                 dust_particles: true,
                 dust_amount: 0.5,
+                breeze_shaders: true,
             },
             autosave_interval: 180.0,
             language: Language::En,

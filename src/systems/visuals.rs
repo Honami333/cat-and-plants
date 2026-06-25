@@ -4,6 +4,11 @@ use bevy::prelude::*;
 
 // Обновление визуала в инвенторе
 pub fn sync_inventory_visuals(
+    mut shader_set: ParamSet<(
+        ResMut<Assets<BreezeShaderMaterial>>,
+        ResMut<Assets<Mesh>>,
+        Res<Assets<TextureAtlasLayout>>,
+    )>,
     mut query_items: Query<(Entity, &mut SlotItem)>,
     mut commands: Commands,
     mut inv: ResMut<GlobalInventory>,
@@ -52,6 +57,7 @@ pub fn sync_inventory_visuals(
                     &query_slots,
                     i,
                     plant.species_id,
+                    &mut shader_set,
                 );
             }
         } else {
@@ -61,6 +67,7 @@ pub fn sync_inventory_visuals(
                 &query_slots,
                 target_slot.id,
                 plant.species_id,
+                &mut shader_set,
             );
         };
     }
@@ -68,22 +75,43 @@ pub fn sync_inventory_visuals(
 
 // Обновление визула роста ростения
 pub fn update_plant_appearance(
-    mut query_item: Query<(&mut Sprite, &mut SlotItem)>,
+    mut shader_set: ParamSet<(
+        ResMut<Assets<BreezeShaderMaterial>>,
+        ResMut<Assets<Mesh>>,
+        Res<Assets<TextureAtlasLayout>>,
+    )>,
+    mut query_item: Query<(&MeshMaterial2d<BreezeShaderMaterial>, &SlotItem)>,
     mut inv: ResMut<GlobalInventory>,
+    atlas_assets: Res<AtlasAssets>,
     current_world: Res<State<CurrentWorld>>,
 ) {
-    let Some(inventory) =  inv.get_for_world_mut(&current_world) else {
-        return;
-    };
+    let Some(inventory) =  inv.get_for_world_mut(&current_world) else { return; };
 
-    for (mut sprite, slot_info) in query_item.iter_mut() {
+    for (material_handle, slot_info) in query_item.iter_mut() {
         let Some(slot_state) = inventory.get_mut(&slot_info.uid) else { continue; };
 
         let SlotState::Occupied(plant) = slot_state else { continue; };
 
-        let Some(atlas) = &mut sprite.texture_atlas else { continue; };
+        let layout_type = atlas_assets.common_layout_x128.clone();
 
-        atlas.index = plant.state.atlas_texture_id() as usize;
+        if let Some(layout) = shader_set.p2().get(&layout_type) {
+            let index = plant.state.atlas_texture_id();
+
+            if let Some(rect) = layout.textures.get(index) {
+                let atlas_size = layout.size.as_vec2();
+
+                let sprite_rect = Vec4::new(
+                    rect.min.x as f32 / atlas_size.x,
+                    rect.min.y as f32 / atlas_size.y,
+                    rect.max.x as f32 / atlas_size.x,
+                    rect.max.y as f32 / atlas_size.y
+                );
+
+                if let Some(material) = shader_set.p0().get_mut(&material_handle.0) {
+                    material.sprite_rect = sprite_rect;
+                };
+            };
+        };
     }
 }
 
@@ -109,9 +137,9 @@ pub fn update_scene_scale(
     mut set: ParamSet<(
         Query<(&mut Transform, &Background)>,
         Query<(&mut Transform, &Slot)>,
-        Query<(&mut Transform, &MeshMaterial2d<ShaderMaterial>), With<ShaderMesh>>,
+        Query<(&mut Transform, &MeshMaterial2d<LightShaderMaterial>), With<ShaderMesh>>,
     )>,
-    mut materials: ResMut<Assets<ShaderMaterial>>,
+    mut materials: ResMut<Assets<LightShaderMaterial>>,
     scale: ResMut<WorldScale>,
 ) {
     let s = scale.0;
@@ -139,23 +167,15 @@ pub fn update_scene_scale(
 }
 
 pub fn shader_animation(
-    mut materials: ResMut<Assets<ShaderMaterial>>,
-    shader_query: Query<&MeshMaterial2d<ShaderMaterial>>,
+    mut materials: ResMut<Assets<LightShaderMaterial>>,
+    shader_query: Query<&MeshMaterial2d<LightShaderMaterial>>,
     time: Res<Time>,
 ) {
     for material_handle in shader_query.iter() {
         if let Some(material) = materials.get_mut(&material_handle.0) {
-            match material.shader_type {
-                0 => {
-                    let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
-                    material.color.set_alpha(material.color.alpha + sin_time);
-                }
-                1 => {
-                    let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
-                    material.color.set_alpha(material.color.alpha + sin_time);
-                }
-                _ => return,
-            };
+            let sin_time = (time.elapsed_secs() * 2.0).sin() * 0.001;
+            
+            material.color.set_alpha(material.color.alpha + sin_time);
         }
     }
 }

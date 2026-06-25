@@ -118,7 +118,7 @@ impl ItemTypeInfo {
 
         let Some(ability_case) = ability_vec.get(i) else { return 0.0; };
 
-        let Some(ability_count) = ability_case.get(0) else { return 0.0; };
+        let Some(ability_count) = ability_case.first() else { return 0.0; };
 
         let Some(ability_marker) = ability_case.get(1) else { return 0.0; };
 

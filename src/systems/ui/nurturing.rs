@@ -155,14 +155,12 @@ pub fn trading_ui_system(
 
                             for (i, item_idx) in range.enumerate() {
                                 if let Some(item) = all_items.get(item_idx) {
-                                    let is_select = if let Some(_) = trade_state.selected_item.iter().find(|r| item == *r) {
-                                        true
-                                    } else { false };
+                                    let is_select = trade_state.selected_item.iter().find(|r| item == *r).is_some();
 
                                     if ui
                                         .add_sized(
                                             [20.0 * s.x, 20.0 * s.y],
-                                            egui::Button::new(translate(&item.to_string(), &settings.language)).selected(is_select),
+                                            egui::Button::new(translate(item.as_ref(), &settings.language)).selected(is_select),
                                         )
                                         .clicked()
                                     {
@@ -209,7 +207,7 @@ fn trade_well(
     
     if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::WholesaleSupply) {up_value_1 = value};
 
-    let trade = economy.egui_get_res_list(TRADEWELL, trade_state.selected_percent as f64, &upgrade_storege, &trade_state.selected_item);
+    let trade = economy.egui_get_res_list(TRADEWELL, trade_state.selected_percent as f64, upgrade_storege, &trade_state.selected_item);
 
 
     (trade * up_value_1).floor()

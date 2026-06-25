@@ -9,7 +9,7 @@ pub const TOMATO_TAB:TradeTab = TradeTab {
 };
 
 pub const CUCUMBER_TAB:TradeTab = TradeTab {
-    title_key: "cucumber_buyy",
+    title_key: "cucumber_buy",
     description: "cucumber-tab-desc",
     dragg_info: "cucumber-tab-drag",
     type_page: TypePage::CucumberBuy,

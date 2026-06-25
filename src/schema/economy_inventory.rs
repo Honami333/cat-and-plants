@@ -80,7 +80,7 @@ impl Economy {
         *self.vault.entry(res).or_insert(0.0) += amount;
     }
 
-    pub fn feed_res_list(&mut self, percent: f64, select_item_list: &Vec<ResourceType>,) {
+    pub fn feed_res_list(&mut self, percent: f64, select_item_list: &[ResourceType]) {
         let factor = 1.0 - (percent / 100.0).clamp(0.0, 1.0);
 
         for res in select_item_list.iter() {
@@ -97,7 +97,7 @@ impl Economy {
         well: TradeWell,
         percent: f64,
         upgrade_storege: &UpgradeStorege,
-        select_item_list: &Vec<ResourceType>,
+        select_item_list: &[ResourceType],
     ) -> f64 {
         let mut all_trade = 0.0;
 
@@ -114,11 +114,10 @@ impl Economy {
 
             let mut up_value_2 =  1.0;
 
-            if let Ok(type_plant) = (*res).try_into() {
-                if let (Some(value), _) = upgrade_storege.get_plant_global_modifier(&type_plant, PlantGGM::Joy) {up_value_2 = value};
-            };
+            if let Ok(type_plant) = (*res).try_into()
+                && let (Some(value), _) = upgrade_storege.get_plant_global_modifier(&type_plant, PlantGGM::Joy) {up_value_2 = value};
 
-            all_trade += (item_count * factor * price.1 * up_value_2).floor() ;
+            all_trade += (item_count * factor * price.1 * up_value_2).floor();
         }
 
         all_trade

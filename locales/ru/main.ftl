@@ -179,9 +179,9 @@ ui-cancel = Отмена
 
 # Интерфейс Улучшения
 
-ui-garden-upgrades = Garden Upgrades
-ui-upgrades = Upgrades
-ui-categories = Categories
+ui-garden-upgrades = Улучшения сада
+ui-upgrades = Улучшения
+ui-categories = Категории
 ui-req-dependencies = Требуемые улучшения:
 ui-current-lvl = Текущий уровень:
 ui-current-value = Текущий эффект:
@@ -242,6 +242,7 @@ ui-settings-screen-mode = Режим экрана
 ui-settings-select-res = Выбор разрешения
 ui-settings-shaders = Шейдеры
 ui-settings-light-shader = Шейдер света
+ui-settings-breeze-shader = Шейдер горшечного бриза
 ui-settings-dust-particles = Частицы пыли
 ui-settings-count = количество
 ui-settings-save = Сохранение

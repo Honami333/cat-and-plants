@@ -36,7 +36,8 @@ impl Plugin for SchemaPlugin {
             .init_resource::<hud::MenuCurPage>()
             .init_resource::<hud::TradeState>();
 
-        app.add_plugins(Material2dPlugin::<config::ShaderMaterial>::default());
+        app.add_plugins(Material2dPlugin::<config::LightShaderMaterial>::default());
+        app.add_plugins(Material2dPlugin::<config::BreezeShaderMaterial>::default());
 
         app.add_systems(
             OnEnter(common::GameState::Loading),

@@ -243,6 +243,7 @@ ui-settings-screen-mode = Screen Mode
 ui-settings-select-res = Select Resolution
 ui-settings-shaders = Shaders
 ui-settings-light-shader = Light Shader
+ui-settings-breeze-shader = Potted Breeze Shader
 ui-settings-dust-particles = Dust Particles
 ui-settings-count = count
 ui-settings-save = Save

@@ -183,14 +183,14 @@ fn continue_enabled() -> (usize, bool) {
 
         let Ok(modified_time) = metadata.modified() else { continue; };
         
-        if latest_time == None || modified_time > latest_time.unwrap() {
+        if latest_time.is_none() || modified_time > latest_time.unwrap() {
             latest_time = Some(modified_time);
 
             newest_slot = Some(i);
         };
     };
 
-    if let Some(i) = newest_slot { return (i, true); } else { return (0, false);}
+    if let Some(i) = newest_slot { (i, true)} else { (0, false)}
 }
 
 
@@ -201,7 +201,7 @@ fn new_game_enabled() -> (usize, bool) {
         };
     };
     
-    return (0, false)
+    (0, false)
 }
 
 fn continue_clicked(
@@ -262,7 +262,7 @@ fn create_save_menu(
 
             let Some(image) = create_image(
                 *handle_texture_id,
-                &atlas_layout,
+                atlas_layout,
                 stage as usize,
                  (100.0, 240.0),
                  s
@@ -270,16 +270,16 @@ fn create_save_menu(
 
             ui.allocate_ui(egui::vec2(100.0 * s.x, 300.0 * s.y), |ui| {
                 ui.vertical_centered_justified(|ui| {
-                    double_slot_click(ui, game_state, save_slot_inv, economy, image, i, s, &settings);
+                    double_slot_click(ui, game_state, save_slot_inv, economy, image, i, s, settings);
 
                     match stage {
-                        SlotTextureState::Empty => slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Start, &settings),
+                        SlotTextureState::Empty => slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Start, settings),
                         SlotTextureState::Occupied => {
-                            slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Continue, &settings);
+                            slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Continue, settings);
                             if let Some(del) = save_slot_inv.deleting_slot && del == i {
-                                slot_save_delete(ui, save_slot_inv, i, s, &settings);
+                                slot_save_delete(ui, save_slot_inv, i, s, settings);
                             } else {
-                                slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Delete, &settings);
+                                slot_save_button(ui, game_state, save_slot_inv, economy,  s, i, SvSlBT::Delete, settings);
                             };
                         },
                     };
@@ -541,6 +541,8 @@ pub fn setting_menu(
                         );
                     });
 
+                    select_setting_text(ui, &mut settings.shader.breeze_shaders, s, &translate("ui-settings-breeze-shader", &settings.language));
+
                     separate(ui, s);
 
                     ui.add_sized([100.0* s.x, 10.0 * s.y], 
@@ -565,7 +567,7 @@ fn language_combo_box(
 ) {
     let current_key = settings.language.to_string();
 
-    let current_lang = settings.language.clone();
+    let current_lang = settings.language;
     let combo = egui::ComboBox::from_id_salt("language_select")
         .selected_text(translate(&current_key, &settings.language))
         .width(120.0 * s.x);

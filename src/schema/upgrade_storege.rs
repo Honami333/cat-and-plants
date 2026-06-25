@@ -131,7 +131,7 @@ impl Upgrade {
 
         let Some(req_level) = self.location_prestige_req.1 else { return true; };
 
-        let Some(prestige) = prestige_inv.get_room(&world) else { return true; };
+        let Some(prestige) = prestige_inv.get_room(world) else { return true; };
 
         prestige >= req_level
     }
@@ -148,32 +148,32 @@ pub struct UpgradeStorege {
 impl Default for UpgradeStorege {
     fn default() -> Self {
         let sparcks_item = [
-            (PURR_PROFIT.grid_pos, PURR_PROFIT.clone()),
-            (OVER_BLOOMING.grid_pos, OVER_BLOOMING.clone()),
+            (PURR_PROFIT.grid_pos, PURR_PROFIT),
+            (OVER_BLOOMING.grid_pos, OVER_BLOOMING),
         ];
 
         let global_item = [
-            (FERTILE_SOIL.grid_pos, FERTILE_SOIL.clone()),
-            (GROWTH_SPEED.grid_pos, GROWTH_SPEED.clone()),
-            (JOY_BOOST.grid_pos, JOY_BOOST.clone()),
-            (CARDBOARD_BOX.grid_pos, CARDBOARD_BOX.clone()),
+            (FERTILE_SOIL.grid_pos, FERTILE_SOIL),
+            (GROWTH_SPEED.grid_pos, GROWTH_SPEED),
+            (JOY_BOOST.grid_pos, JOY_BOOST),
+            (CARDBOARD_BOX.grid_pos, CARDBOARD_BOX),
         ];
 
         let sunlit_nursery_item = [
-            (UNLOCK_TOMATO.grid_pos, UNLOCK_TOMATO.clone()),
-            (UNLOCK_CUCUMBER.grid_pos, UNLOCK_CUCUMBER.clone()),
-            (UNLOCK_CORN.grid_pos, UNLOCK_CORN.clone()),
-            (UNLOCK_PUMPKIN.grid_pos, UNLOCK_PUMPKIN.clone()),
-            (CONCENTRATED_NECTAR.grid_pos, CONCENTRATED_NECTAR.clone()),
-            (TOMATO_BOUNTY.grid_pos, TOMATO_BOUNTY.clone()),
-            (TOMATO_GROWTH.grid_pos, TOMATO_GROWTH.clone()),
-            (TOMATO_JOY.grid_pos, TOMATO_JOY.clone()),
-            (CUCUMBER_BOUNTY.grid_pos, CUCUMBER_BOUNTY.clone()),
-            (CUCUMBER_GROWTH.grid_pos, CUCUMBER_GROWTH.clone()),
-            (CUCUMBER_JOY.grid_pos, CUCUMBER_JOY.clone()),
-            (CORN_BOUNTY.grid_pos, CORN_BOUNTY.clone()),
-            (CORN_GROWTH.grid_pos, CORN_GROWTH.clone()),
-            (CORN_JOY.grid_pos, CORN_JOY.clone()),
+            (UNLOCK_TOMATO.grid_pos, UNLOCK_TOMATO),
+            (UNLOCK_CUCUMBER.grid_pos, UNLOCK_CUCUMBER),
+            (UNLOCK_CORN.grid_pos, UNLOCK_CORN),
+            (UNLOCK_PUMPKIN.grid_pos, UNLOCK_PUMPKIN),
+            (CONCENTRATED_NECTAR.grid_pos, CONCENTRATED_NECTAR),
+            (TOMATO_BOUNTY.grid_pos, TOMATO_BOUNTY),
+            (TOMATO_GROWTH.grid_pos, TOMATO_GROWTH),
+            (TOMATO_JOY.grid_pos, TOMATO_JOY),
+            (CUCUMBER_BOUNTY.grid_pos, CUCUMBER_BOUNTY),
+            (CUCUMBER_GROWTH.grid_pos, CUCUMBER_GROWTH),
+            (CUCUMBER_JOY.grid_pos, CUCUMBER_JOY),
+            (CORN_BOUNTY.grid_pos, CORN_BOUNTY),
+            (CORN_GROWTH.grid_pos, CORN_GROWTH),
+            (CORN_JOY.grid_pos, CORN_JOY),
         ];
 
         Self {
@@ -210,7 +210,7 @@ impl UpgradeStorege {
                 match type_plant {
                     TypePlant::Tomato => self.get_global_modifier(UpgradeUID::TomatoGrowth),
                     TypePlant::Cucumber => self.get_global_modifier(UpgradeUID::CucumberGrowth),
-                    TypePlant::Corn => self.get_global_modifier(UpgradeUID::CucumberJoy),
+                    TypePlant::Corn => self.get_global_modifier(UpgradeUID::CucumberGrowth),
                     TypePlant::Pumpkin => self.get_global_modifier(UpgradeUID::PumpkinGrowth),
                 }
             }

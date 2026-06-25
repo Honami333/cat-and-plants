@@ -30,15 +30,17 @@ impl Plugin for SystemPlugin {
 
         app.add_systems(OnEnter(GameState::Menu), (
             lifecycle::cleanup_system,
-        ));
+            lifecycle::menu_current_world,
+        ).chain());
 
         app.add_systems(OnEnter(GameState::LoadGame), (
             save::final_load_game,
         ));
 
         app.add_systems(OnEnter(GameState::Playing), (
+            lifecycle::cleanup_system,
             lifecycle::spawn_world_system,
-        ));
+        ).chain());
         
         app.add_systems(Update, simulation::set_global_scale);
 
@@ -55,16 +57,22 @@ impl Plugin for SystemPlugin {
             Update,
             (
                 visuals::update_plant_appearance,
-                visuals::update_scene_scale,
                 visuals::sync_inventory_visuals,
                 visuals::grad_item_anim_and_zsort,
                 visuals::shader_animation,
                 interaction::state_dragg_item,
                 simulation::plant_growth.run_if(on_timer(Duration::from_secs(1))),
-                simulation::update_shader_settings,
                 // simulation::corn_boon_ability
             )
                 .run_if(in_state(GameState::Playing)),
+        );
+
+        app.add_systems(
+            Update,
+            (
+                simulation::update_shader_settings,
+                visuals::update_scene_scale,
+            )
         );
 
         app.add_systems(Update, save::event_save_system.run_if(in_state(GameState::Playing)));

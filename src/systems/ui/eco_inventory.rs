@@ -52,7 +52,7 @@ pub fn economy_inventory(
 
                         let text = egui::RichText::new(
                             format!("{}   {}",
-                                translate(&res.to_string(), &settings.language),
+                                translate(res.as_ref(), &settings.language),
                                 format_number(vsc_display[0])))
                                 .heading()
                                 .color(color);
@@ -69,9 +69,8 @@ pub fn economy_inventory(
             ui.allocate_space(ui.available_size());
         });
 
-    if let Some(res) = window_response {
-        if res.inner.is_some() { return; };
-    };
+    if let Some(res) = window_response
+        && res.inner.is_some() { return; };
     egui::Area::new(egui::Id::new("economy_anim_area"))
         .pivot(egui::Align2::LEFT_BOTTOM) 
         .constrain(true) 
@@ -99,11 +98,10 @@ pub fn economy_inventory(
                         if vsc_display[1] == 0.0 {
                             let v = vsc_display[0];
 
-                            if let Some(vsc_target) = visual_counter.target_value.get(&res) {
-                                if vsc_target != count {
+                            if let Some(vsc_target) = visual_counter.target_value.get(&res)
+                                && vsc_target != count {
                                     visual_counter.display_value.insert(res, [v, ITEM_ADD_ANIM]);
                                 };
-                            };
 
                             if let Some(vsc_target) = visual_counter.target_value.get_mut(&res) {
                                 *vsc_target = *count; 
@@ -112,7 +110,7 @@ pub fn economy_inventory(
 
                         let text = egui::RichText::new(
                             format!("{}   {}{}",
-                                translate(&res.to_string(), &settings.language),
+                                translate(res.as_ref(), &settings.language),
                                 sing,
                                 format_number(anim_count)
                             )

@@ -3,13 +3,15 @@
 use bevy::{prelude::*, window::WindowMode};
 use schema::SchemaPlugin;
 use systems::SystemPlugin;
+use cat_ai::CatAIPlugin;
 
 mod assets;
 mod content;
 mod schema;
 mod systems;
+mod cat_ai;
 
-pub const GAME_VERSION: &'static str = "0.6.4 pre-release";
+pub const GAME_VERSION: &str = "0.6.5 pre-release";
 
 
 fn main() {
@@ -30,6 +32,7 @@ fn main() {
         )
         .add_plugins(SystemPlugin)
         .add_plugins(SchemaPlugin)
+        .add_plugins(CatAIPlugin)
         .run();
 }
 

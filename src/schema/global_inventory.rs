@@ -41,6 +41,33 @@ impl TypePlant {
 
         (image_layout, assets.common_layout_x128.clone())
     }
+
+    pub fn get_soil_line(&self) -> f32 {
+        match self {
+            TypePlant::Tomato => 0.4,
+            TypePlant::Cucumber => 0.4,
+            TypePlant::Corn => 0.4,
+            TypePlant::Pumpkin => 0.0,
+        }
+    }
+
+    pub fn get_wind_speed(&self) -> f32 {
+        match self {
+            TypePlant::Tomato => 0.6,
+            TypePlant::Cucumber => 0.4,
+            TypePlant::Corn => 0.6,
+            TypePlant::Pumpkin => 0.5,
+        }
+    }
+
+    pub fn get_wind_strength(&self) -> f32 {
+        match self {
+            TypePlant::Tomato => 0.03,
+            TypePlant::Cucumber => 0.02,
+            TypePlant::Corn => 0.04,
+            TypePlant::Pumpkin => 0.03,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -67,7 +94,7 @@ pub enum PlantStateGrowth {
 }
 
 impl PlantStateGrowth {
-    pub fn atlas_texture_id(&self) -> u32 {
+    pub fn atlas_texture_id(&self) -> usize {
         match self {
             Self::Seed => 0,
             Self::Sprout => 1,
@@ -133,14 +160,12 @@ impl GlobalInventory {
     ) {
         let Some(inventory) = self.get_for_world_mut(current_world) else { return; };
 
-        if let Some(i) = idx {
-            if let Some(slot_state) = inventory.get_mut(&i) {
-                if *slot_state == SlotState::Empty {
+        if let Some(i) = idx
+            && let Some(slot_state) = inventory.get_mut(&i)
+                && *slot_state == SlotState::Empty {
                     *slot_state = SlotState::Occupied(new_plant);
                     return;
                 };
-            };
-        };
 
         for i in 0..16 {
             let Some(slot_state) = inventory.get_mut(&i) else { continue; };
@@ -201,7 +226,7 @@ impl GlobalInventory {
     }
 
     pub fn get_slots_unlocking(&self, world: &State<CurrentWorld>) -> Option<usize> {
-        let Some(inv) = self.get_for_world(world) else { return None; };
+        let inv = self.get_for_world(world)?;
 
         let min_lock_id = inv
             .iter()

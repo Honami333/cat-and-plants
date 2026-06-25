@@ -38,9 +38,9 @@ impl CurrentWorld {
     }
 
     pub fn get_cost(&self, res: ResourceType, pr_room: usize) -> Option<f64> {
-        let Some(res_cost) = self.get_prestige_cost() else { return None; };
+        let res_cost = self.get_prestige_cost()?;
 
-        let Some((_, cost)) = res_cost.iter().find(|(r, _)| *r == res) else { return None; };
+        let (_, cost) = res_cost.iter().find(|(r, _)| *r == res)?;
 
         if matches!(res, ResourceType::CatHappiness) {
             Some(*cost * (pr_room as f64 + 1.0).powf(1.8))

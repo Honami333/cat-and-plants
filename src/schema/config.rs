@@ -19,8 +19,8 @@ pub struct WorldSettingsSlot { // Слот инвенторя
 }
 
 
-#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-pub struct ShaderMaterial { // Конфиг шейдеров
+#[derive(Asset, TypePath, AsBindGroup, Clone)]
+pub struct LightShaderMaterial { // Конфиг шейдеров
     #[uniform(0)] pub color: LinearRgba,
     #[uniform(0)] pub scale: f32,
     #[uniform(0)] pub shader_type: u32,
@@ -33,13 +33,37 @@ pub struct ShaderMaterial { // Конфиг шейдеров
     pub mesh_scale: f32,
 }
 
-impl Material2d for ShaderMaterial {
+impl Material2d for LightShaderMaterial {
     // Настройки шейдеров
     fn fragment_shader() -> ShaderRef {
         "shaders/combined_window.wgsl".into()
     }
 
-    fn alpha_mode(&self) -> bevy::sprite_render::AlphaMode2d {
+    fn alpha_mode(&self) -> AlphaMode2d {
+        AlphaMode2d::Blend
+    }
+}
+
+#[derive(Asset, TypePath, AsBindGroup, Clone)]
+pub struct BreezeShaderMaterial {
+    #[uniform(0)] pub wind_speed: f32,
+    #[uniform(0)] pub wind_strength: f32,
+    #[uniform(0)] pub sprite_rect: Vec4,
+    #[uniform(0)] pub soil_line: f32,
+
+    #[uniform(0)] pub breeze_shaders: u32,
+
+    #[texture(1)]
+    #[sampler(2)]
+    pub texture: Handle<Image>,
+}
+
+impl Material2d for BreezeShaderMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/potted_breeze.wgsl".into()
+    }
+
+    fn alpha_mode(&self) -> AlphaMode2d {
         AlphaMode2d::Blend
     }
 }
@@ -47,8 +71,6 @@ impl Material2d for ShaderMaterial {
 pub struct SlotPrices {
     pub prices: &'static [f64],
 }
-
-
 
 pub struct PrestigeCost {
     pub cost: &'static [(ResourceType, f64)],

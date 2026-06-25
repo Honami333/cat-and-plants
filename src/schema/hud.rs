@@ -88,22 +88,22 @@ pub enum TypePage {
 
 impl TypePage {
     pub fn get_plant_cfg(&self) -> Option<Plant> {
-        return match *self {
+        match *self {
             TypePage::TomatoBuy => Some(PL_TOMATO),
             TypePage::CucumberBuy => Some(PL_CUCUMBER),
             TypePage::CornBuy => Some(PL_CORN),
             TypePage::PumpkinBuy => Some(PL_PUMPKIN),
             TypePage::SlotsUnLocking => None,
-        };
+        }
     }
 
     pub fn get_dependencies_upgrade(&self) -> Option<UpgradeUID> {
-        return match *self {
+        match *self {
             TypePage::CucumberBuy => Some(UpgradeUID::UnlockCucumber),
             TypePage::CornBuy => Some(UpgradeUID::UnlockCorn),
             TypePage::PumpkinBuy => Some(UpgradeUID::UnlockPumpkin),
             _ => None,
-        };
+        }
     }
 
     pub fn get_button_sprite(&self, assets: &GameAssets) -> Handle<Image> {

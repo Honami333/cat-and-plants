@@ -43,9 +43,27 @@ impl Plugin for UiPlugin {
             market::page_item_dragg
         ));
 
+        app.add_systems(Update, set_visuals);
+
         app.add_observer(market::page_item_dragg_start);
         app.add_observer(market::page_item_dragg_end);
     }
+}
+
+fn set_visuals(
+    mut contexts: EguiContexts,
+    mut is_set: Local<bool>
+) {
+    if *is_set { return; };
+    
+    let Ok(ctx) = contexts.ctx_mut() else { return; };
+
+    let mut visuals = ctx.style().visuals.clone();
+
+    visuals.selection.bg_fill = egui::Color32::from_rgb(140, 150, 70);
+
+    ctx.set_visuals(visuals);
+    *is_set = true;
 }
 
 pub fn func_fonts_loaded(ctx: &mut Context, fonts_loaded: bool, all_fonts: &Assets<Font>, font: &FontAssets) -> bool {
@@ -80,7 +98,7 @@ pub fn create_image<'a> (
     size: (f32, f32),
     s: Vec2
 ) -> Option<egui::Image<'a>> {
-    let Some(rect) = atlas_layout.textures.get(i) else { return None;};
+    let rect = atlas_layout.textures.get(i)?;
 
     let atlas_size = atlas_layout.size.as_vec2();
 
@@ -114,5 +132,5 @@ pub fn func_assets_loaded<'a> (
 
     let atlas_layout = layouts.get(get_layouts);
 
-    return (assets_loaded, atlas_layout, handle_texture_id);
+    (assets_loaded, atlas_layout, handle_texture_id)
 }

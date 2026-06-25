@@ -1,15 +1,15 @@
 struct VertexOutput {
-    @builtin(position) clip_position:vec4<f32>,
-    @location(0) uv:vec2<f32>
+    @builtin(position) clip_position: vec4<f32>,
+    @location(0) uv: vec2<f32>
 };
 
 struct Globals {
     time: f32,
     delta_time: f32,
     frame_count: u32,
-}
+};
 
-struct ShaderMaterial {
+struct LightShaderMaterial {
     color: vec4<f32>,
     scale: f32,
     shader_type: u32,
@@ -23,13 +23,12 @@ struct ShaderMaterial {
 var<uniform> globals: Globals;
 
 @group(2) @binding(0)
-var<uniform> material: ShaderMaterial;
-
+var<uniform> material: LightShaderMaterial;
 
 
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
-    if material.light_shaders == 0 { return vec4<f32>(0.0);}
+    if (material.light_shaders == 0) { return vec4<f32>(0.0);}
 
     let uv = in.uv;
 
@@ -67,11 +66,25 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
 
         beam = (win_beam1 + win_beam2 * 1.8) * 0.2;
 
-    }
+    } else if (material.shader_type == 2) {
+        let slant1 = (uv.x - uv.y * 0.6) * material.scale;
+        let slant2 = (uv.x - uv.y * 0.9) * material.scale;
+        let slant3 = (uv.x - uv.y * 0.1) * material.scale;
 
-    var final_beam =beam;
+        let scale_uv_y = (uv.y * material.scale) + 0.3;
 
-    if material.dust_particles == 1 {
+        let beam1 = smoothstep(0.0, -0.2,  slant1)  * smoothstep(-1.0, -0.2, slant1);
+        let beam2 = smoothstep(0.6, -0.2,  slant2)  * smoothstep(-1.0, -0.2, slant2);
+        let beam3 = smoothstep(1.2, 0.3,  slant3)  * smoothstep(-0.3, 0.3, slant3);
+
+        let win_beam = (beam2 + beam3) * 0.5 + beam1 * 0.075;
+
+        beam = win_beam * 0.4 * scale_uv_y;
+    };
+
+    var final_beam = beam;
+
+    if (material.dust_particles == 1) {
         final_beam = generation_dust(uv, beam, material.dust_amount);
     };
     

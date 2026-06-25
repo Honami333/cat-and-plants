@@ -1,4 +1,4 @@
-use crate::schema::config::ShaderMaterial;
+use crate::schema::config::LightShaderMaterial;
 use bevy::prelude::*;
 
 // Ассеты
@@ -9,26 +9,30 @@ pub struct GameAssets {
 
     pub sunlit_nursery: Handle<Image>,
     pub warm_paws_porch: Handle<Image>,
+    pub dark_storage: Handle<Image>,
 
     pub button_buy_tomato: Handle<Image>,
     pub button_buy_cucumber: Handle<Image>,
     pub button_buy_corn: Handle<Image>,
     pub button_buy_pumpkin: Handle<Image>,
     pub button_slots_unlocking: Handle<Image>,
+
+    pub plant_stand_rack: Handle<Image>,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(u32)]
-pub enum ShaderType {
-    SNWindowLight = 0,
-    WPPWindowLight = 1,
+pub enum LightShaderType {
+    SNWindow = 0,
+    WPPWindow = 1,
+    DSMenu = 2,
 }
 
 #[derive(Resource)]
-pub struct ShaderAssets {
-    // Общий список шейдеров
-    pub sn_window_light: Handle<ShaderMaterial>,
-    pub wpp_window_light: Handle<ShaderMaterial>,
+pub struct ShaderAssets { // Общий список шейдеров
+    pub sn_window_light: Handle<LightShaderMaterial>,
+    pub wpp_window_light: Handle<LightShaderMaterial>,
+    pub ds_light: Handle<LightShaderMaterial>,
 }
 
 #[derive(Resource)]
@@ -43,7 +47,7 @@ pub struct AtlasAssets {
 
     pub common_layout_x128: Handle<TextureAtlasLayout>,
     pub common_layout_x100_240: Handle<TextureAtlasLayout>,
-    pub common_layout_x40: Handle<TextureAtlasLayout>,
+    pub common_layout_x64: Handle<TextureAtlasLayout>,
 }
 
 #[derive(Resource, Debug, Clone)]

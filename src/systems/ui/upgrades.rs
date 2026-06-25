@@ -12,6 +12,7 @@ pub fn show_upgrade_grid(
     mut fonts_loaded: Local<bool>,
     mut assets_loaded: Local<bool>,
     mut handle_texture_id: Local<egui::TextureId>,
+    game_assets: Res<GameAssets>,
     settings: Res<GlobalSettings>,
     prestige_inv: Res<PrestigeRoom>,
     count_item_type: Res<ItemTypeInfo>,
@@ -30,21 +31,22 @@ pub fn show_upgrade_grid(
             &mut contexts,
             &layouts,
             assets.pockets_of_improvements.clone(),
-            &assets.common_layout_x40,
+            &assets.common_layout_x64,
         ) else { return; };
     
     *assets_loaded = new_bool;
     *handle_texture_id = text_id;
 
-    let Ok(ctx) = contexts.ctx_mut() else { return; };
+    let plant_stand_rack_image = contexts.add_image(EguiTextureHandle::Strong(game_assets.plant_stand_rack.clone()));
 
+    let Ok(ctx) = contexts.ctx_mut() else { return; };
 
     *fonts_loaded = func_fonts_loaded(ctx, *fonts_loaded, &all_fonts, &font);
 
     let s = scale.0;
 
     let my_frame = egui::Frame {
-        fill: egui::Color32::from_rgba_unmultiplied(20, 20, 20, 150),
+        fill: egui::Color32::from_rgba_unmultiplied(20, 20, 20, 160),
         corner_radius: 10.0.into(),
         inner_margin: 5.0.into(),
         ..default()
@@ -57,6 +59,16 @@ pub fn show_upgrade_grid(
         .constrain(true)
         .frame(my_frame)
         .show(ctx, |ui| {
+            let rect = ui.max_rect();
+            let uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
+
+            ui.painter().image(
+                plant_stand_rack_image,
+                rect,
+                uv,
+                egui::Color32::WHITE,
+            );
+
             ui.horizontal(|ui| {
                 ui.allocate_ui(egui::vec2(375.0 * s.x, 195.0 * s.y), |ui| {
                     ui.vertical_centered(|ui| {
@@ -80,7 +92,7 @@ pub fn show_upgrade_grid(
                                             let i = upgrade.texture_stage as usize;
                                             
                                             let Some(image) = create_image(*handle_texture_id,
-                                                &atlas_layout,
+                                                atlas_layout,
                                                 i,
                                                 (40.0, 40.0),
                                                 s
@@ -198,7 +210,7 @@ fn add_upgrade(
             ui.separator();
 
             for ped in upgrade.dependencies {
-                ui.colored_label(block_color, format!("{}",translate(&ped.to_string(), &settings.language)));
+                ui.colored_label(block_color, translate(&ped.to_string(), &settings.language));
             };
 
             return;
@@ -286,7 +298,7 @@ fn add_upgrade(
                         columns[1].colored_label(next_lvl_color, format!("{} {}", translate("ui-unlocking", &settings.language), translate(unlock_text, &settings.language)));
                     };
 
-                    if level.resource_types.len() > 0 {
+                    if !level.resource_types.is_empty() {
                         columns[1].add_space(10.0 * (s.x).min(s.y));
 
                         columns[1].colored_label(next_lvl_color, translate("ui-req-resources", &settings.language));

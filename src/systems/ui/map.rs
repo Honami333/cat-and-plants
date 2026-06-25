@@ -66,7 +66,7 @@ pub fn map_ui_system(
                     &mut new_current_world,
                     &current_world,
                     room_point_sn,
-                    min.clone(),
+                    min,
                     &painter,
                     critical_point_sn,
                     CurrentWorld::SunlitNursery,
@@ -78,7 +78,7 @@ pub fn map_ui_system(
                     &mut new_current_world,
                     &current_world,
                     room_point_wpp,
-                    min.clone(),
+                    min,
                     &painter,
                     critical_point_wpp,
                     CurrentWorld::WarmPawsPorch,
@@ -110,8 +110,8 @@ fn room_map_spawn(
         egui::Color32::from_gray(20)
     };
 
-    if let Some(m_pos) = mouse_pos {
-        if m_pos.x > min.x + critical_point[0]
+    if let Some(m_pos) = mouse_pos
+        && m_pos.x > min.x + critical_point[0]
             && m_pos.x < min.x + critical_point[1]
             && m_pos.y > min.y + critical_point[2]
             && m_pos.y < min.y + critical_point[3]
@@ -122,7 +122,6 @@ fn room_map_spawn(
                 new_current_world.set(location);
             };
         };
-    };
 
     let center_x = min.x + (critical_point[0] + critical_point[1]) / 2.0;
     let center_y = min.y + (critical_point[2] + critical_point[3]) / 2.0;

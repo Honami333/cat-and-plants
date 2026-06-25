@@ -76,7 +76,7 @@ pub fn auto_save_system(
         global_storege: global_storege.clone(),
         eco_storege: eco_storege.clone(),
         iti_storege: iti_storege.clone(),
-        prestige: pristige_room.clone(),
+        prestige: *pristige_room,
         world: **world,
     };
 
@@ -151,11 +151,10 @@ fn load_game_from_disk(i: usize) -> Result<SaveDataContainer, Box<dyn std::error
             .map(|(_, v)| v.clone())
     };
 
-    if let Some(prestige) = get_field(&parsed, "prestige") {
-        if let Some(ron::Value::Number(ron::value::Number::Integer(int_val))) = get_field(&prestige, "sunlit_nursery") {
+    if let Some(prestige) = get_field(&parsed, "prestige")
+        && let Some(ron::Value::Number(ron::value::Number::Integer(int_val))) = get_field(&prestige, "sunlit_nursery") {
             contener.prestige.sunlit_nursery = int_val as usize;
         };
-    };
 
     if let Ok(full_container) = ron::de::from_bytes::<SaveDataContainer>(&decrypted_bytes) {
         contener.eco_storege = full_container.eco_storege;
@@ -331,7 +330,7 @@ fn setting_load(path: PathBuf) -> Result<GlobalSettings, Box<dyn std::error::Err
 }
 
 pub fn get_setting_path() -> PathBuf {
-    let file_name = format!("setting.dat");
+    let file_name = "setting.dat".to_string();
 
     if let Some(proj_dirs) = ProjectDirs::from("com", "Honami", "CatAndPlants") {
         let save_dir = proj_dirs.data_dir();
@@ -350,7 +349,7 @@ pub fn save_setting_maneger(
 ) {
     let path = get_setting_path();
 
-    *settings = if let Ok(load) = setting_load(path) { load } else { GlobalSettings::default() };
+    *settings = setting_load(path).unwrap_or_default();
 
     let Ok(mut window) = window_query.single_mut() else { return; };
     

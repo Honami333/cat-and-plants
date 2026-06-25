@@ -164,15 +164,14 @@ pub fn assets_load_screen(
         return;
     };
 
-    if *current_state == 5 {
-        if load_timer.is_finished() {
+    if *current_state == 5
+        && load_timer.is_finished() {
             load_timer.reset();
             error_timer.reset();
 
             *current_state = 6;
             return;
-        }
-    };
+        };
 
     if *current_state != 6 || !load_timer.is_finished() { return; };
 

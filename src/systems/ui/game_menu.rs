@@ -133,7 +133,7 @@ fn exit_to_menu(
     slot_reset: bool,
 ) {
     if response.clicked() {
-        auto_save_system(&up_storege, &global_storege, &eco_storege, &cit_storege, &save_slot_inv, world, pristige_room);
+        auto_save_system(up_storege, global_storege, eco_storege, cit_storege, save_slot_inv, world, pristige_room);
 
         *up_storege = UpgradeStorege::default();
         *global_storege = GlobalInventory::default();
