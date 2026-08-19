@@ -19,6 +19,7 @@ pub struct GlobalSettings {
     pub shader: ShaderSettings,
     pub autosave_interval: f64,
     pub language: Language,
+    pub audio: Audio,
 }
 
 #[derive(Resource, Clone, Copy, Serialize, Deserialize)]
@@ -44,6 +45,13 @@ pub struct MaxFPS {
     pub unfoces_fps: f64,
 }
 
+#[derive(Resource, Clone, Copy, Serialize, Deserialize)]
+pub struct Audio {
+    pub master_volume: f32,
+    pub sfx_volume: f32,
+    pub music_volume: f32,
+}
+
 impl Default for GlobalSettings {
     fn default() -> Self {
         Self {
@@ -53,19 +61,29 @@ impl Default for GlobalSettings {
                 foces_fps: 60.0,
                 unfoces_fps: 5.0,
             },
+
             display: DisplaySettings {
                 screen_mode: ScreenMode::Fullscreen,
                 resolution: [1920.0, 1080.0],
                 max_display: [0.0, 0.0],
             },
+
             shader: ShaderSettings {
                 light_shaders: true,
                 dust_particles: true,
                 dust_amount: 0.5,
                 breeze_shaders: true,
             },
+
             autosave_interval: 180.0,
+
             language: Language::En,
+
+            audio: Audio {
+                master_volume: 100.0,
+                sfx_volume: 65.0,
+                music_volume: 80.0
+            }
         }
     }
 }

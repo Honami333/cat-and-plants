@@ -1,4 +1,4 @@
-use crate::schema::{world_components::*, common::*, global_inventory::*, item_type_info::*, economy_inventory::*, prestige::*, upgrade_storege::*};
+use crate::schema::{world_components::*, common::*, global_inventory::*, economy_inventory::*, prestige::*, upgrade_storege::*};
 
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -13,9 +13,9 @@ pub fn start_drag_item(
     query_item: Query<(Entity, &SlotItem)>,
     window: Single<&Window, With<PrimaryWindow>>,
     scale: Res<WorldScale>,
-    inv: Res<GlobalInventory>,
-    current_world: Res<State<CurrentWorld>>,
 ) {
+    if dragged.mouse_stage != MouseStage::Dragg { return; };
+
     let s = scale.0;
 
     let Some(mouse_pos) = window.cursor_position() else { return; };
@@ -25,19 +25,12 @@ pub fn start_drag_item(
         (window.height() / 2.0 - mouse_pos.y) / s.y,
     );
 
-    let Some((entity, item)) = query_item.iter()
+    let Some((entity, _)) = query_item.iter()
         .find(|(_, item)|
             pos.distance(item.base_pos) < RADIUS * s.x.min(s.y)
     ) else { return; };
 
-    let Some(inv_world) = inv.get_for_world(&current_world) else { return; };
-
-    let Some(slot_item) = inv_world.get(&item.slot_id) else { return; };
-
-    if let SlotState::Occupied(plant) = slot_item
-        && plant.state == PlantStateGrowth::Mature { return; };
-
-     dragged.entity = Some(entity);   
+    dragged.entity = Some(entity);   
 }
 
 // Окончания перетаскивая предмета
@@ -72,7 +65,7 @@ pub fn end_drag_item(
             if item
                 .base_pos
                 .distance(slot_trans.translation.truncate() / (s.x).min(s.y))
-                < 17.5 * (s.x).min(s.y)
+                < 24.0 * (s.x).min(s.y)
             {
                 targer_slot = Some(slot_data.id);
                 break;
@@ -129,13 +122,15 @@ pub fn harvest(
     query_item: Query<&SlotItem>,
     mut global_inventory: ResMut<GlobalInventory>,
     mut resources_inv: ResMut<Economy>,
-    mut cit_inventory: ResMut<ItemTypeInfo>,
+    dragged: Res<DragItem>,
     current_world: Res<State<CurrentWorld>>,
     upgrade_storege: Res<UpgradeStorege>,
     prestige_inv: Res<PrestigeRoom>,
     window: Single<&Window, With<PrimaryWindow>>,
     scale: Res<WorldScale>,
 ) {
+    if dragged.mouse_stage != MouseStage::Click { return; };
+
     let s = scale.0;
 
     let Some(mouse_pos) = window.cursor_position() else { return; };
@@ -146,8 +141,7 @@ pub fn harvest(
     );
 
     let item = query_item.iter()
-        .find(|item|
-            pos.distance(item.base_pos) < RADIUS * s.x.min(s.y)
+        .find(|item| pos.distance(item.base_pos) < RADIUS * s.x.min(s.y)
     );
 
     let mut up_value_1 =  0.0;
@@ -166,6 +160,9 @@ pub fn harvest(
         up_value_3 = value;
         modifier_unlocked_1 = is_unlocked;
     };
+
+    let tomato_combo = if let Some(data) = global_inventory.find_ability_global(PlantAbilityType::TomatoClickCombo, &current_world) 
+        && let PlantAbilityData::TomatoClickCombo { combo } = data { Some(combo) } else { None };
 
     let Some(global_inv) = global_inventory.get_for_world_mut(&current_world) else {return; };
 
@@ -196,22 +193,29 @@ pub fn harvest(
             (plant.gather_amount * up_value_2 * prestige_buff).floor()
         };
 
-
-        let mut tomato_bonus = 1.0;
-
-        if plant.species_id == TypePlant::Tomato { 
-            cit_inventory.add_to_plant_ability(&plant.species_id, PlantAbility::TomatoClickCombo, 1, ModifierOperation::Add, 0);
-            tomato_bonus = 2.0;
-        };
-
-        if modifier_unlocked_1 {
-            let cit_inv = cit_inventory.get_value_plant_ability(&TypePlant::Tomato, PlantAbility::TomatoClickCombo, 0);
-            amount += (up_value_3 * tomato_bonus * amount * cit_inv).floor();
-        };
+        let species_id = plant.species_id;
+        let tomato_bonus = if species_id == TypePlant::Tomato { 2.0 } else { 1.0 };
+        
+        if modifier_unlocked_1 && let Some(combo) = tomato_combo {
+            amount += (up_value_3 * tomato_bonus * amount * combo as f64).floor();
+        }
 
         resources_inv.add_res(plant.species_id.into(), amount);
 
         plant.state = PlantStateGrowth::Seed;
         plant.growth_score = 0.0;
+
+        let mut tomato_vec = Vec::new();
+
+        if species_id == TypePlant::Tomato && modifier_unlocked_1 {
+            global_inventory.find_ability_global_mut_all(PlantAbilityType::TomatoClickCombo, &current_world, &mut tomato_vec);
+
+            for tomato_data in tomato_vec.iter_mut() {
+                if let PlantAbilityData::TomatoClickCombo { combo } = tomato_data {
+                    *combo += 1_usize;
+                };
+            };
+            GlobalInventory::ability_global_to_max(&mut tomato_vec);
+        };
     }
 }

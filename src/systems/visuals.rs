@@ -144,10 +144,10 @@ pub fn update_scene_scale(
 ) {
     let s = scale.0;
 
-    if let Ok((mut bg_trans, _)) = set.p0().single_mut() {
+    for (mut bg_trans, _) in set.p0().iter_mut() {
         bg_trans.scale.x = s.x;
         bg_trans.scale.y = s.y;
-    } else { return; }
+    };
 
     // Слоты
     for (mut slot_trans, slot_info) in set.p1().iter_mut() {

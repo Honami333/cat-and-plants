@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui};
-use crate::schema::{common::*, global_inventory::*, item_type_info::*, economy_inventory::*, prestige::*, global_settings::*, resources::*};
+use crate::schema::upgrade_storege::*;
+use crate::schema::{common::*, economy_inventory::*, global_inventory::*, global_settings::*, item_type_info::*, prestige::*, resources::*};
 use crate::systems::ui::func_fonts_loaded;
 use crate::systems::visuals::format_number;
 use crate::systems::locales::*;
@@ -16,6 +17,7 @@ pub fn prestige_flag(
     mut is_prestige: Local<bool>,
     mut confirmation: Local<bool>,
     mut prestige: Local<bool>,
+    upgrade_storege: Res<UpgradeStorege>,
     all_fonts: Res<Assets<Font>>,
     font: Res<FontAssets>,
     current_world: Res<State<CurrentWorld>>,
@@ -56,8 +58,14 @@ pub fn prestige_flag(
                         };
                     });
                 } else {
+                    let mut shock_wave_val = 0.0;
+
+                    let (value, _) = upgrade_storege.get_global_modifier(UpgradeUID::StaticShockWave);
+
+                    if let Some(val) = value { shock_wave_val = val; };
+
                     ui.horizontal(|ui| {
-                        let sparcks = (1.0 + *pr_room as f64).powf(1.2).floor();
+                        let sparcks = (1.0 + *pr_room as f64).powf(1.2).floor() + shock_wave_val;
 
                         let response = ui.add_sized([60.0 * s.x, 25.0 * s.y], egui::Button::new(
                             egui::RichText::new(translate("ui-lets-go", &settings.language)).heading().color(egui::Color32::GOLD)

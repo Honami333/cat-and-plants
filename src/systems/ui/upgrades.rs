@@ -1,17 +1,17 @@
-use crate::schema::{hud::*, resources::*, global_settings::*, common::*, global_inventory::*, item_type_info::*, economy_inventory::*, prestige::*, upgrade_storege::*};
+use crate::schema::{common::*, economy_inventory::*, global_inventory::*, global_settings::*, hud::*, item_type_info::*, prestige::*, resources::*, upgrade_storege::*};
 use bevy::prelude::*;
 use crate::systems::{ui::*, visuals::*, locales::*};
 use bevy_egui::{EguiContexts, egui};
 use strum::IntoEnumIterator;
 
 pub fn show_upgrade_grid(
-    mut contexts: EguiContexts,
-    mut upgrade_storege: ResMut<UpgradeStorege>,
-    mut upgrade_state: ResMut<UpgradeState>,
+    (mut contexts, mut upgrade_storege, mut upgrade_state): (EguiContexts, ResMut<UpgradeStorege>, ResMut<UpgradeState>),
     mut economy: ResMut<Economy>,
     mut fonts_loaded: Local<bool>,
     mut assets_loaded: Local<bool>,
     mut handle_texture_id: Local<egui::TextureId>,
+    global_inventory: Res<GlobalInventory>,
+    current_world: Res<State<CurrentWorld>>,
     game_assets: Res<GameAssets>,
     settings: Res<GlobalSettings>,
     prestige_inv: Res<PrestigeRoom>,
@@ -84,6 +84,7 @@ pub fn show_upgrade_grid(
                                     EGUISelectedCategories::Sparcks => &mut upgrade_storege.sparcks,
                                     EGUISelectedCategories::Global => &mut upgrade_storege.global,
                                     EGUISelectedCategories::SunlitNursery => &mut upgrade_storege.sunlit_nursery,
+                                    EGUISelectedCategories::ShadowGreenhouse => &mut upgrade_storege.shadow_greenhouse
                                 };
 
                                 for row in 0..4 {
@@ -98,7 +99,7 @@ pub fn show_upgrade_grid(
                                                 s
                                             ) else { continue; };
 
-                                            add_upgrade(ui, upgrade, &mut economy, &upgrade_storege_clone, &settings, &count_item_type, s, image);
+                                            add_upgrade(ui, upgrade, &mut economy, &upgrade_storege_clone, &settings, &global_inventory, &current_world, s, image);
                                         } else {
                                             add_space(ui, s)
                                         };
@@ -176,7 +177,8 @@ fn add_upgrade(
     economy: &mut Economy,
     upgrade_storege: &UpgradeStorege,
     settings: &GlobalSettings,
-    cit: &ItemTypeInfo,
+    global_inventory: &GlobalInventory,
+    current_world: &State<CurrentWorld>,
     s: Vec2,
     image: egui::Image
 ) {
@@ -234,6 +236,7 @@ fn add_upgrade(
                     let display_val = if upgrade.current_level == 0 {
                         match upgrade.id {
                             UpgradeUID::ConcentratedNectar => 0.0,
+                            UpgradeUID::StaticShockWave => 0.0,
                             _ => 100.0
                         }
                     } else { ((val) * 1000000.0).round() / 10000.0 };
@@ -242,15 +245,32 @@ fn add_upgrade(
 
                     columns[0].add_space(5.0);
 
-                    columns[0].colored_label(current_lvl_color, format!("{} {}%", translate("ui-current-value", &settings.language), display_val));
-
                     let text = match upgrade.id {
                         UpgradeUID::ConcentratedNectar => {
-                            format!("{} {}%",
-                                translate("ui-current-tomato-bonus", &settings.language),
-                                (display_val * cit.get_value_plant_ability(&TypePlant::Tomato, PlantAbility::TomatoClickCombo, 0) * 10000.0).floor() / 10000.0)
-                            },
-                        _ => "".to_string(),
+                            columns[0].colored_label(current_lvl_color, format!("{} {}%", translate("ui-current-value", &settings.language), display_val));
+                            match global_inventory.find_ability_global(PlantAbilityType::TomatoClickCombo, current_world) {
+                                Some(ability_data) => {
+                                    if let PlantAbilityData::TomatoClickCombo { combo } = ability_data {
+                                        format!("{} {}%",
+                                            translate("ui-current-tomato-bonus", &settings.language),
+                                            (((display_val * combo as f64) * 10000.0).floor() / 10000.0)
+                                        )
+                                    } else { "".to_string() }
+                                },
+                                None => "".to_string()
+                            }
+                        },
+
+                        UpgradeUID::StaticShockWave => {
+                            columns[0].colored_label(current_lvl_color, format!("{} {}", translate("ui-current-value", &settings.language), display_val.round()));
+                            
+                            "".to_string()
+                        },
+                        _ => {
+                            columns[0].colored_label(current_lvl_color, format!("{} {}%", translate("ui-current-value", &settings.language), display_val));
+
+                            "".to_string()
+                        },
                     };
                     
                     if !text.is_empty() {
@@ -273,16 +293,32 @@ fn add_upgrade(
                     if let Some(val) = level.value {
                         let display_val = ((val) * 1000000.0).round() / 10000.0;
                         columns[1].add_space(2.5 * (s.x).min(s.y));
-
-                        columns[1].colored_label(next_lvl_color, format!("{} {}%", translate("ui-next-level-value", &settings.language), display_val));
                         
                         let text = match upgrade.id {
                             UpgradeUID::ConcentratedNectar => {
-                                format!("{} {}%",
-                                    translate("ui-current-tomato-bonus", &settings.language),
-                                    (display_val * cit.get_value_plant_ability(&TypePlant::Tomato, PlantAbility::TomatoClickCombo, 0) * 10000.0).floor() / 10000.0)
+                                columns[1].colored_label(next_lvl_color, format!("{} {}%", translate("ui-next-level-value", &settings.language), display_val));
+
+                                match global_inventory.find_ability_global(PlantAbilityType::TomatoClickCombo, current_world) {
+                                    Some(ability_data) => {
+                                        if let PlantAbilityData::TomatoClickCombo { combo } = ability_data {
+                                            format!("{} {}%",
+                                                translate("ui-current-tomato-bonus", &settings.language),
+                                                ((display_val * combo as f64) * 10000.0).floor() / 10000.0)
+                                        } else { "".to_string() }
+                                    },
+                                    None => "".to_string()
                                 }
-                            _ => "".to_string(),
+                            },
+                            UpgradeUID::StaticShockWave => {
+                                columns[1].colored_label(next_lvl_color, format!("{} {}", translate("ui-next-level-value", &settings.language), display_val.round()));
+
+                                "".to_string()
+                            },
+                            _ => {
+                                columns[1].colored_label(next_lvl_color, format!("{} {}%", translate("ui-next-level-value", &settings.language), display_val));
+
+                                "".to_string()
+                            },
                         };
                     
                         if !text.is_empty() {

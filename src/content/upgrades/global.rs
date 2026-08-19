@@ -159,9 +159,22 @@ const BOX_LVL_3: UpgradeLevel = UpgradeLevel {
     value: Some(0.85),
 };
 
-// Стеклянная теплица: Повышает доход в локации Sunlit Nursery
-// Полка для рассады: Позволяет хранить один слот «в запасе». что иметь возможность собирать уражай с какого либо растения на любой локации
-// Селекция семян: +1 к gather_amount для кукурузы.
-// Гормональный буст: +1 к gather_amount для тыквы
-// Возможность перетаскивать растения
-// Все виды суперс улучшений на каждое растение
+pub const SOFT_REARRANGE: Upgrade = Upgrade {
+    name: "soft-rearrange-name",
+    description: "soft-rearrange-desc",
+
+    id: UpgradeUID::SoftRearrange,
+    texture_stage: UpgradeStage::Locked,
+    current_level: 0,
+    levels: &[SFRARR_1],
+    dependencies: &[],
+    location_prestige_req: (None, None),
+    category: EGUISelectedCategories::Global,
+    grid_pos: (0, 6),
+};
+
+const SFRARR_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[ResourceType::CatHappiness],
+    costs: &[120.0],
+    value: None,
+};

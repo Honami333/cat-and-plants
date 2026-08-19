@@ -10,6 +10,9 @@ pub struct GameAssets {
     pub sunlit_nursery: Handle<Image>,
     pub warm_paws_porch: Handle<Image>,
     pub dark_storage: Handle<Image>,
+    pub shadow_greenhouse_base: Handle<Image>,
+    pub shadow_greenhouse_shelf: Handle<Image>,
+    pub shadow_greenhouse_photos: Handle<Image>,
 
     pub button_buy_tomato: Handle<Image>,
     pub button_buy_cucumber: Handle<Image>,

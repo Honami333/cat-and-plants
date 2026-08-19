@@ -12,11 +12,17 @@ catnip-infusion-desc = A secret ingredient in the soil makes cats much happier w
 wholesale-supplies-name = Wholesale Supplies
 wholesale-supplies-desc = We've arranged for shipments in big boxes! Reduces the cost of all future upgrades.
 
+soft-rearrange-name = Soft Rearrange
+soft-rearrange-desc = Allows you to freely move and rearrange plants between slots to perfect your layout.
+
 purr-profit-name = Purr Profit
 purr-profit-desc = Boosts your overall cat happiness income. Happy cats bring more wealth!
 
 over-blooming-name = Over Blooming
 over-blooming-desc = Permanently multiplies crop yield from prestige rooms. Watch the garden explode!
+
+static-shockwave-name = Static Shockwave
+static-shockwave-desc = Unleashes a powerful electric buzz from your cats purring. grants extra prestige sparks based on the level of this upgrade upon entering prestige.
 
 unlock-tomato-name = Juicy Red Ball
 unlock-tomato-desc = Your starting crop! Cats adore these bright red treats for their rich flavor and how fun they are to roll around.
@@ -59,6 +65,16 @@ corn-growth-desc = Installs miniature mirrors around each pot. The sprouts soak 
 
 corn-joy-name = Butter Glazed Nibbles
 corn-joy-desc = Covers the fresh kernels with a warm, sweet glaze. Fluffy kittens start purring like engines just from the smell.
+
+pumpkin-bounty-name = Giant Pots
+pumpkin-bounty-desc = Enriches the soil in the pot with premium minerals. the roots grow massive, prize-winning pumpkins filled with rich pulp.
+
+pumpkin-growth-name = Heated Containers
+pumpkin-growth-desc = Installs automatic heating elements inside each pot. the pumpkin sprouts absorb warmth constantly and ripen much faster.
+
+pumpkin-joy-name = Roasted Seeds
+pumpkin-joy-desc = Bakes the harvest into crunchy, warm treats. feeding this to your kittens makes them roll over with pure delight.
+
 
 # Button Text
 

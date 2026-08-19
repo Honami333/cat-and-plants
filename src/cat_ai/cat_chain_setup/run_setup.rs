@@ -1,40 +1,40 @@
-use purrgress::cat_stage_manager::*;
-use purrgress::cat_motion_blur::*;
+use purrgress::cat_malloc::train_design;
+use purrgress::cat_malloc::train_route;
+use purrgress::cat_malloc::train_types;
+use purrgress::condition;
 
-use purrgress::cat_motion_blur::pandemonium_types::PurrFrameStage;
-
-use std::collections::HashMap;
+use purrgress::cat_malloc::train_types::{StandardRules, BufferMode};
 use bevy::prelude::*;
+
+use anyhow::Result;
 
 use crate::cat_ai::cat_dataset::*;
 
 
 pub fn run_purr_chain(
-    cat_manager: &mut manager::StageManager<CatStages>,
-    purr_chain_map: &mut HashMap<PurrChain, CatStages>,
-) {
-    let idle_condition = condition::PurrTimer::default();
-    let run_condition = condition::PurrProximity::default();
+    train_route: &mut train_route::PurrRoute<CatStages, train_types::StandardRules>,
+    idle_timer: condition::PurrTimer,
+    run_proximity: condition::PurrProximity,
+) -> Result<()> {
+    let idle_condition = StandardRules::Timer(idle_timer);
+    let run_condition = StandardRules::Proximity(run_proximity);
 
-    let run_purr_chain = purrgress_macros::new_purr_chain!(
-        cat_manager,
-        CatStages,
-        CatStages::Idle : idle_condition =>
-        CatStages::Run : run_condition
+    let mut train_design = train_design::PurrDesign::new();
+
+    train_design.single(CatStages::Idle(RUN_NAMED), idle_condition);
+
+    train_design.single(CatStages::Run(RUN_NAMED), run_condition);
+
+    let run_chain_design = Some(vec![CatStages::Idle(RUN_NAMED), CatStages::Run(RUN_NAMED)]);
+
+    let run_chain_box = train_design::DesignBox::new(
+        StandardRules::instant(),
+        run_chain_design
     );
+    
+    train_design.chain(CatStages::RunChain, run_chain_box);
 
-    purr_chain_map.insert(PurrChain::RunChain, run_purr_chain);
-}
+    train_route.construct_schedule(&train_design, BufferMode::Keep)?;
 
-pub fn cat_run_ani_setup() -> (PurrChain, manager::StageManager<PurrFrameStage>, memory_demonium::PurrAnimateMetaData<CatAni>) {
-    purrgress_macros::purr_pandemonium!(
-        !!PurrChain::RunChain : <
-            CatAni::Idle(AniSub::Start), [1, 1] => 
-            CatAni::Idle(AniSub::Loop), [1, 1] => 
-            CatAni::Idle(AniSub::End), [1, 1] =>
-            CatAni::Run(AniSub::Start), [1, 1] => 
-            CatAni::Run(AniSub::Loop), [1, 1] => 
-            CatAni::Run(AniSub::End), [1, 1]
-        >
-    )
+    Ok(())
 }

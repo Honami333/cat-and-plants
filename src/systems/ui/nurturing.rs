@@ -65,7 +65,14 @@ pub fn trading_ui_system(
                     .add(egui::Slider::new(&mut trade_state.selected_percent, 1..=100).text("%"));
                 columns[0].add_space(5.0 * (s.x).min(s.y));
                 columns[0].horizontal(|ui| {
-                    let current_economy = economy.egui_get_res_list(TRADEWELL, trade_state.selected_percent as f64, &upgrade_storege, &trade_state.selected_item);
+                    let current_economy = economy.egui_get_res_list(
+                        TRADEWELL,
+                        trade_state.selected_percent as f64,
+                        &upgrade_storege,
+                        &trade_state.selected_item,
+                        false,
+                        false
+                    );
                     
                     trade_state.selected_economy = current_economy;
 
@@ -138,7 +145,7 @@ pub fn trading_ui_system(
                         .show(ui, |ui| {
                             let all_items: Vec<_> = ResourceType::iter()
                                 .filter(|t| {
-                                    !matches!(*t, ResourceType::CatHappiness | ResourceType::SunSparks)})
+                                    !matches!(*t, ResourceType::CatHappiness | ResourceType::SunSparks | ResourceType::PhotoSparks)})
                                 .collect();
 
                             let range = if trade_state.selected_world == EGUICurrntWorld::All {
@@ -146,9 +153,15 @@ pub fn trading_ui_system(
                             } else {
                                 let world_idx = trade_state.selected_world as usize;
 
+                                let end_pos = match trade_state.selected_world {
+                                    EGUICurrntWorld::All => 0,
+                                    EGUICurrntWorld::SunlitNursery => 4,
+                                    EGUICurrntWorld::ShadowGreenhouse => 5,
+                                };
+
                                 let start = (world_idx - 1) * 4;
 
-                                let end = start + 4;
+                                let end = start + end_pos;
 
                                 start..end
                             };
@@ -207,8 +220,14 @@ fn trade_well(
     
     if let (Some(value), _) = upgrade_storege.get_global_modifier(UpgradeUID::WholesaleSupply) {up_value_1 = value};
 
-    let trade = economy.egui_get_res_list(TRADEWELL, trade_state.selected_percent as f64, upgrade_storege, &trade_state.selected_item);
-
+    let trade = economy.egui_get_res_list(
+        TRADEWELL,
+        trade_state.selected_percent as f64,
+        upgrade_storege,
+        &trade_state.selected_item,
+        true,
+        true,
+    );
 
     (trade * up_value_1).floor()
 }

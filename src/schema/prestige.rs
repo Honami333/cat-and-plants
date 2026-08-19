@@ -9,6 +9,7 @@ use std::borrow::Borrow;
 #[derive(Resource, Clone, Copy, Default,  Serialize, Deserialize, Debug)]
 pub struct PrestigeRoom {
     pub sunlit_nursery: usize,
+    pub shadow_greenhouse: usize,
 }
 
 impl PrestigeRoom {
@@ -19,6 +20,7 @@ impl PrestigeRoom {
 
         match current_world.borrow() {
             CurrentWorld::SunlitNursery => Some(self.sunlit_nursery),
+            CurrentWorld::ShadowGreenhouse => Some(self.shadow_greenhouse),
             CurrentWorld::WarmPawsPorch => None,
         }
     }
@@ -26,6 +28,7 @@ impl PrestigeRoom {
     pub fn get_mut_room(&mut self, current_world: &State<CurrentWorld>) -> Option<&mut usize> {
         match current_world.get() {
             CurrentWorld::SunlitNursery => Some(&mut self.sunlit_nursery),
+            CurrentWorld::ShadowGreenhouse => Some(&mut self.shadow_greenhouse),
             CurrentWorld::WarmPawsPorch => None,
         }
     }
@@ -33,12 +36,13 @@ impl PrestigeRoom {
     pub fn get_sparks_res(&self, current_world: &State<CurrentWorld>) -> Option<ResourceType>{
         match current_world.get() {
             CurrentWorld::SunlitNursery => Some(ResourceType::SunSparks),
+            CurrentWorld::ShadowGreenhouse => Some(ResourceType::PhotoSparks),
             CurrentWorld::WarmPawsPorch => None,
         }
     }
 
     pub fn first_prestige(&self) -> bool {
-        let rooms = [self.sunlit_nursery];
+        let rooms = [self.sunlit_nursery, self.shadow_greenhouse];
 
         for room in rooms {
             if room > 0 { return true };
@@ -48,7 +52,7 @@ impl PrestigeRoom {
     }
 
     pub fn get_all_prestige(&self) -> usize {
-        let rooms = [self.sunlit_nursery];
+        let rooms = [self.sunlit_nursery, self.shadow_greenhouse];
 
         let mut prestige_count = 0;
 

@@ -35,3 +35,10 @@ pub const SN_SLOTSUNLOCKING_TAB:TradeTab = TradeTab {
     dragg_info: "slots-unlock-drag",
     type_page: TypePage::SlotsUnLocking,
 };
+
+pub const SG_SLOTSUNLOCKING_TAB:TradeTab = TradeTab {
+    title_key: "slots_unlocking",
+    description: "slots-unlock-desc",
+    dragg_info: "slots-unlock-drag",
+    type_page: TypePage::SlotsUnLocking,
+};

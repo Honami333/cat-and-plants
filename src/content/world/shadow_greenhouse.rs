@@ -1,20 +1,6 @@
 use crate::schema::{config::*, economy_inventory::*, global_inventory::*};
 use bevy::prelude::*;
 
-pub const TRADEWELL: TradeWell = TradeWell {
-    well: &[
-        (ResourceType::Tomatoes, 1.0),
-        (ResourceType::Cucumbers, 2.0),
-        (ResourceType::Corn, 8.0),
-        (ResourceType::Pumpkin, 30.0),
-        (ResourceType::CatnipBall, 10.0),
-        (ResourceType::AmberBerry, 20.0),
-        (ResourceType::HoveringCherries, 30.0),
-        (ResourceType::FlowerMilkSyrup, 50.0),
-        (ResourceType::PowerRoot, 100.0)
-    ],
-};
-
 pub const SN_SLOT_CFG: WorldSettingsSlot = WorldSettingsSlot {
     slot_start_pos: Vec2::new(-182.0, -22.0),
     step_x: Vec2::new(63.0, 31.5),
@@ -79,15 +65,16 @@ pub const PL_PUMPKIN: Plant = Plant {
 };
 
 pub const SLOT_PRICES: SlotPrices = SlotPrices {
-    prices: &[0.0, 0.0, 0.0, 0.0, 50.0, 100.0, 200.0, 350.0, 500.0, 750.0, 1000.0, 1350.0, 1800.0, 2400.0, 3200.0, 4500.0],
+    prices: &[0.0, 0.0, 0.0, 1000.0, 2000.0, 4000.0, 8000.0, 14000.0, 20000.0, 35000.0, 45000.0, 60000.0, 80000.0, 105000.0, 140000.0],
 };
 
-pub const SN_FIRST_PRESTIGE_COST: PrestigeCost = PrestigeCost {
+pub const SG_FIRST_PRESTIGE_COST: PrestigeCost = PrestigeCost {
     cost: &[
-        (ResourceType::CatHappiness, 20000.0),
-        (ResourceType::Tomatoes, 1200.0),
-        (ResourceType::Cucumbers, 800.0),
-        (ResourceType::Corn, 300.0),
-        (ResourceType::Pumpkin, 50.0)
+        (ResourceType::CatHappiness, 200000.0),
+        (ResourceType::CatnipBall, 1500.0),
+        (ResourceType::AmberBerry, 800.0),
+        (ResourceType::HoveringCherries, 650.0),
+        (ResourceType::FlowerMilkSyrup, 300.0),
+        (ResourceType::PowerRoot, 80.0)
     ],
 };

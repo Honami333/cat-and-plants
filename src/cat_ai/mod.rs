@@ -2,16 +2,16 @@ use bevy::prelude::*;
 
 mod cat_chain_setup {
     pub mod run_setup;
+    pub mod sleep_setup;
     pub mod walk_setup;
 }
 mod cat_im {
     pub mod ai;
     mod run_purrchain_updata;
+    mod sleep_purrchain_updata;
     mod walk_purrchain_update;
 }
-mod cat_actions {
-    mod actions;
-}
+
 mod cat_dataset;
 mod rooney_dataset;
 

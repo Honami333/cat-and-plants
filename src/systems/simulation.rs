@@ -1,6 +1,8 @@
 use crate::schema::config::BreezeShaderMaterial;
 use crate::schema::{config::LightShaderMaterial, world_components::SlotItem};
-use crate::schema::{global_settings::*, common::*, global_inventory::*, item_type_info::*, upgrade_storege::*};
+use crate::schema::{global_settings::*, common::*, global_inventory::*, upgrade_storege::*};
+use bevy::platform::collections::HashMap;
+use bevy::window::NormalizedWindowRef;
 use bevy::{asset::uuid::Uuid, camera::NormalizedRenderTarget, picking::pointer::{Location, PointerId}, platform::thread, prelude::*, window::{PrimaryWindow, WindowFocused}};
 use std::time::{Duration, Instant};
 
@@ -155,20 +157,27 @@ pub fn update_shader_settings(
 
 pub fn corn_boom_ability(
     mut commands: Commands,
-    _iti_invetory: ResMut<ItemTypeInfo>,
-    _upgrade_storege: Res<UpgradeStorege>,
+    upgrade_storege: Res<UpgradeStorege>,
     current_world: Res<State<CurrentWorld>>,
-    global_inventory: Res<GlobalInventory>,
+    global_inventory: ResMut<GlobalInventory>,
     query_slot_item: Query<(Entity, &SlotItem)>,
-    query_window: Query<Entity, With<PrimaryWindow>>
+    query_window: Query<Entity, With<PrimaryWindow>>,
 ) {
     let Some(gl_inv) = global_inventory.get_for_world(&current_world) else { return; };
 
     let Ok(window_entity) = query_window.single() else { return; };
 
     let Some(normalized_window) = bevy::window::WindowRef::Primary.normalize(Some(window_entity)) else { return; };
+}
 
-    for slot_state in gl_inv.values() {
+fn boom_harvest(
+    commands: &mut Commands,
+    inventory: &HashMap<usize, SlotState>,
+    query_slot_item: &Query<(Entity, &SlotItem)>,
+    normalized_window: NormalizedWindowRef,
+    window_entity: Entity,
+) {
+    for slot_state in inventory.values() {
         if let SlotState::Occupied(plant) = slot_state {
             let Some((entity, _)) = query_slot_item.iter().find(|(_, si)| si.slot_id == plant.slot_uid) else { continue; };
 

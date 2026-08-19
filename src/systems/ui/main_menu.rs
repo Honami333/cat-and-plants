@@ -24,11 +24,11 @@ const RESOLUTIONS: [([f32; 2], &str); 13] = [
 ];
 
 fn add_start(economy: &mut Economy) {
-    // economy.add_res(ResourceType::CatHappiness, 1000000.0);
-    // economy.add_res(ResourceType::Tomatoes, 1000000.0);
-    // economy.add_res(ResourceType::Cucumbers, 1000000.0);
-    // economy.add_res(ResourceType::Corn, 1000000.0);
-    // economy.add_res(ResourceType::Pumpkin, 1000000.0);
+    economy.add_res(ResourceType::CatHappiness, 1000000.0);
+    economy.add_res(ResourceType::Tomatoes, 1000000.0);
+    economy.add_res(ResourceType::Cucumbers, 1000000.0);
+    economy.add_res(ResourceType::Corn, 1000000.0);
+    economy.add_res(ResourceType::Pumpkin, 1000000.0);
     economy.add_res(ResourceType::Tomatoes, 10.0);
 }
 

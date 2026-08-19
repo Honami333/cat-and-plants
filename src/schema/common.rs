@@ -1,15 +1,13 @@
 use serde::{Serialize, Deserialize};
 use bevy::prelude::*;
 use strum_macros::Display;
-use crate::content::world::sunlit_nursery::*;
+use crate::content::world::{shadow_greenhouse::*, sunlit_nursery::*};
 use super::economy_inventory::ResourceType;
 
 
 pub trait MapStore<T> {
     fn get_for_world (&self, world: &State<CurrentWorld>) -> Option<&T>;
-    fn get_for_world_mut (&mut self, _world: &State<CurrentWorld>) -> Option<&mut T> {
-        None
-    }
+    fn get_for_world_mut (&mut self, _world: &State<CurrentWorld>) -> Option<&mut T> { None }
 }
 
 #[derive(States, Debug, Clone, Eq, PartialEq, Hash, Default)]
@@ -27,12 +25,15 @@ pub enum CurrentWorld {
     #[default]
     #[strum(serialize = "world-warm-paws")] WarmPawsPorch,
     #[strum(serialize = "world-sunlit-nursery")] SunlitNursery,
+    ShadowGreenhouse
 }
+// ShadowGreenhouse Теневая Оранжерея
 
 impl CurrentWorld {
     pub fn get_prestige_cost(&self) -> Option<&[(ResourceType, f64)]> {
         match self {
             CurrentWorld::SunlitNursery => Some(SN_FIRST_PRESTIGE_COST.cost),
+            CurrentWorld::ShadowGreenhouse => Some(SG_FIRST_PRESTIGE_COST.cost),
             CurrentWorld::WarmPawsPorch => None
         }
     }

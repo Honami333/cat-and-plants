@@ -27,9 +27,14 @@ pub enum ResourceType {
     #[strum(serialize = "res-corn")] Corn,
     #[strum(serialize = "res-pumpkin")] Pumpkin,
 
-
+    CatnipBall,
+    AmberBerry,
+    HoveringCherries,
+    FlowerMilkSyrup,
+    PowerRoot,
 
     #[strum(serialize = "res-sun-sparks")] SunSparks,
+    PhotoSparks
 }
 
 impl From<TypePlant> for ResourceType {
@@ -98,6 +103,8 @@ impl Economy {
         percent: f64,
         upgrade_storege: &UpgradeStorege,
         select_item_list: &[ResourceType],
+        use_updgrade: bool,
+        use_price: bool,
     ) -> f64 {
         let mut all_trade = 0.0;
 
@@ -112,13 +119,23 @@ impl Economy {
 
             let Some(&price) = well.well.iter().find(|(r, _)| *r == *res) else { continue; };
 
-            let mut up_value_2 =  1.0;
+            if !use_price {
+                all_trade += (item_count * factor).floor();
+                continue;
+            };
 
-            if let Ok(type_plant) = (*res).try_into()
-                && let (Some(value), _) = upgrade_storege.get_plant_global_modifier(&type_plant, PlantGGM::Joy) {up_value_2 = value};
+            if use_updgrade {
+                let mut up_value_2 =  1.0;
 
-            all_trade += (item_count * factor * price.1 * up_value_2).floor();
-        }
+                if let Ok(type_plant) = (*res).try_into()
+                    && let (Some(value), _) = 
+                        upgrade_storege.get_plant_global_modifier(&type_plant, PlantGGM::Joy) {up_value_2 = value};
+
+                all_trade += (item_count * factor * price.1 * up_value_2).floor();
+            } else {
+                all_trade += (item_count * factor * price.1).floor();
+            };
+        };
 
         all_trade
     }
@@ -135,6 +152,14 @@ impl Economy {
                 res_vec.push(ResourceType::Cucumbers);
                 res_vec.push(ResourceType::Corn);
                 res_vec.push(ResourceType::Pumpkin);
+            },
+            CurrentWorld::ShadowGreenhouse => {
+                res_vec.push(ResourceType::CatHappiness);
+                res_vec.push(ResourceType::CatnipBall);
+                res_vec.push(ResourceType::AmberBerry);
+                res_vec.push(ResourceType::HoveringCherries);
+                res_vec.push(ResourceType::FlowerMilkSyrup);
+                res_vec.push(ResourceType::PowerRoot);
             },
             CurrentWorld::WarmPawsPorch => (),
         };

@@ -74,6 +74,7 @@ pub const UNLOCK_PUMPKIN: Upgrade = Upgrade {
     category: EGUISelectedCategories::SunlitNursery,
     grid_pos: (3, 0),
 };
+
 const UPUMP_LVL_1: UpgradeLevel = UpgradeLevel {
     resource_types: &[ResourceType::CatHappiness, ResourceType::Corn],
     costs: &[400.0, 100.0],
@@ -439,10 +440,10 @@ const COG_LVL_1: UpgradeLevel = UpgradeLevel {
 const COG_LVL_2: UpgradeLevel = UpgradeLevel {
     resource_types: &[
         ResourceType::CatHappiness,
+        ResourceType::Cucumbers,
         ResourceType::Corn,
-        ResourceType::Pumpkin,
     ],
-    costs: &[2400.0, 300.0, 30.0],
+    costs: &[2400.0, 550.0, 120.0],
     value: Some(1.30),
 };
 
@@ -450,10 +451,10 @@ const COG_LVL_3: UpgradeLevel = UpgradeLevel {
     resource_types: &[
         ResourceType::SunSparks,
         ResourceType::CatHappiness,
-        ResourceType::Cucumbers,
         ResourceType::Corn,
+        ResourceType::Pumpkin,
     ],
-    costs: &[1.0, 12000.0, 550.0, 120.0],
+    costs: &[1.0, 12000.0, 400.0, 45.0],
     value: Some(1.5),
 };
 
@@ -497,4 +498,135 @@ const COJ_LVL_3: UpgradeLevel = UpgradeLevel {
     ],
     costs: &[1.0, 15000.0, 700.0, 150.0],
     value: Some(1.5),
+};
+
+
+pub const PUMPKIN_BOUNTY: Upgrade = Upgrade {
+    name: "pumpkin-bounty-name",
+    description: "pumpkin-bounty-desc",
+
+    id: UpgradeUID::PumpkinBounty,
+    texture_stage: UpgradeStage::Locked,
+    current_level: 0,
+    levels: &[PMB_LVL_1, PMB_LVL_2, PMB_LVL_3],
+    dependencies: &[UpgradeUID::UnlockPumpkin],
+    location_prestige_req: (None, None),
+    category: EGUISelectedCategories::SunlitNursery,
+    grid_pos: (3, 1),
+};
+
+const PMB_LVL_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::CatHappiness,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[600.0, 20.0],
+    value: Some(1.3),
+};
+
+const PMB_LVL_2: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[3500.0, 300.0, 50.0],
+    value: Some(1.5),
+};
+
+const PMB_LVL_3: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::SunSparks,
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin
+    ],
+    costs: &[1.0, 12000.0, 600.0, 150.0],
+    value: Some(1.8),
+};
+
+
+pub const PUMPKIN_GROWTH: Upgrade = Upgrade {
+    name: "pumpkin-growth-name",
+    description: "pumpkin-growth-desc",
+
+    id: UpgradeUID::PumpkinGrowth,
+    texture_stage: UpgradeStage::Locked,
+    current_level: 0,
+    levels: &[PMG_LVL_1, PMG_LVL_2, PMG_LVL_3],
+    dependencies: &[UpgradeUID::PumpkinBounty],
+    location_prestige_req: (None, None),
+    category: EGUISelectedCategories::SunlitNursery,
+    grid_pos: (3, 2),
+};
+
+const PMG_LVL_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[ResourceType::CatHappiness, ResourceType:: Pumpkin],
+    costs: &[1200.0, 40.0],
+    value: Some(1.15),
+};
+
+const PMG_LVL_2: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[5000.0, 500.0, 80.0],
+    value: Some(1.30),
+};
+
+const PMG_LVL_3: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::SunSparks,
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[1.0, 15000.0, 800.0, 180.0],
+    value: Some(1.5),
+};
+
+
+pub const PUMPKIN_JOY: Upgrade = Upgrade {
+    name: "pumpkin-joy-name",
+    description: "pumpkin-joy-desc",
+
+    id: UpgradeUID::PumpkinJoy,
+    texture_stage: UpgradeStage::Locked,
+    current_level: 0,
+    levels: &[PMJ_LVL_1, PMJ_LVL_2, PMJ_LVL_3],
+    dependencies: &[UpgradeUID::PumpkinGrowth],
+    location_prestige_req: (None, None),
+    category: EGUISelectedCategories::SunlitNursery,
+    grid_pos: (3, 3),
+};
+
+const PMJ_LVL_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[ResourceType::CatHappiness, ResourceType::Pumpkin],
+    costs: &[2000.0, 80.0],
+    value: Some(1.2),
+};
+
+const PMJ_LVL_2: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::CatHappiness,
+        ResourceType::Corn,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[6000.0, 800.0, 150.0],
+    value: Some(1.4),
+};
+
+const PMJ_LVL_3: UpgradeLevel = UpgradeLevel {
+    resource_types: &[
+        ResourceType::SunSparks,
+        ResourceType::CatHappiness,
+        ResourceType::Tomatoes,
+        ResourceType::Cucumbers,
+        ResourceType::Corn,
+        ResourceType::Pumpkin,
+    ],
+    costs: &[2.0, 20000.0, 8000.0, 4000.0, 1500.0, 300.0],
+    value: Some(1.8),
 };

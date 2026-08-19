@@ -51,5 +51,9 @@ chrono = "0.4"
 fluent = "0.16"
 fluent-templates = "0.9"
 
-purrgress = { version = "0.3.8", features = ["bevy_ecs", "animator"] }
-purrgress-macros = "0.3.3"
+purrgress = { version = "0.4.24", features = ["bevy_ecs", "train"] }
+purrgress-macros = "0.4.1"
+anyhow = "1.0.103"
+
+symphonia = "0.6.0"
+rodio = { version = "0.22.2", default-features = false, features = ["symphonia-wav", "symphonia-ogg", "playback"] }

@@ -18,6 +18,7 @@ pub enum SvSlBT {
 pub enum EGUICurrntWorld {
     #[strum(serialize = "world-all")] All,
     #[strum(serialize = "world-sunlit-nursery")] SunlitNursery,
+    ShadowGreenhouse,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, EnumIter, Display, Serialize, Deserialize)]
@@ -25,6 +26,7 @@ pub enum EGUISelectedCategories {
     #[strum(serialize = "cat-sparks")] Sparcks,
     #[strum(serialize = "cat-global")] Global,
     #[strum(serialize = "cat-nursery")] SunlitNursery,
+    ShadowGreenhouse,
 }
 
 
@@ -139,6 +141,10 @@ impl Default for TradeState {
             (
                 4_usize,
                 (CurrentWorld::SunlitNursery, SN_SLOTSUNLOCKING_TAB)
+            ),
+            (
+                5_usize,
+                (CurrentWorld::ShadowGreenhouse, SG_SLOTSUNLOCKING_TAB)
             ),
         ]);
 

@@ -9,6 +9,9 @@ pub fn load_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
         sunlit_nursery: asset_server.load("world/sunlit_nursery.png"),
         warm_paws_porch: asset_server.load("world/warm_paws_porch.png"),
         dark_storage: asset_server.load("world/dark_storage.png"),
+        shadow_greenhouse_base: asset_server.load("world/shadow_greenhouse_base.png"),
+        shadow_greenhouse_shelf: asset_server.load("world/shadow_greenhouse_shelf.png"),
+        shadow_greenhouse_photos: asset_server.load("world/shadow_greenhouse_photos.png"),
 
         button_buy_tomato: asset_server.load("button/button_buy_tomato.png"),
         button_buy_cucumber: asset_server.load("button/button_buy_cucumber.png"),

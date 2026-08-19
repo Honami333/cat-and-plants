@@ -14,10 +14,7 @@ pub fn menu_current_world(
     assets: Res<GameAssets>,
     shaders: Res<ShaderAssets>,
 ) {
-    bg_spawn(
-        &mut commands,
-        assets.dark_storage.clone(),
-    );
+    bg_spawn(&mut commands, assets.dark_storage.clone(), 0.0);
     shader_spawn(&mut commands, &mut meshes, shaders.ds_light.clone());
 }
 
@@ -31,26 +28,29 @@ pub fn spawn_world_system(
 ) {
     match current_world.get() {
         CurrentWorld::SunlitNursery => {
-            bg_spawn(&mut commands, assets.sunlit_nursery.clone());
+            bg_spawn(&mut commands, assets.sunlit_nursery.clone(), 0.0);
             shader_spawn(&mut commands, &mut meshes, shaders.sn_window_light.clone());
-            spawn_slots(&mut commands, &SN_SLOT_CFG, assets.pot_stands.clone());
+            spawn_slots_grid(&mut commands, &SN_SLOT_CFG, assets.pot_stands.clone());
         },
         CurrentWorld::WarmPawsPorch => {
-            bg_spawn(
-                &mut commands,
-                assets.warm_paws_porch.clone(),
-            );
+            bg_spawn(&mut commands,  assets.warm_paws_porch.clone(), 0.0);
             shader_spawn(&mut commands, &mut meshes, shaders.wpp_window_light.clone());
         },
+        CurrentWorld::ShadowGreenhouse => {
+            bg_spawn(&mut commands,  assets.shadow_greenhouse_base.clone(), 0.0);
+            bg_spawn(&mut commands,  assets.shadow_greenhouse_shelf.clone(), 2.5);
+            bg_spawn(&mut commands,  assets.shadow_greenhouse_photos.clone(), 18.0);
+        }
     };
 }
 
 fn bg_spawn(
     commands: &mut Commands,
     bg_image: Handle<Image>,
+    z_layer: f32
 ) {
     commands.spawn((
-        Transform::from_xyz(0.0, 0.0, 0.0),
+        Transform::from_xyz(0.0, 0.0, z_layer),
         Sprite::from_image(bg_image),
         Background,
         Room,
@@ -73,7 +73,7 @@ fn shader_spawn(
 }
 
 // Спаун слотов в зависимости от мира
-fn spawn_slots(
+fn spawn_slots_grid(
     commands: &mut Commands,
     config: &WorldSettingsSlot,
     slot_image_handle: Handle<Image>,

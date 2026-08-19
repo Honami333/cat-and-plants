@@ -8,7 +8,7 @@ use crate::GAME_VERSION;
 use crate::systems::locales::*;
 
 const ERROR_TIME: f64 = 20.0;
-const LOAD_TIME: f64 = 1.0;
+const LOAD_TIME: f64 = 0.0;
 const DOT_TIME: f64 = 0.1;
 
 pub fn assets_load_screen(
@@ -173,7 +173,7 @@ pub fn assets_load_screen(
             return;
         };
 
-    if *current_state != 6 || !load_timer.is_finished() { return; };
+    if *current_state < 6 || !load_timer.is_finished() { return; };
 
     next_state.set(GameState::Menu);
 }

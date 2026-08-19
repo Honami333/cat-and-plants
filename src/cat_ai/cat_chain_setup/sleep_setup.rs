@@ -11,28 +11,28 @@ use anyhow::Result;
 use crate::cat_ai::cat_dataset::*;
 
 
-pub fn walk_purr_chain(
+pub fn sleep_purr_chain(
     train_route: &mut train_route::PurrRoute<CatStages, train_types::StandardRules>,
     idle_timer: condition::PurrTimer,
-    walk_proximity: condition::PurrProximity,
+    sleep_timer: condition::PurrTimer,
 ) -> Result<()> {
     let idle_condition = StandardRules::Timer(idle_timer);
-    let walk_condition = StandardRules::Proximity(walk_proximity);
+    let sleep_condition = StandardRules::Timer(sleep_timer);
 
     let mut train_design = train_design::PurrDesign::new();
 
-    train_design.single(CatStages::Idle(WALK_NAMED), idle_condition);
+    train_design.single(CatStages::Idle(SLEEP_NAMED), idle_condition);
 
-    train_design.single(CatStages::Walk(WALK_NAMED), walk_condition);
+    train_design.single(CatStages::CurledSleep(SLEEP_NAMED), sleep_condition);
 
-    let walk_chain_design = Some(vec![CatStages::Idle(WALK_NAMED), CatStages::Walk(WALK_NAMED)]);
+    let sleep_chain_design = Some(vec![CatStages::Idle(SLEEP_NAMED), CatStages::CurledSleep(SLEEP_NAMED)]);
 
-    let walk_chain_box = train_design::DesignBox::new(
+    let sleep_chain_box = train_design::DesignBox::new(
         StandardRules::instant(),
-        walk_chain_design
+        sleep_chain_design
     );
     
-    train_design.chain(CatStages::WalkChain, walk_chain_box);
+    train_design.chain(CatStages::SleepChain, sleep_chain_box);
 
     train_route.construct_schedule(&train_design, BufferMode::Keep)?;
 

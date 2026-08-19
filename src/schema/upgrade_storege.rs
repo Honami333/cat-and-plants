@@ -14,10 +14,12 @@ use super::prestige::PrestigeRoom;
 pub enum UpgradeUID {
     #[strum(serialize = "purr-profit-name")] PurrProfit,
     #[strum(serialize = "over-blooming-name")] OverBlooming,
+    #[strum(serialize = "static-shockwave-name")] StaticShockWave,
     #[strum(serialize = "fertile-soil-name")] FertileSoil,
     #[strum(serialize = "growth-catalysts-name")] WholesaleSupply,
     #[strum(serialize = "catnip-infusion-name")] SelectiveBreeding,
     #[strum(serialize = "wholesale-supplies-name")] CardboardBox,
+    #[strum(serialize = "soft-rearrange-name")] SoftRearrange,
     #[strum(serialize = "unlock-tomato-name")] UnlockTomato,
     #[strum(serialize = "unlock-cucumber-name")] UnlockCucumber,
     #[strum(serialize = "unlock-corn-name")] UnlockCorn,
@@ -32,9 +34,9 @@ pub enum UpgradeUID {
     #[strum(serialize = "corn-bounty-name")] CornBounty,
     #[strum(serialize = "corn-growth-name")] CornGrowth,
     #[strum(serialize = "corn-joy-name")] CornJoy,
-    PumpkinBounty,
-    PumpkinGrowth,
-    PumpkinJoy,
+    #[strum(serialize = "pumpkin-bounty-name")] PumpkinBounty,
+    #[strum(serialize = "pumpkin-growth-name")] PumpkinGrowth,
+    #[strum(serialize = "pumpkin-joy-name")] PumpkinJoy,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
@@ -143,6 +145,7 @@ pub struct UpgradeStorege {
     pub sparcks: HashMap<(usize, usize), Upgrade>,
     pub global: HashMap<(usize, usize), Upgrade>,
     pub sunlit_nursery: HashMap<(usize, usize), Upgrade>,
+    pub shadow_greenhouse: HashMap<(usize, usize), Upgrade>,
 }
 
 impl Default for UpgradeStorege {
@@ -150,12 +153,14 @@ impl Default for UpgradeStorege {
         let sparcks_item = [
             (PURR_PROFIT.grid_pos, PURR_PROFIT),
             (OVER_BLOOMING.grid_pos, OVER_BLOOMING),
+            (STATIC_SHOCKWAVE.grid_pos, STATIC_SHOCKWAVE),
         ];
 
         let global_item = [
             (FERTILE_SOIL.grid_pos, FERTILE_SOIL),
             (GROWTH_SPEED.grid_pos, GROWTH_SPEED),
             (JOY_BOOST.grid_pos, JOY_BOOST),
+            (SOFT_REARRANGE.grid_pos, SOFT_REARRANGE),
             (CARDBOARD_BOX.grid_pos, CARDBOARD_BOX),
         ];
 
@@ -174,12 +179,20 @@ impl Default for UpgradeStorege {
             (CORN_BOUNTY.grid_pos, CORN_BOUNTY),
             (CORN_GROWTH.grid_pos, CORN_GROWTH),
             (CORN_JOY.grid_pos, CORN_JOY),
+            (PUMPKIN_BOUNTY.grid_pos, PUMPKIN_BOUNTY),
+            (PUMPKIN_GROWTH.grid_pos, PUMPKIN_GROWTH),
+            (PUMPKIN_JOY.grid_pos, PUMPKIN_JOY),
+        ];
+        
+        let shadow_greenhouse_item = [
+
         ];
 
         Self {
             sparcks: sparcks_item.into_iter().collect(),
             global: global_item.into_iter().collect(),
             sunlit_nursery: sunlit_nursery_item.into_iter().collect(),
+            shadow_greenhouse: shadow_greenhouse_item.into_iter().collect()
         }
     }
 }
@@ -233,6 +246,7 @@ impl UpgradeStorege {
             EGUISelectedCategories::Sparcks => &self.sparcks,
             EGUISelectedCategories::Global => &self.global,
             EGUISelectedCategories::SunlitNursery => &self.sunlit_nursery,
+            EGUISelectedCategories::ShadowGreenhouse => &self.shadow_greenhouse
         }
     }
 }

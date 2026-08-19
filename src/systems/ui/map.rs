@@ -1,4 +1,4 @@
-use crate::schema::{common::*, global_settings::*};
+use crate::schema::{common::*, global_settings::*, global_inventory::*};
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui};
 use crate::systems::locales::*;
@@ -6,6 +6,7 @@ use crate::systems::locales::*;
 pub fn map_ui_system(
     mut contexts: EguiContexts,
     mut new_current_world: ResMut<NextState<CurrentWorld>>,
+    mut dragget: ResMut<DragItem>,
     current_world: Res<State<CurrentWorld>>,
     scale: Res<WorldScale>,
     settings: Res<GlobalSettings>,
@@ -58,12 +59,25 @@ pub fn map_ui_system(
                     min + egui::vec2(65.0 * s.x, 35.0 * s.y),
                 ];
 
+                let room_point_sg = vec![
+                    min + egui::vec2(10.0 * s.x, 70.0 * s.y),
+                    min + egui::vec2(10.0 * s.x, 110.0 * s.y),
+                    min + egui::vec2(80.0 * s.x, 110.0 * s.y),
+                    min + egui::vec2(80.0 * s.x, 70.0 * s.y),
+                    min + egui::vec2(70.0 * s.x, 70.0 * s.y),
+                    min + egui::vec2(70.0 * s.x, 75.0 * s.y),
+                    min + egui::vec2(55.0 * s.x, 75.0 * s.y),
+                    min + egui::vec2(55.0 * s.x, 70.0 * s.y),
+                ];
+
                 let critical_point_sn = [10.0 * s.x, 50.0 * s.x, 10.0 * s.y, 60.0 * s.y];
                 let critical_point_wpp = [65.0 * s.x, 130.0 * s.x, 10.0 * s.y, 60.0 * s.y];
+                let critical_point_sg = [10.0 * s.x, 80.0 * s.x, 70.0 * s.y, 110.0 * s.y];
 
                 room_map_spawn(
                     ui,
                     &mut new_current_world,
+                    &mut dragget,
                     &current_world,
                     room_point_sn,
                     min,
@@ -76,12 +90,26 @@ pub fn map_ui_system(
                 room_map_spawn(
                     ui,
                     &mut new_current_world,
+                    &mut dragget,
                     &current_world,
                     room_point_wpp,
                     min,
                     &painter,
                     critical_point_wpp,
                     CurrentWorld::WarmPawsPorch,
+                    s,
+                    &settings
+                );
+                room_map_spawn(
+                    ui,
+                    &mut new_current_world,
+                    &mut dragget,
+                    &current_world,
+                    room_point_sg,
+                    min,
+                    &painter,
+                    critical_point_sg,
+                    CurrentWorld::ShadowGreenhouse,
                     s,
                     &settings
                 );
@@ -92,6 +120,7 @@ pub fn map_ui_system(
 fn room_map_spawn(
     ui: &mut egui::Ui,
     new_current_world: &mut NextState<CurrentWorld>,
+    dragget: &mut DragItem,
     current_world: &CurrentWorld,
     room_point: Vec<egui::Pos2>,
     min: egui::Pos2,
@@ -119,6 +148,7 @@ fn room_map_spawn(
             fill_color = egui::Color32::from_rgba_unmultiplied(140, 150, 75, 200);
 
             if is_click && *current_world != location {
+                dragget.entity = None;
                 new_current_world.set(location);
             };
         };

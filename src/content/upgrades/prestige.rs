@@ -53,3 +53,23 @@ const BLOOM_2: UpgradeLevel = UpgradeLevel {
     costs: &[3.0],
     value: Some(0.4),
 };
+
+pub const STATIC_SHOCKWAVE : Upgrade = Upgrade {
+    name: "static-shockwave-name",
+    description: "static-shockwave-desc",
+
+    id: UpgradeUID::StaticShockWave,
+    texture_stage: UpgradeStage::Locked,
+    current_level: 0,
+    levels: &[STSHW_1],
+    dependencies: &[UpgradeUID::PurrProfit, UpgradeUID::OverBlooming],
+    location_prestige_req: (Some(CurrentWorld::SunlitNursery), Some(1)),
+    category: EGUISelectedCategories::Sparcks,
+    grid_pos: (2, 3),
+}; 
+
+const STSHW_1: UpgradeLevel = UpgradeLevel {
+    resource_types: &[ResourceType::SunSparks],
+    costs: &[2.0],
+    value: Some(0.01),
+};

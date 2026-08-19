@@ -4,7 +4,8 @@ use bevy::{asset::uuid::Uuid, camera::NormalizedRenderTarget, picking::pointer::
 use bevy_egui::{EguiContexts, egui, egui::Response};
 use crate::schema::{world_components::*, common::*, global_inventory::*, global_settings::*, hud::*, resources::*, prestige::*, item_type_info::*, economy_inventory::*, upgrade_storege::*};
 use crate::systems::{locales::*, ui::*, visuals::format_number};
-use crate::content::world::sunlit_nursery::*;
+use crate::content::world::sunlit_nursery;
+use crate::content::world::shadow_greenhouse;
 
 const FRAME_ANIM_TIME: f64 = 0.8;
 
@@ -58,6 +59,7 @@ pub fn cat_happiness_market(
             (2_usize, (assets.corn_pot_atlas.clone(), assets.common_layout_x128.clone())),
             (3_usize, (assets.pumpkin_pot_atlas.clone(), assets.common_layout_x128.clone())),
             (4_usize, (assets.pumpkin_pot_atlas.clone(), assets.common_layout_x128.clone())),
+            (5_usize, (assets.pumpkin_pot_atlas.clone(), assets.common_layout_x128.clone())),
         ]);
 
         for i in 0..assets_market_sprite.len() {
@@ -284,7 +286,7 @@ fn ui_build_from_market(
 
             let Some(image_id) = button_sprite_map.get(&tab_info.type_page) else { return; };
 
-            let widget = egui::Button::new("").min_size(egui::vec2(160.0 * s.x, 48.0 * s.y));
+            let widget = egui::Button::new("").min_size(egui::vec2(128.0 * s.x, 48.0 * s.y));
 
             let response = page_ui.add_enabled(is_enabled_1 && is_enabled_2, widget);
 
@@ -600,7 +602,9 @@ fn add_plant_and_lock(
 
     iti_inventory.add(plant.species_id, current_world);
 
-    gl_inventory.add_plant(current_world, plant, idx);
+    gl_inventory.add_plant(current_world, plant, idx, iti_inventory.last_plant_uid);
+
+    iti_inventory.last_plant_uid += 1;
 }
 
 fn plant_price(
@@ -609,15 +613,15 @@ fn plant_price(
     page_data: &TypePage,
     prestige_inv: &PrestigeRoom,
 ) -> Option<f64>{
-    let Some(count_inv) = iti_inventory.get_for_world_mut(current_world) else { return None; };
+    let count_inv = iti_inventory.get_for_world_mut(current_world)?;
 
-    let Some(plant) = page_data.get_plant_cfg() else { return None; };
+    let plant = page_data.get_plant_cfg()?;
 
-    let Some(plant_count) = count_inv.get(&plant.species_id) else { return None; };
+    let plant_count = count_inv.get(&plant.species_id)?;
 
     if *plant_count >= plant.max_count { return None; };
 
-    let Some(prestige_room) = prestige_inv.get_room(current_world.get()) else { return None; };
+    let prestige_room = prestige_inv.get_room(current_world.get())?;
 
     let cur_price = plant.price[*plant_count] * (1.0 + (prestige_room as f64).powf(1.6) * 3.0);
 
@@ -643,7 +647,8 @@ fn slot_price(
     prestige_inv: &PrestigeRoom,
 ) -> Option<f64> {
     let price = match current_world.get() {
-        CurrentWorld::SunlitNursery => SLOT_PRICES,
+        CurrentWorld::SunlitNursery => sunlit_nursery::SLOT_PRICES,
+        CurrentWorld::ShadowGreenhouse => shadow_greenhouse::SLOT_PRICES,
         CurrentWorld::WarmPawsPorch => return None,
     };
 

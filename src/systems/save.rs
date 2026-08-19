@@ -209,9 +209,19 @@ fn fix_upgrade_references(inv: &mut UpgradeStorege) {
             upgrade.texture_stage = loaded_upgrade.texture_stage;
     };
 
+    for (_, loaded_upgrade) in inv.shadow_greenhouse.iter() {
+        let Some((_, upgrade)) = clean_reference.sunlit_nursery
+            .iter_mut() 
+            .find(|(_, u)| u.id == loaded_upgrade.id) else { continue; };
+
+            upgrade.current_level = loaded_upgrade.current_level;
+            upgrade.texture_stage = loaded_upgrade.texture_stage;
+    };
+
     inv.sparcks = clean_reference.sparcks;
     inv.global = clean_reference.global;
     inv.sunlit_nursery = clean_reference.sunlit_nursery;
+    inv.shadow_greenhouse = clean_reference.shadow_greenhouse;
 }
 
 fn get_plant_static_price(plant: TypePlant) -> &'static [f64] {
@@ -241,25 +251,26 @@ fn fix_inventory_references(inv: &mut GlobalInventory) {
             plant.price = get_plant_static_price(plant.species_id);
         };
     };
+
+    for i in 0..15 {
+        let Some(slot_state) = inv.shadow_greenhouse_inv.get_mut(&i) else { continue; };
+
+        if let SlotState::Occupied(plant) = slot_state {
+            plant.price = get_plant_static_price(plant.species_id);
+        };
+    };
 }
 
 fn fix_iti_inventory(
-    iti_storege: &mut ItemTypeInfo
+    iti_storege: &mut ItemTypeInfo,
+    inv: &mut GlobalInventory,
 ) {
     let mut clean_reference = ItemTypeInfo::default();
 
-    for (type_plant_loaded, plant_ability_map_loaded) in iti_storege.sn_plant_ability.iter() {
-        let Some(plant_ability_map) = clean_reference.sn_plant_ability.get_mut(type_plant_loaded) else { continue; };
-
-        for (plant_ability_id_loaded, plant_ability_case_loaded) in plant_ability_map_loaded.iter() {
-            let Some(plant_ability_case) = plant_ability_map.get_mut(plant_ability_id_loaded) else { continue; };
-
-            for (i, plant_ability_value_loaded) in plant_ability_case_loaded.iter().enumerate() {
-                let Some(plant_ability_value) = plant_ability_case.get_mut(i) else { continue; };
-
-                *plant_ability_value = *plant_ability_value_loaded;
-            };
-        };
+    if clean_reference.last_plant_uid < iti_storege.last_plant_uid {
+        clean_reference.last_plant_uid = iti_storege.last_plant_uid;
+        
+        fix_uid_plant(inv);
     };
     for (type_loaded, count_loaded) in iti_storege.item_count_inv.iter() {
         let Some(count) = clean_reference.item_count_inv.get_mut(type_loaded) else { continue; };
@@ -270,6 +281,19 @@ fn fix_iti_inventory(
     *iti_storege = clean_reference;
 }
 
+fn fix_uid_plant(inv: &mut GlobalInventory) {
+    for (i, item) in inv.sunlit_nursery_inv.iter_mut() {
+        if let SlotState::Occupied(plant) = item {
+            plant.uid = *i;
+        };
+    };
+
+    for (i, item) in inv.shadow_greenhouse_inv.iter_mut() {
+        if let SlotState::Occupied(plant) = item {
+            plant.uid = *i;
+        };
+    };
+}
 
 pub fn final_load_game(
     mut next_state: ResMut<NextState<GameState>>,
@@ -289,7 +313,7 @@ pub fn final_load_game(
 
     fix_inventory_references(&mut contener.global_storege);
 
-    fix_iti_inventory(&mut contener.iti_storege);
+    fix_iti_inventory(&mut contener.iti_storege, &mut contener.global_storege);
 
     fix_economy_references(&mut contener.eco_storege);
 
